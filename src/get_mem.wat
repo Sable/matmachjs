@@ -7,20 +7,22 @@
         ;; drop
     )
     (export "mem" (memory $mem))
-    (export "main" (func $main))
     (export "malloc" (func $malloc))
     (global $HEAP_TOP (mut i32) (i32.const 64))
     (global $HEAP_START (mut i32) (i32.const 64))
     (func $main (result i32)
-    
-        i32.const 8
-        i32.const 0
-        call $create_array_1d
-
-    
+        ;; For testing purposes
     )
     (func $size_s (param $type i32) (result i32)
         (local $type_size i32)
+        ;; @name size_s#memory  
+        ;; @param $type Contains the type for the array, 
+        ;;    i.e double | single | int8 | int16 | int32 | int64 | uint8 | uint16 | uint32 | uint64
+        ;; @return i32, size for that type
+        ;; @description
+        ;;      Create a 1d array of $n size
+        ;;      and type
+        ;; TODO: Expand to also unsigned types
            block block block block block
             get_local $type
             br_table 0 1 2 3 4
@@ -45,16 +47,15 @@
     (func $create_array_1d (param $n i32) (param  $type i32) (result i32)
         (local $sizepayload i32) (local $pointer i32) (local $meta_size i32)(local $total_length i32)(local $array_ptr i32)
         (local $type_size i32) (local $realsize i32)
-        ;; @name ones#memory  
-        ;; @param $n length of one d array
-        ;; @param $type Contains the type for the array, 
+        ;; @name create_array_1d#memory  
+        ;; @param $n i32, length of one d array
+        ;; @param $type i32,  Contains the type for the array, 
         ;;    i.e double | single | int8 | int16 | int32 | int64 | uint8 | uint16 | uint32 | uint64
-        ;; @return returns pointer to array
-        ;; THIS WORKS TOO!
+        ;; @return i32, returns pointer to array
         ;; @description
-        ;;      Create a 1d array of $n size
-        ;;      and type
-        ;; TODO: Expand zeros to other types instead of just doubles
+        ;;      Creates a 1d array of $n size
+        ;;      and type $type.
+        ;; TODO: Unit test
 
         ;; Get the size of bytes for type
         (set_local $type_size (call $size_s (get_local $type)))
@@ -92,16 +93,16 @@
     (func $zeroes_nxn (param $n i32) (param  $type i32) (result i32)
         (local $sizepayload i32) (local $pointer i32) (local $meta_size i32)(local $total_length i32)(local $array_ptr i32)
         (local $type_size i32)
-        ;; @name ones#memory  
+        ;; @name zeroes_nxn#memory  
         ;; @param $n Dimension of square matrix
         ;; @param $type Contains the type for the array, 
         ;;    i.e double | single | int8 | int16 | int32 | int64 | uint8 | uint16 | uint32 | uint64
-        ;; @return returns pointer to nxn matrix
+        ;; @return i32, returns pointer to nxn matrix
         ;;
         ;; @description
         ;;      Create an array of zeroes with the given $dimensions array
         ;;      and type
-        ;; TODO: Expand zeros to other types instead of just doubles
+        ;; TODO Unit Test
 
         ;; Get the size of bytes for type
         (set_local $type_size (call $size_s (get_local $type)))
@@ -139,34 +140,48 @@
     )
     (export "get_heap_top" (func $get_heap_top))
     (func $get_heap_top (result i32)
+        ;; @name get_heap_top#memory  
+        ;; @return i32, returns the value for the top of the heap
+        ;; @description
+        ;;      Used for debugging and testing, returns the size of the top of heap
         get_global $HEAP_TOP
         return
     )
     (export "array_dim_num" (func $array_dim_num))
     (func $array_dim_num (param $array i32)
+        ;; @name array_dim_num#memory 
+        ;; @param $array i32, Pointer to array whose dimensions will be returned 
+        ;; @return i32, Number of dimensions 
+        ;; @description
+        ;;      Used for debugging and testing, returns number of dimensions for the array
         (i32.load (i32.sub (get_local $array) (i32.const 12)))
         return
     )
     (export "array_length" (func $array_length))
     (func $array_length (param $array i32) (result i32)
+        ;; @name array_length#memory 
+        ;; @param $array i32, Pointer to array whose dimensions will be returned 
+        ;; @return i32, Array length
+        ;; @description
+        ;;      Gets the array "total" number of items, or length
         (i32.load (i32.sub (get_local $array) (i32.const 4)))
         return
     )
     (func $create_array (param $dimensions_array i32) (param  $type i32) (result i32)
         (local $type_size i32)(local $meta_size i32)(local $size_payload i32) (local $total_length i32)
         (local $array_dim i32)(local $array_length i32) (local $i i32) (local $pointer i32) (local $padding_flag i32)
-        ;; @name zeros#memory  
+        ;; @name create_array#memory  
         ;; @param $dimensions Array of Dimensions for array
         ;; @param $type Contains the type for the array, 
         ;;    i.e double | single | int8 | int16 | int32 | int64 | uint8 | uint16 | uint32 | uint64
         ;; @return returns pointer to start of payload
-        ;; @requires  dimensions to be larger than 0, 
+        ;; @requires  all dimensions to be larger than 0, 
         ;; @description
         ;;      Create an array of zeroes with the given $dimensions array
         ;;      and type
         ;; TODO: Expand zeros to other types instead of just doubles
-        ;; TODO Check size of dimensions
-        ;; TODO Check type
+        ;; TODO: Check dimensions
+        ;; TODO: Unit test
 
         ;; Get the size of bytes for type
         (set_local $type_size (call $size_s (get_local $type)))
@@ -250,19 +265,18 @@
         ;; @name malloc#memory  
         ;; @param $size Size of the allocated payload
         ;; @return returns pointer to start of payload
-        ;; THIS WORKS
         ;; @description
         ;;      Allocate a given payload based on provided size plus, alignment bits
         ;;      Save size, flag at beginning and end occupying 16bytes
-        ;; Add bytes to make allocation mod 64
-        
+        ;; TODO: Case where the memory is not large enough to allocate, grow memory
+
         ;; Check size is positive.
         (i32.le_s (get_local $size) (i32.const 0))
         if unreachable end
            
         
 
-
+        ;; Add bytes to make allocation mod 64
         (tee_local $realsize (i32.rem_s (get_local $size) (i32.const 8)))
         if 
             (set_local $realsize (i32.add (get_local $size) (i32.sub (i32.const 8)(get_local $realsize))))
@@ -299,6 +313,11 @@
 
     (export "get_mem_free_bit" (func $get_free_bit_mem))
     (func $get_free_bit_mem (param $memory i32) (result i32)
+        ;; @name get_mem_free_bit#memory 
+        ;; @param $array i32, Pointer to array whose dimensions will be returned 
+        ;; @return i32, Array length
+        ;; @description
+        ;;      Gets the array "total" number of items, or length
         get_local $memory
         i32.const 8
         i32.sub
@@ -306,26 +325,16 @@
     ) 
 
     (export "get_mem_payload_size" (func $get_mem_payload_size))
+    
     (func $get_mem_payload_size (param $memory i32) (result i32)
+        ;; @name get_mem_payload_size#memory 
+        ;; @param $memory i32, pointer to allocated memory by malloc 
+        ;; @return i32, Size of payload at header stored in size section by malloc
+        ;; @description
+        ;;      Gets the total size of the payload allocated by checking the header
         get_local $memory
         i32.const 4
         i32.sub
         i32.load offset=0 align=2
     ) 
-    (func $zeroes)
-
-    ;; (func $get_array_index 
-    
-    ;;     loop
-    ;;         block
-    ;;         (i32.ge_s (get_local $i)(get_local $array_dim) )
-    ;;         br_if 0
-    ;;         (set_local $array_length 
-    ;;             (i32.mul (get_local $array_length)
-    ;;                     (i32.load (i32.sub (get_local $dimensions_array) (i32.add (i32.const 16)(i32.mul (i32.const 4)(get_local $i)))))))
-    ;;             (set_local $i (i32.add (get_local $i)(i32.const 1)))
-    ;;         br 1
-    ;;         end
-    ;;     end
-    ;; )
 )
