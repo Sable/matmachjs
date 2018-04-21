@@ -1,0 +1,37 @@
+<html lang="en">
+<head>
+    <title>Document</title>
+    <script type="application/javascript">
+      WebAssembly.compileStreaming(fetch('file.wasm'))
+      .then(module => WebAssembly.instantiate(module, {}))
+      .then(instance => {
+            const t0 = performance.now();
+            instance.exports.main();    
+            const t1 = performance.now();
+            const timing = ((t1 - t0)/1000).toFixed(8) + " milliseconds";
+            console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.");
+            httpGetAsync(`http://localhost:8000/result?timing=${timing}`,()=>{
+                console.log("COOl");
+                
+            });
+            //window.close();
+            // if (window.confirm("Call to doSomething took " + (t1 - t0) + " milliseconds.")) { 
+            //     window.close();
+            // }
+        });
+        function httpGetAsync(theUrl, callback)
+        {
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function() { 
+                if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+                    callback(xmlHttp.responseText);
+            }
+            xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+            xmlHttp.send(null);
+        }
+    </script>
+</head>
+<body>
+    
+</body>
+</html>
