@@ -1,6 +1,8 @@
 (module $memory
+    ;; (import "js" "mem" (memory $mem 1))
     
-    (memory $mem 10)
+    (memory $mem 1 5)
+
     (start $init)
     (func $init 
         ;; call $main
@@ -10,8 +12,18 @@
     (export "malloc" (func $malloc))
     (global $HEAP_TOP (mut i32) (i32.const 64))
     (global $HEAP_START (mut i32) (i32.const 64))
-    (func $main (result i32)
+    (global $PAGE_SIZE i32 (i32.const 65536))
+    (global $FLAG_CHECK_SIZE_MEM (mut i32) (i32.const 1)) ;; Should be imported
+    (func $main 
         ;; For testing purposes
+    )
+    (func $get_flag_check_size_mem (result i32)
+        get_global $FLAG_CHECK_SIZE_MEM
+    )
+    (func $set_flag_check_size_mem (param i32) (result i32)
+        get_local 0
+        set_global $FLAG_CHECK_SIZE_MEM
+        get_global $FLAG_CHECK_SIZE_MEM
     )
     (func $size_s (param $type i32) (result i32)
         (local $type_size i32)
@@ -261,19 +273,20 @@
 
     )
     (func $malloc (param $size i32) (result i32) 
-        (local $realsize i32) (local $end i32)
+        (local $realsize i32) (local $end i32) (local $heap_offset i32)
         ;; @name malloc#memory  
         ;; @param $size Size of the allocated payload
         ;; @return returns pointer to start of payload
         ;; @description
         ;;      Allocate a given payload based on provided size plus, alignment bits
         ;;      Save size, flag at beginning and end occupying 16bytes
-        ;; TODO: Case where the memory is not large enough to allocate, grow memory
-
+        ;; TODO: Flag import, and memory import
+        ;; TODO: Add messages and errors functionality
         ;; Check size is positive.
         (i32.le_s (get_local $size) (i32.const 0))
         if unreachable end
-           
+
+   
         
 
         ;; Add bytes to make allocation mod 64
@@ -283,6 +296,34 @@
         else
             (set_local $realsize (get_local $size))
         end
+        
+        ;; Grow memory if necessary, if unable to grow, throw trap
+        (i32.add (i32.add (get_global $HEAP_TOP)(get_local $realsize)) (i32.const 16))
+        (i32.mul (current_memory) (get_global $PAGE_SIZE))
+        i32.sub
+        tee_local $heap_offset
+        i32.const 0
+        i32.gt_s 
+        if 
+            get_local $heap_offset
+            get_global $PAGE_SIZE
+            i32.rem_s
+            if (result i32)
+                get_local $heap_offset
+                get_global $PAGE_SIZE
+                i32.div_s
+                i32.const 1
+                i32.add
+            else 
+                get_local $heap_offset
+                get_global $PAGE_SIZE
+                i32.div_s
+            end
+            grow_memory 
+            i32.const -1
+            i32.eq
+            if unreachable end
+        end 
         ;; Set the free bit
         (i32.store (get_global $HEAP_TOP)(i32.const 1))
         ;; Set the size, add 16 because of malloc bits
