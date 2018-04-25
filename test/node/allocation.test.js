@@ -8,6 +8,7 @@ const expect = require("chai").expect;
 const sinon = require("sinon");
 const sinonChai = require("sinon-chai");
 const fs = require("fs");
+const path = require("path");
 // TODO: Create import object into wasm, separate both wasm-interp,wasm-node etc.
 chai.use(sinonChai);
 
@@ -16,23 +17,23 @@ chai.use(sinonChai);
 
 
 
-const file = fs.readFileSync("/home/sable/dherre3/Documents/Research/mc2wasm/src/main/wasm/bin/get_mem.wasm");
+const file = fs.readFileSync(path.join(__dirname,"../../")+"/bin/get_mem.wasm");
 let wasmInstance;
 let memory;
 let malloc;
 const PAGE_SIZE = 65536;
 const HEAP_OFFSET = 64;
 describe("Memory",()=>{
+	beforeEach(async ()=>{
+		wasmInstance= await WebAssembly.instantiate(file, {"js":{"mem":WebAssembly.Memory({initial:1})}});
+		wasmInstance = wasmInstance.instance.exports;
+		memory = wasmInstance.mem;
+		malloc = wasmInstance.malloc;
 
+		// console.log(wasmInstance)
+	});
     describe("#malloc",()=>{
-        beforeEach(async ()=>{
-            wasmInstance= await WebAssembly.instantiate(file, {});
-            wasmInstance = wasmInstance.instance.exports;
-            memory = wasmInstance.mem;
-            malloc = wasmInstance.malloc;
 
-            // console.log(wasmInstance)
-        });
         it("Throws error when size is negative", ()=>{
             let malloc = wasmInstance.malloc;
             expect(malloc.bind(malloc, -2)).to.throw();
@@ -71,19 +72,37 @@ describe("Memory",()=>{
             expect(wasmInstance.get_mem_payload_size(array2)).to.equal(8);
         });
 
-
-        it("Should correctly grow memory if there is no more memory for page", ()=>{
+        it("Should correctly grow memory if there is no more memory for page",async ()=>{
             // Max Page Size: 5,
+	        wasmInstance= await WebAssembly.instantiate(file, {"js":{"mem":WebAssembly.Memory({initial:1, maximum:5})}});
+	        wasmInstance = wasmInstance.instance.exports;
+	        malloc = wasmInstance.malloc;
             expect(malloc.bind(malloc,
                 5*PAGE_SIZE - HEAP_OFFSET - 16)).to.not.throw();//16 bits for header/footer of malloc.
         });
-        it("Should throw correct unreachable error if it cannot grow memory anymore", ()=>{
+        it("Should throw correct unreachable error if it cannot grow memory anymore",async ()=>{
             // Max Page Size: 5,
+	        wasmInstance= await WebAssembly.instantiate(file, {"js":{"mem":WebAssembly.Memory({initial:1, maximum:5})}});
+	        wasmInstance = wasmInstance.instance.exports;
+	        malloc = wasmInstance.malloc;
             expect(malloc.bind(malloc,
                 5*PAGE_SIZE - HEAP_OFFSET - 15)).to.throw();//One more bit than the maximum allocated data
         });
 
-    })
+    });
+    describe("#create_array_1d",()=>{
+        it("Should create array and set the length should be set appropriately",()=>{
+            let array = wasmInstance.create_array_1d(10,0);
+            expect(wasmInstance.array_length(array)).to.be.equal(10);
+	        let array2 = wasmInstance.create_array_1d(20,0);
+	        expect(wasmInstance.array_length(array2)).to.be.equal(20);
+        });
+	    it("Should throw error if array length is negative",()=>{
+		    let array = wasmInstance.create_array_1d(-1,0);
+		    expect(wasmInstance.array_length(array)).to.be.equal(0);
+
+	    });
+    });
 
 
 });

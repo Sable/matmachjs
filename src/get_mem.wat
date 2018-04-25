@@ -56,6 +56,7 @@
         end
         (return (get_local $type_size))
     )
+    (export "create_array_1d" (func $create_array_1d))
     (func $create_array_1d (param $n i32) (param  $type i32) (result i32)
         (local $sizepayload i32) (local $pointer i32) (local $meta_size i32)(local $total_length i32)(local $array_ptr i32)
         (local $type_size i32) (local $realsize i32)
