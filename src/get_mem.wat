@@ -25,6 +25,7 @@
         set_global $FLAG_CHECK_SIZE_MEM
         get_global $FLAG_CHECK_SIZE_MEM
     )
+    (export "size_s" (func $size_s))
     (func $size_s (param $type i32) (result i32)
         (local $type_size i32)
         ;; @name size_s#memory  
@@ -69,24 +70,33 @@
         ;;      Creates a 1d array of $n size
         ;;      and type $type.
         ;; TODO: Unit test
-
+        get_local $n
+        i32.const 0
+        i32.le_s
+        if
+            i32.const 0
+            return
+        end
+       
         ;; Get the size of bytes for type
         (set_local $type_size (call $size_s (get_local $type)))
+  
         ;; Calculate size of payload and allocate memory
         (tee_local $total_length (i32.mul (get_local $type_size) (get_local $n) )) ;; Add number of array elements
-
+        
         i32.const 16 ;; 4 for total size, 4 for num dimensions, 4 for type and 4 for dimension
         tee_local $meta_size
         i32.add ;; sizes
         tee_local $sizepayload ;; set size of payload
         call $malloc ;; Allocate bytes
+        
         tee_local $pointer ;; set pointer
-        ;; Set dimensions
+        ;; Set length of first dimension
         get_local $n
         i32.store 
         ;; Store number of dimensions
         get_local $pointer
-        i32.const 2
+        i32.const 1
         i32.store offset=4 align=2
         ;; Store type
         get_local $pointer
@@ -102,7 +112,10 @@
         i32.add
         return
     )
-    
+    (export "get_array_type" (func $get_array_type))
+    (func $get_array_type (param $arr i32) (result i32)
+        (i32.load (i32.sub (get_local $arr) (i32.const 8)))
+    )
     (func $zeroes_nxn (param $n i32) (param  $type i32) (result i32)
         (local $sizepayload i32) (local $pointer i32) (local $meta_size i32)(local $total_length i32)(local $array_ptr i32)
         (local $type_size i32)
@@ -161,7 +174,7 @@
         return
     )
     (export "array_dim_num" (func $array_dim_num))
-    (func $array_dim_num (param $array i32)
+    (func $array_dim_num (param $array i32) (result i32)
         ;; @name array_dim_num#memory 
         ;; @param $array i32, Pointer to array whose dimensions will be returned 
         ;; @return i32, Number of dimensions 
@@ -180,6 +193,7 @@
         (i32.load (i32.sub (get_local $array) (i32.const 4)))
         return
     )
+    (export "create_array" (func $create_array))
     (func $create_array (param $dimensions_array i32) (param  $type i32) (result i32)
         (local $type_size i32)(local $meta_size i32)(local $size_payload i32) (local $total_length i32)
         (local $array_dim i32)(local $array_length i32) (local $i i32) (local $pointer i32) (local $padding_flag i32)
@@ -297,6 +311,7 @@
         else
             (set_local $realsize (get_local $size))
         end
+
         
         ;; Grow memory if necessary, if unable to grow, throw trap
         (i32.add (i32.add (get_global $HEAP_TOP)(get_local $realsize)) (i32.const 16))

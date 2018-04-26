@@ -14,7 +14,7 @@ chai.use(sinonChai);
 
 
 ///////////////////////////////////////////////////////////////
-
+const libjs = require(path.join(__dirname,"../../")+"/bin/lib.js");
 
 
 const file = fs.readFileSync(path.join(__dirname,"../../")+"/bin/get_mem.wasm");
@@ -24,16 +24,16 @@ let malloc;
 const PAGE_SIZE = 65536;
 const HEAP_OFFSET = 64;
 describe("Memory",()=>{
-	beforeEach(async ()=>{
-		wasmInstance= await WebAssembly.instantiate(file, {"js":{"mem":WebAssembly.Memory({initial:1})}});
-		wasmInstance = wasmInstance.instance.exports;
-		memory = wasmInstance.mem;
-		malloc = wasmInstance.malloc;
 
-		// console.log(wasmInstance)
-	});
     describe("#malloc",()=>{
+	    beforeEach(async ()=>{
+		    wasmInstance= await WebAssembly.instantiate(file,libjs);
+		    wasmInstance = wasmInstance.instance.exports;
+		    memory = wasmInstance.mem;
+		    malloc = wasmInstance.malloc;
 
+		    // console.log(wasmInstance)
+	    });
         it("Throws error when size is negative", ()=>{
             let malloc = wasmInstance.malloc;
             expect(malloc.bind(malloc, -2)).to.throw();
@@ -62,8 +62,10 @@ describe("Memory",()=>{
             expect(a).to.equal(heap_top_start+8);
         });
         it("Should have set the free bits to one in the correct memory positions",()=>{
+        	// 10 bytes, + 2 alignment + 8(last element, size)
             let array = malloc(10);
             expect(wasmInstance.get_mem_free_bit(array)).to.equal(1);
+	        expect((new Int32Array(wasmInstance.mem.buffer, array+20,1))[0]).to.equal(1);
         });
         it("Should have set the size to the correct payload for both aligned/unaligned accesses",()=>{
             let array = malloc(10);
@@ -88,21 +90,93 @@ describe("Memory",()=>{
             expect(malloc.bind(malloc,
                 5*PAGE_SIZE - HEAP_OFFSET - 15)).to.throw();//One more bit than the maximum allocated data
         });
+        it("Should set footer correctly",()=>{
+        	// Start + 8 for header + 12(10 for allocated, 6 for alignment / always 64 bit aligned), should give the footer
+	        let start = wasmInstance.malloc(10);
+	        let mem = new Int32Array(wasmInstance.mem.buffer,start+16,1);
+	        expect(mem[0]).to.equal(16);
+
+        });
 
     });
     describe("#create_array_1d",()=>{
+	    beforeEach(async ()=>{
+		    wasmInstance= await WebAssembly.instantiate(file, {"js":{"mem":WebAssembly.Memory({initial:1})}});
+		    wasmInstance = wasmInstance.instance.exports;
+		    memory = wasmInstance.mem;
+		    malloc = wasmInstance.malloc;
+
+		    // console.log(wasmInstance)
+	    });
+    	it("Should start array at correct section",()=>{
+			let heap_top = wasmInstance.get_heap_top();
+		    let arr = wasmInstance.create_array_1d(5,0);
+			// 16 for metadata, 8 for malloc header
+		    expect(arr).to.be.equal(heap_top+16+8);
+	    });
+    	it("Should correctly allocate elements of different types",()=>{
+    		// Allocate 10, int16 elements, 10*2 = 20 bytes + 4 for alignment+4. Type: 1->16bit
+		    // Checked by checking for the footer of the memory
+		   // let memBytes = new Int8Array(wasmInstance.mem.buffer);
+		    let arr4 = wasmInstance.create_array_1d(10,3); // 8 bit allocation
+		    expect((new Int32Array(wasmInstance.mem.buffer,arr4+20, 1))[0], 1).to.equal(1);
+		    let arr = wasmInstance.create_array_1d(10,2);// 16 bit allocation
+		    expect((new Int32Array(wasmInstance.mem.buffer,arr+28, 1))[0], 1).to.equal(1);
+		    let arr2 = wasmInstance.create_array_1d(10,1); // 32 bit allocation
+		    expect((new Int32Array(wasmInstance.mem.buffer,arr2+44, 1))[0], 1).to.equal(1);
+		    let arr3 = wasmInstance.create_array_1d(10,0);// 64 bit allocation
+		    expect((new Int32Array(wasmInstance.mem.buffer,arr3+84, 1))[0], 1).to.equal(1);
+	    });
+    	it("Should set meta data correctly",()=>{
+		    let ar = new Int8Array(wasmInstance.mem.buffer);
+		    let arr = wasmInstance.create_array_1d(5,0);
+		    expect([ar[arr-4],ar[arr-8],ar[arr-12],ar[arr-16]]).to.deep.equal([5,0,1,5]);
+	    });
+	    it("Should correctly set the type",()=>{
+		    let array = wasmInstance.create_array_1d(10,0);
+		    expect(wasmInstance.get_array_type(array)).to.be.equal(0);
+		    let array2 = wasmInstance.create_array_1d(20,0);
+		    expect(wasmInstance.get_array_type(array2)).to.be.equal(0);
+
+	    });
         it("Should create array and set the length should be set appropriately",()=>{
-            let array = wasmInstance.create_array_1d(10,0);
-            expect(wasmInstance.array_length(array)).to.be.equal(10);
+	        let array = wasmInstance.create_array_1d(10,0);
+	        expect(wasmInstance.array_length(array)).to.be.equal(10);
 	        let array2 = wasmInstance.create_array_1d(20,0);
 	        expect(wasmInstance.array_length(array2)).to.be.equal(20);
         });
-	    it("Should throw error if array length is negative",()=>{
-		    let array = wasmInstance.create_array_1d(-1,0);
-		    expect(wasmInstance.array_length(array)).to.be.equal(0);
+
+	    it("Should correctly give dimensions",()=>{
+		    let array = wasmInstance.create_array_1d(10,0);
+		    expect(wasmInstance.array_dim_num(array)).to.be.equal(1);
+		    let array2 = wasmInstance.create_array_1d(20,0);
+		    expect(wasmInstance.array_dim_num(array2)).to.be.equal(1);
 
 	    });
+	    it("Should throw error if array length is negative",()=>{
+		    let array = wasmInstance.create_array_1d(-1,0);
+		    expect(array).to.be.equal(0);
+	    });
     });
+	describe("#size_s",()=>{
+		let size_s;
+		beforeEach(async ()=>{
+			wasmInstance= await WebAssembly.instantiate(file, {"js":{"mem":WebAssembly.Memory({initial:1})}});
+			wasmInstance = wasmInstance.instance.exports;
+			memory = wasmInstance.mem;
+			size_s = wasmInstance.size_s;
 
+			// console.log(wasmInstance)
+		});
+		it("Should give the correct size for a given type",()=>{
+			expect(size_s(0)).to.equal(8);
+			expect(size_s(1)).to.equal(4);
+			expect(size_s(2)).to.equal(2);
+			expect(size_s(3)).to.equal(1);
+		});
+	});
+	describe("#create_array",()=>{
+
+	});
 
 });
