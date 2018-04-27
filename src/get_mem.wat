@@ -193,16 +193,26 @@
         (i32.load (i32.sub (get_local $array) (i32.const 4)))
         return
     )
+    (func $get_array_index_offset (param $arr i32)(param $index i32) (result i32)
+        get_local $arr
+        call $get_array_type
+
+        get_local $index
+        i32.const 1
+        i32.sub
+        i32.const 4
+        i32.mul
+        i32.add
+    )
     (export "create_array" (func $create_array))
     (func $create_array (param $dimensions_array i32) (param  $type i32) (result i32)
-        (local $type_size i32)(local $meta_size i32)(local $size_payload i32) (local $total_length i32)
+        (local $type_size i32)(local $meta_size i32)(local $size_payload i32) (local $total_length i32) (local $dim_temp i32)
         (local $array_dim i32)(local $array_length i32) (local $i i32) (local $pointer i32) (local $padding_flag i32)
         ;; @name create_array#memory  
         ;; @param $dimensions Array of Dimensions for array
         ;; @param $type Contains the type for the array, 
         ;;    i.e double | single | int8 | int16 | int32 | int64 | uint8 | uint16 | uint32 | uint64
         ;; @return returns pointer to start of payload
-        ;; @requires  all dimensions to be larger than 0, 
         ;; @description
         ;;      Create an array of zeroes with the given $dimensions array
         ;;      and type
@@ -216,19 +226,26 @@
         ;; Get total array size
         (set_local $array_length (i32.const 1))
         loop
-            block
+            block ;; array iteration
             (i32.ge_s (get_local $i)(get_local $array_dim) )
             br_if 0
+            ;; Get dimension size, if its empty, return null
+            (tee_local $dim_temp (i32.load (i32.add (get_local $dimensions_array) (i32.mul (i32.const 4)(get_local $i)))))
+            i32.eqz
+            if
+              i32.const 0
+              return  
+            end
             (set_local $array_length 
-                (i32.mul (get_local $array_length)
-                        (i32.load (i32.add (get_local $dimensions_array) (i32.mul (i32.const 4)(get_local $i))))))
-                (set_local $i (i32.add (get_local $i)(i32.const 1)))
+                (i32.mul (get_local $array_length) (get_local $dim_temp)))
+            (set_local $i (i32.add (get_local $i)(i32.const 1))) ;; Increase loop counter
             br 1
             end
         end
 
+
         ;; Calculate size of payload and allocate memory
-        (tee_local $total_length (i32.mul (get_local $type_size) (get_local $array_length))) ;; Add number of array elements
+        (tee_local $total_length (i32.mul (get_local $type_size) (get_local $array_length))) ;; Add number of bytes elements
         (i32.add (i32.const 12)(i32.mul (get_local $array_dim) (i32.const 4))) ;; get meta size
         (tee_local $meta_size)
         i32.add
@@ -242,8 +259,12 @@
         end
         get_local $size_payload
         call $malloc ;; Allocate bytes
-        set_local $pointer ;; set pointer
-        
+        tee_local $pointer ;; set pointer
+        i32.eqz
+        if
+            i32.const 0
+            return  
+        end
         ;; if padding increase pointer offset
         get_local $padding_flag
         if 
@@ -366,6 +387,7 @@
         ;; return pointer to start of payload        
         return
     )
+    
     ;;; HELPER FUNCTIONS
 
     (export "get_mem_free_bit" (func $get_free_bit_mem))
@@ -394,4 +416,15 @@
         i32.sub
         i32.load offset=0 align=2
     ) 
+    (export "load_mem" (func $load_mem))
+    (func $load_mem (param i32) (result i32)
+        get_local 0
+        i32.load 
+        return
+    )
+
+
+    ;; Array Operations
+   
+    ;; TEST 
 )

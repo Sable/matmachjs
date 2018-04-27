@@ -3,6 +3,8 @@ const gulp = require('gulp')
 const shell = require('gulp-shell')
 const express = require('express')
 const colors = require('colors');
+const mocha = require('gulp-mocha');
+const fs = require("fs");
 const PORT = 8000;
 gulp.task('compile', () => {
   return gulp.src('./src/*.wat', {read: false})
@@ -15,9 +17,19 @@ gulp.task('compile-browser', () => {
     .pipe(shell([
       './run_wasm_browser.sh <%= file.path %>'
     ]))
-  })
+});
+gulp.task("test",["compile"],()=>{
+    if(fs.existsSync("./bin/get_mem.wasm"))
+    {
+        return gulp.src('./test/node/*.test.js', {read: false})
+        .pipe(mocha());
+    }
+ });
+gulp.task("test-watch",()=>{
+  gulp.watch(['./test/**/*.test.js','./src/*.wat'],["test"])
+});
 gulp.task('default',()=>{
-    return gulp.watch('./src/*.wat',['compile'])
+    return gulp.watch(['./test/**/*.test.js','./src/*.wat'],['compile','test'])
 });
 gulp.task('browser',()=>{
     startServer(PORT,()=>

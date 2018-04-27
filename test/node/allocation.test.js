@@ -176,7 +176,49 @@ describe("Memory",()=>{
 		});
 	});
 	describe("#create_array",()=>{
+		let create_array;
+		
+	    beforeEach(async ()=>{
+		    wasmInstance= await WebAssembly.instantiate(file,libjs);
+		    wasmInstance = wasmInstance.instance.exports;
+		    memory = wasmInstance.mem;
+		    create_array = wasmInstance.create_array;
+	    });
+		it("Should test that dimensions are all positive numbers",()=>{
+			let arr = new Int8Array(memory.buffer);
+			let arr_1d = wasmInstance.create_array_1d(2,1);
+			// Two dimensions
+			arr[arr_1d] = 10;
+			arr[arr_1d+4] = 2;
+		
+			let arra_multi = wasmInstance.create_array(arr_1d, 0);
+			console.log(arra_multi);
 
+		});
+		it("Should test the heap top ends in the right position for many multidimensional entries ",()=>{
+
+		});
+		it("Should align initial array position for different dimension numbers",()=>{
+
+		});
+		it("Should set the dimensions of array correctly",()=>{
+
+		});
+		it("Should set the length of the array correctly for different dimensions",()=>{
+
+		});
+		it("Should set the type of the array correctly",()=>{
+
+		});
+		it("Should create multi-dimensional arrays of many sizes ",()=>{
+
+		});
+		it("Should align arrays correctly for both aligned/unaligned",()=>{
+
+		});
+		it("Should correctly allocate the right bytes for different arrays",()=>{
+
+		});
 	});
 
 });
