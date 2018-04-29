@@ -22,8 +22,9 @@ let wasmInstance;
 let memory;
 let malloc;
 const PAGE_SIZE = 65536;
-const HEAP_OFFSET = 64;
+let HEAP_OFFSET = 64;
 describe("Memory",()=>{
+	
 
     describe("#malloc",()=>{
 	    beforeEach(async ()=>{
@@ -31,13 +32,10 @@ describe("Memory",()=>{
 		    wasmInstance = wasmInstance.instance.exports;
 		    memory = wasmInstance.mem;
 		    malloc = wasmInstance.malloc;
-
-		    // console.log(wasmInstance)
 	    });
         it("Throws error when size is negative", ()=>{
-            let malloc = wasmInstance.malloc;
+			let malloc = wasmInstance.malloc;
             expect(malloc.bind(malloc, -2)).to.throw();
-            // expect(true).to.be(true)
         });
         it("Expect heap top to grow correctly when input is unaligned",()=>{
             // Total: 16(footer/header)+ 10(size) + 6(alignment) = 32
@@ -75,17 +73,21 @@ describe("Memory",()=>{
         });
 
         it("Should correctly grow memory if there is no more memory for page",async ()=>{
-            // Max Page Size: 5,
-	        wasmInstance= await WebAssembly.instantiate(file, {"js":{"mem":WebAssembly.Memory({initial:1, maximum:5})}});
+			// Max Page Size: 5,
+			libjs.js.mem = WebAssembly.Memory({initial:1, maximum:5});
+			wasmInstance= await WebAssembly.instantiate(file,libjs);
 	        wasmInstance = wasmInstance.instance.exports;
-	        malloc = wasmInstance.malloc;
+			HEAP_OFFSET =  wasmInstance.get_heap_top();			
+			malloc = wasmInstance.malloc;
             expect(malloc.bind(malloc,
                 5*PAGE_SIZE - HEAP_OFFSET - 16)).to.not.throw();//16 bits for header/footer of malloc.
         });
         it("Should throw correct unreachable error if it cannot grow memory anymore",async ()=>{
-            // Max Page Size: 5,
-	        wasmInstance= await WebAssembly.instantiate(file, {"js":{"mem":WebAssembly.Memory({initial:1, maximum:5})}});
-	        wasmInstance = wasmInstance.instance.exports;
+			// Max Page Size: 5,
+			libjs.js.mem = WebAssembly.Memory({initial:1, maximum:5});
+	        wasmInstance= await WebAssembly.instantiate(file, libjs);
+			wasmInstance = wasmInstance.instance.exports;
+			HEAP_OFFSET = wasmInstance.get_heap_top();
 	        malloc = wasmInstance.malloc;
             expect(malloc.bind(malloc,
                 5*PAGE_SIZE - HEAP_OFFSET - 15)).to.throw();//One more bit than the maximum allocated data
@@ -101,7 +103,8 @@ describe("Memory",()=>{
     });
     describe("#create_array_1d",()=>{
 	    beforeEach(async ()=>{
-		    wasmInstance= await WebAssembly.instantiate(file, {"js":{"mem":WebAssembly.Memory({initial:1})}});
+			libjs.js.mem = WebAssembly.Memory({initial:1});
+		    wasmInstance= await WebAssembly.instantiate(file,libjs);
 		    wasmInstance = wasmInstance.instance.exports;
 		    memory = wasmInstance.mem;
 		    malloc = wasmInstance.malloc;
@@ -111,8 +114,8 @@ describe("Memory",()=>{
     	it("Should start array at correct section",()=>{
 			let heap_top = wasmInstance.get_heap_top();
 		    let arr = wasmInstance.create_array_1d(5,0);
-			// 16 for metadata, 8 for malloc header
-		    expect(arr).to.be.equal(heap_top+16+8);
+			// 24 for metadata, 8 for malloc header
+		    expect(arr).to.be.equal(heap_top+24+8);
 	    });
     	it("Should correctly allocate elements of different types",()=>{
     		// Allocate 10, int16 elements, 10*2 = 20 bytes + 4 for alignment+4. Type: 1->16bit
@@ -129,8 +132,10 @@ describe("Memory",()=>{
 	    });
     	it("Should set meta data correctly",()=>{
 		    let ar = new Int8Array(wasmInstance.mem.buffer);
-		    let arr = wasmInstance.create_array_1d(5,0);
-		    expect([ar[arr-4],ar[arr-8],ar[arr-12],ar[arr-16]]).to.deep.equal([5,0,1,5]);
+		    let arr_pointer = wasmInstance.create_array_1d(5,0);
+			console.log(arr_pointer);
+		    console.log([ar[arr_pointer-4],ar[arr_pointer-8],ar[arr_pointer-12],ar[arr_pointer-16], ar[arr_pointer-20]]);
+		    expect([ar[arr_pointer-4],ar[arr_pointer-8],ar[arr_pointer-12],ar[arr_pointer-16], ar[arr_pointer-20]]).to.deep.equal([5,0,2,5,1]);
 	    });
 	    it("Should correctly set the type",()=>{
 		    let array = wasmInstance.create_array_1d(10,0);
@@ -148,20 +153,22 @@ describe("Memory",()=>{
 
 	    it("Should correctly give dimensions",()=>{
 		    let array = wasmInstance.create_array_1d(10,0);
-		    expect(wasmInstance.array_dim_num(array)).to.be.equal(1);
+		    expect(wasmInstance.array_dim_num(array)).to.be.equal(2);
 		    let array2 = wasmInstance.create_array_1d(20,0);
-		    expect(wasmInstance.array_dim_num(array2)).to.be.equal(1);
+		    expect(wasmInstance.array_dim_num(array2)).to.be.equal(2);
 
 	    });
-	    it("Should throw error if array length is negative",()=>{
-		    let array = wasmInstance.create_array_1d(-1,0);
-		    expect(array).to.be.equal(0);
+	    it("Should allocate metadata correctly even if array length is negative",()=>{
+			let array = wasmInstance.create_array_1d(-1,0);
+			expect(wasmInstance.array_dim_num(array)).to.be.equal(2);
+			expect(wasmInstance.array_length(array)).to.be.equal(0);
 	    });
     });
 	describe("#size_s",()=>{
 		let size_s;
 		beforeEach(async ()=>{
-			wasmInstance= await WebAssembly.instantiate(file, {"js":{"mem":WebAssembly.Memory({initial:1})}});
+			libjs.js.mem = WebAssembly.Memory({initial:1});
+			wasmInstance= await WebAssembly.instantiate(file,libjs );
 			wasmInstance = wasmInstance.instance.exports;
 			memory = wasmInstance.mem;
 			size_s = wasmInstance.size_s;
@@ -182,21 +189,27 @@ describe("Memory",()=>{
 		    wasmInstance= await WebAssembly.instantiate(file,libjs);
 		    wasmInstance = wasmInstance.instance.exports;
 		    memory = wasmInstance.mem;
-		    create_array = wasmInstance.create_array;
+			create_array = wasmInstance.create_array;
+			
 	    });
-		it("Should test that dimensions are all positive numbers",()=>{
-			let arr = new Int8Array(memory.buffer);
+		it("Should return 0 if dimensions are negative or 0",()=>{
 			let arr_1d = wasmInstance.create_array_1d(2,1);
+			let arr = new Int32Array(memory.buffer, arr_1d, 2);
 			// Two dimensions
-			arr[arr_1d] = 10;
-			arr[arr_1d+4] = 2;
-		
-			let arra_multi = wasmInstance.create_array(arr_1d, 0);
-			console.log(arra_multi);
-
+			arr[0] = -2;		
+			arr[1] = 10;
+			expect(wasmInstance.create_array(arr_1d,0)).to.equal(0);
+			// Two dimensions
+			arr[0] = 0;		
+			arr[1] = 10;
+			expect(wasmInstance.create_array(arr_1d,0)).to.equal(0);
+			// Two dimensions
+			arr[0] = 2;		
+			arr[1] = 10;
+			expect(wasmInstance.create_array(arr_1d,0)).to.not.equal(0);	
 		});
 		it("Should test the heap top ends in the right position for many multidimensional entries ",()=>{
-
+			
 		});
 		it("Should align initial array position for different dimension numbers",()=>{
 

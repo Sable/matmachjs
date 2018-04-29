@@ -29,7 +29,7 @@ gulp.task("test-watch",()=>{
   gulp.watch(['./test/**/*.test.js','./src/*.wat'],["test"])
 });
 gulp.task('default',()=>{
-    return gulp.watch(['./test/**/*.test.js','./src/*.wat'],['compile','test'])
+    return gulp.watch(['./src/*.wat'],['compile']);
 });
 gulp.task('browser',()=>{
     startServer(PORT,()=>
