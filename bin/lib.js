@@ -1,17 +1,16 @@
 let memory = WebAssembly.Memory({initial:10});
-const { TextDecoder } = require('util');
+const { TextDecoder,TextEncoder } = require('util');
 function printError(offset, length) {
     var bytes = new Uint8Array(module.exports.js.mem.buffer, offset, length);
     var string = new TextDecoder('utf8').decode(bytes);
     console.error(string);
 }
-module.exports = {
-    "js":{
-        "mem":memory,
-        "printError":printError,
-        "printWho":printWhos
-    }
-};
+
+function printString(offset, length) {
+    var bytes = new Uint8Array(module.exports.js.mem.buffer, offset, length);
+    var string = new TextDecoder('utf8').decode(bytes);
+    console.log(string);
+}
 function printWhos(size, bytes, class_type)
 {
     let name_class = '';
@@ -21,4 +20,39 @@ function printWhos(size, bytes, class_type)
             name_class = "double";
     }   
 }
-console.log("Error: Negative length is not allowed in this context\n".length);
+function printDouble(number)
+{
+    console.log(number);
+}
+
+module.exports = {
+    "js":{
+        "mem":memory,
+        "printError":printError,
+        "printWho":printWhos,
+        "printString":printString,
+        "printDouble":printDouble
+    }
+};
+
+String.prototype.hexEncode = function(){
+    var hex, i;
+
+    var result = "";
+    for (i=0; i<this.length; i++) {
+        hex = this.charCodeAt(i).toString(16);
+        result += ("000"+hex).slice(-4);
+    }
+
+    return result
+}
+String.prototype.hexDecode = function(){
+    var j;
+    var hexes = this.match(/.{1,4}/g) || [];
+    var back = "";
+    for(j = 0; j<hexes.length; j++) {
+        back += String.fromCharCode(parseInt(hexes[j], 16));
+    }
+
+    return back;
+}

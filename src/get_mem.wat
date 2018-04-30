@@ -1,7 +1,13 @@
 (module $memory
     ;; (import "js" "mem" (memory $mem 1))
     ;; (import "js" "printError" (func $printError (param i32 i32)(result i32)))
+    ;; (import "js" "printString" (func $printString (param i32 i32)(result i32)))
+    ;; (import "js" "printDouble" (func $printDouble (param i32)(result i32)))
+    ;; Dummy variables which will be commented out
+    (func $printString (param i32 i32)(result i32) i32.const 1)
     (func $printError (param i32 i32)(result i32) i32.const 1)
+    (func $printDouble (param i32)(result i32) i32.const 1)
+
     (memory $mem 1 5)
     (export "mem" (memory $mem))
 
@@ -11,12 +17,54 @@
     (global $FLAG_CHECK_SIZE_MEM (mut i32) (i32.const 1)) ;; Should be imported
     (start $init)
     (func $init 
-        ;; call $main
+        (local i32 i32 i32 i32 i32)
+        i32.const 100
+        set_local 0
+        i32.const 97
+        set_local 1
+        i32.const 118
+        set_local 2
+        i32.const 105
+        set_local 3
+        i32.const 100
+        set_local 4
+        get_global $HEAP_TOP
+        get_local 0
+        i32.store8 offset=0
+        get_global $HEAP_TOP
+        get_local 1
+        i32.store8 offset=1
+        get_global $HEAP_TOP
+        get_local 2
+        i32.store8 offset=2
+        get_global $HEAP_TOP
+        get_local 3
+        i32.store8 offset=3
+        get_global $HEAP_TOP
+        get_local 4 
+        i32.store8 offset=4
+        ;; get_global $HEAP_TOP
+        ;; i32.const 5
+        ;; call $printString
         ;; drop
+        ;; i32.const 136
+        ;; f64.const 20
+        ;; f64.store
+        i32.const 136
+        i32.load offset=0
+        call $printDouble
+        drop
+        get_global $HEAP_TOP
+        i32.const 8
+        i32.add
+        set_global $HEAP_TOP
+       
     )
 
-    (data $mem (i32.const 0) "Error: Out-of-memory, trying to allocate a larger memory than available\n")
-    (data  $mem (i32.const 73) "Error: Negative length is not allowed in this context\n")
+    (data $mem (i32.const 0) "Error: Out-of-memory, trying to allocate a larger memory than available\n\00\00\00\00\00\00\00\00Error: Negative length is not allowed in this context\n")
+    (data $mem (i32.const 136) "\40\f2\62\49")
+    ;; (data  $mem (i32.const 80) "Error: Negative length is not allowed in this context\n")
+    ;;
     (func $throwError (param $error i32)
         (local $offset i32)(local $length i32)
         (;
@@ -31,7 +79,7 @@
                (set_local $length (i32.const 72))
                br 1
             end
-               (set_local $offset (i32.const 73))
+               (set_local $offset (i32.const 80))
                (set_local $length (i32.const 54))
                br 0
         end 

@@ -41,3 +41,17 @@ When it comes to strings, the elements are pointers to the respective string ele
 When it comes to complex numbers the combination of comple/real and element byte size will give the real size of the array.
 
 
+# Handling Matlab literals
+
+In Matlab we can have literals in this fashion:
+
+``` 
+a = [1,2,3;4,5,6] % (2,3) double array
+b = 'dadsda' % (1,6) character array
+```
+This could be translated in two ways:
+We could do them at compile time or at execution time with an init function. 
+-   Compile time makes things a bit complicated because all of a sudden I need to be able to actually translate to bytes everything, so If I create a literal in matlab, which is normally a double array, I need to get the byte representation and initialize webassembly memory to it,  then I have to define the metadata of that array, so take a bunch of 32 bit integers which describe the array, and write all the metadata in terms of single bytes and handle the webassembly memory from it, incrementing the HEAP Pointer at compile time. 
+- At run-time, you would simply generate the code to generate the array/string/struct/cel array etc, this would obviously have a cost in execution but it would be a little simpler.
+
+It will likely be at compile time.
