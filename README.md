@@ -1,4 +1,8 @@
 # Matlab library for WebAssembly
+- [Matlab library for WebAssembly](#matlab-library-for-webassembly)
+  * [Memory Allocation](#memory-allocation)
+  * [Memory representation](#memory-representation)
+  * [Author](#author)
 
 The purpose of this repository is to create all the built-in functions necessary to support a McLab backend in WebAssembly. At the moment wasm does not support reference types and only allows one memory segment per module, this means before we have Matlab built-ins we must build a library for memory allocation, higher-level constructs among other things.
 
