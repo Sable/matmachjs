@@ -15,7 +15,7 @@
     (global $HEAP_START (mut i32) (i32.const 32768))
     (global $PAGE_SIZE i32 (i32.const 65536))
     (global $FLAG_CHECK_SIZE_MEM (mut i32) (i32.const 1)) ;; Should be imported
-    (start $init)
+    ;; (start $init)
     (func $init 
         (local i32 i32 i32 i32 i32)
         i32.const 100
@@ -62,7 +62,8 @@
     )
 
     (data $mem (i32.const 0) "Error: Out-of-memory, trying to allocate a larger memory than available\n\00\00\00\00\00\00\00\00Error: Negative length is not allowed in this context\n")
-    (data $mem (i32.const 136) "\40\f2\62\49")
+    (data $mem (i32.const 136) "Error: Index out-of-bound\n\00\00\00\00\00")
+    ;; (data $mem (i32.const 136) "\f3\e0\01\00")
     ;; (data  $mem (i32.const 80) "Error: Negative length is not allowed in this context\n")
     ;;
     (func $throwError (param $error i32)
@@ -70,17 +71,23 @@
         (;
             Errors:
                 0: "Allocating larger memory than expected"
+                1: "Negative length is not allowed in this context"
+                2: "Index out-of-bounds"
         ;)
-        block  block  block
+        block  block  block block
             get_local $error
-            br_table 0 1 2
+            br_table 0 1 2 3
             end
                (set_local $offset (i32.const 0))
                (set_local $length (i32.const 72))
-               br 1
+               br 2
             end
                (set_local $offset (i32.const 80))
                (set_local $length (i32.const 54))
+               br 1
+            end 
+              (set_local $offset (i32.const 136))
+              (set_local $length (i32.const 17)) 
                br 0
         end 
         get_local $offset
@@ -89,7 +96,6 @@
         drop
         unreachable
     )
-    (export "malloc" (func $malloc))
 
     (func $main 
         ;; For testing purposes
@@ -393,6 +399,7 @@
         i32.add
         return
     )
+    (export "malloc" (func $malloc))
     (func $malloc (param $size i32) (result i32) 
         (local $realsize i32) (local $end i32) (local $heap_offset i32)
         ;; @name malloc#memory  
@@ -514,8 +521,85 @@
         return
     )
 
-
     ;; Array Operations
-   
-    ;; TEST 
+    ;; TEMPLATES
+    ;;Array get
+    (export "get_element_array_f64" (func $get_element_array_f64))
+    (func $get_element_array_f64 (param $array i32) (param $index i32) (result f64)
+        ;; @name memory#get_element_array_f64
+        ;; @param $array i32, Pointer to array 
+        ;; @param $index i32, Index to be accessed
+        ;; @return f64, returns element in $index of array.
+        ;; @description
+        ;;      Gets the array "total" number of items, or length
+        
+     ;; Check that the access index is within bounds
+        get_local $index
+        get_local $array
+        call $array_length
+        i32.ge_s
+        if 
+           i32.const 2
+           call $throwError
+           unreachable 
+        end
+        ;; Check that the access $index is positive
+        get_local $index
+        i32.const 0
+        i32.le_s
+        if 
+           i32.const 1
+           call $throwError
+           unreachable 
+        end 
+        i32.const 8
+        get_local $index
+        i32.const 1
+        i32.sub
+        i32.mul
+        get_local $array
+        i32.add
+        f64.load offset=0 align=8
+        return
+    )
+    (export "set_element_array_f64" (func $set_element_array_f64))
+    (func $set_element_array_f64 (param $array i32) (param $index i32) (param $value f64) (result i32)
+        ;; Check that the access $index is positive
+        get_local $index
+        i32.const 0
+        i32.le_s
+        if 
+           i32.const 1
+           call $throwError
+           unreachable 
+        end
+        ;; Check that the access index is within bounds if not grow array
+        get_local $index
+        get_local $array
+        call $array_length
+        i32.ge_s
+        if 
+           ;; Grow array
+        end
+        
+
+       ;; decrease matlab index by one 
+        get_local $index
+        i32.const 1
+        i32.sub
+        set_local $index
+       
+        ;; access array
+        i32.const 8
+        get_local $index
+        i32.const 1
+        i32.sub
+        i32.mul
+        get_local $array
+        i32.add
+        get_local $value
+        f64.store offset=0 align=8 
+        i32.const 1
+        return
+    )
 )

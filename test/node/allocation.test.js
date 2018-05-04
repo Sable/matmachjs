@@ -133,9 +133,7 @@ describe("Memory",()=>{
     	it("Should set meta data correctly",()=>{
 		    let ar = new Int8Array(wasmInstance.mem.buffer);
 		    let arr_pointer = wasmInstance.create_array_1d(5,0);
-			console.log(arr_pointer);
-		    console.log([ar[arr_pointer-4],ar[arr_pointer-8],ar[arr_pointer-12],ar[arr_pointer-16], ar[arr_pointer-20]]);
-		    expect([ar[arr_pointer-4],ar[arr_pointer-8],ar[arr_pointer-12],ar[arr_pointer-16], ar[arr_pointer-20]]).to.deep.equal([5,0,2,5,1]);
+			expect([ar[arr_pointer-4],ar[arr_pointer-8],ar[arr_pointer-12],ar[arr_pointer-16], ar[arr_pointer-20]]).to.deep.equal([5,0,2,5,1]);
 	    });
 	    it("Should correctly set the type",()=>{
 		    let array = wasmInstance.create_array_1d(10,0);
@@ -223,10 +221,10 @@ describe("Memory",()=>{
 		it("Should set the type of the array correctly",()=>{
 
 		});
-		it("Should create multi-dimensional arrays of many sizes ",()=>{
+		it("Should create multi-dimensional arrays of many sizes correctly",()=>{
 
 		});
-		it("Should align arrays correctly for both aligned/unaligned",()=>{
+		it("Should align beginning of arrays correctly for both aligned/unaligned",()=>{
 
 		});
 		it("Should correctly allocate the right bytes for different arrays",()=>{

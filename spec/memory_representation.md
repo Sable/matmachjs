@@ -55,3 +55,19 @@ We could do them at compile time or at execution time with an init function.
 - At run-time, you would simply generate the code to generate the array/string/struct/cel array etc, this would obviously have a cost in execution but it would be a little simpler.
 
 It will likely be at compile time.
+# API so far
+
+## Printing
+- printString
+- printError
+- printDouble
+
+# Errors
+
+    throwError: (param $error i32))-> Trap
+
+Errors:
+- 0: "Allocating larger memory than expected"
+- 1: "Negative length is not allowed in this context"
+- 2: "Index out-of-bounds"
+
