@@ -1,7 +1,7 @@
 
-const gulp = require('gulp')
-const shell = require('gulp-shell')
-const express = require('express')
+const gulp = require('gulp');
+const shell = require('gulp-shell');
+const express = require('express');
 const colors = require('colors');
 const mocha = require('gulp-mocha');
 const fs = require("fs");
@@ -11,7 +11,8 @@ gulp.task('compile', () => {
   .pipe(shell([
     './run_wasm.sh <%= file.path %>'
   ]))
-})
+});
+
 gulp.task('compile-browser', () => {
     return gulp.src('./src/*.wat', {read: false})
     .pipe(shell([
@@ -40,9 +41,9 @@ gulp.task('browser',()=>{
 });
 
 function startServer(port, callback){
-  const app = express()
-  express.static.mime.types['wasm'] = 'application/wasm'
-  app.use(express.static('./test/browser/'))
+  const app = express();
+  express.static.mime.types['wasm'] = 'application/wasm';
+  app.use(express.static('./test/browser/'));
   app.get('/result',(req, res)=>{
       console.log(String(req.query.timing).bgGreen.white);
       res.send("Done!");

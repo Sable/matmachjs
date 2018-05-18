@@ -32,13 +32,15 @@ The following is the homogeneous array in memory representation, each of the box
 
 ![array memory][array_memory]
 
-[logo]: ./images/type_attribute.png "Type Attribute"
+[logo]: ./images/type_attri.png "Type Attribute"
 [array_memory]: ./images/array_memory.png "Array Memory"
 
 The padding (empty byte) is added depending on the number of dimensions.
 When the array created has 0 length or negative length, the metadata header is still created, this serves to maintain the matlab semantics with empty arrays.
 When it comes to strings, the elements are pointers to the respective string element for which the bytesize will be 4.
 When it comes to complex numbers the combination of comple/real and element byte size will give the real size of the array.
+Every high-level structure will have two memory segments. The headers, which will contain information about the variable, similar to the `whos` function in Matlab and the data segment, 
+which will contain actual data.
 
 
 # Handling Matlab literals

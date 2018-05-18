@@ -602,4 +602,13 @@
         i32.const 1
         return
     )
+
+    (export "set_header" (func $set_header))
+    (func $set_header (result i32)
+        (param $class i32)(param $simple_class i32)
+        (param $size i32)(param $complex i32)
+
+    
+    
+    )
 )
