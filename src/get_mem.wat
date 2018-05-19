@@ -7,7 +7,7 @@
     (func $printString (param i32 i32)(result i32) i32.const 1)
     (func $printError (param i32 i32)(result i32) i32.const 1)
     (func $printDouble (param i32)(result i32) i32.const 1)
-
+    (global $ASSERT_HEADER_FLAG i32 (i32.const 1))
     (memory $mem 1 5)
     (export "mem" (memory $mem))
 
@@ -62,8 +62,11 @@
     )
 
     (data $mem (i32.const 0) "Error: Out-of-memory, trying to allocate a larger memory than available\n\00\00\00\00\00\00\00\00Error: Negative length is not allowed in this context\n")
-    (data $mem (i32.const 136) "Error: Index out-of-bound\n\00\00\00\00\00")
+    (data $mem (i32.const 136) "Error: Index out-of-bound\n\00\00\00\00\00\00")
+    (data $mem (i32.const 158) "Error: class attribute invalid at allocation\n\00\00\00\00\00")
+
     ;; (data $mem (i32.const 136) "\f3\e0\01\00")
+
     ;; (data  $mem (i32.const 80) "Error: Negative length is not allowed in this context\n")
     ;;
     (func $throwError (param $error i32)
@@ -74,21 +77,25 @@
                 1: "Negative length is not allowed in this context"
                 2: "Index out-of-bounds"
         ;)
-        block  block  block block
+        block  block  block block block
             get_local $error
-            br_table 0 1 2 3
+            br_table 0 1 2 3 4
             end
                (set_local $offset (i32.const 0))
                (set_local $length (i32.const 72))
-               br 2
+               br 3
             end
                (set_local $offset (i32.const 80))
                (set_local $length (i32.const 54))
-               br 1
+               br 2
             end 
               (set_local $offset (i32.const 136))
               (set_local $length (i32.const 17)) 
-               br 0
+               br 1
+            end
+                (set_local $offset (i32.const 136))
+                (set_local $length (i32.const 44)) 
+                br 0
         end 
         get_local $offset
         get_local $length
@@ -603,12 +610,36 @@
         return
     )
 
-    (export "set_header" (func $set_header))
-    (func $set_header (result i32)
+    (export "set_type_attribute" (func $set_type_attribute))
+    (func $set_type_attribute
+        (param $address i32)
         (param $class i32)(param $simple_class i32)
         (param $size i32)(param $complex i32)
-
-    
-    
+        get_local $address
+        get_local $class
+        i32.store offset=0 align=1
+        get_local $address
+        get_local $simple_class
+        i32.store offset=1 align=1
+        get_local $address
+        get_local $size
+        i32.store offset=2 align=1
+        get_local $address
+        get_local $complex
+        i32.store offset=3 align=1
+    )
+    (func $check_class (param i32)
+        i32.const 0
+        get_local 0
+        i32.gt_s 
+        i32.const 4
+        get_local 0
+        i32.lt_s
+        i32.or
+        if
+          i32.const 3
+          call $throwError
+          unreachable 
+        end
     )
 )

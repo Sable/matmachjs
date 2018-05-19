@@ -10,7 +10,7 @@ The purpose of this repository is to create all the built-in functions necessary
 This will be a simple malloc implementation in WebAssembly, where we use the memory segment as the array of bytes.
 - Spec: [spec](./spec/memory_allocation.md)
 ## Memory representation
-, it is necessary to manage that memory segment and implement higher level constructs such as arrays, structs, cell-arrays, and strings. 
+It is necessary to manage that memory segment and implement higher level constructs such as arrays, structs, cell-arrays, and strings. 
 - Spec: [spec](./spec/memory_representation.md)
 
 

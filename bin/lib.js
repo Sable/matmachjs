@@ -31,7 +31,8 @@ module.exports = {
         "printError":printError,
         "printWho":printWhos,
         "printString":printString,
-        "printDouble":printDouble
+        "printDouble":printDouble,
+        "assert_header":1
     }
 };
 
