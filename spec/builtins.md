@@ -20,8 +20,8 @@
 - [ ] ones
 - [ ] eye
 - [ ] colon(start,stop,step) 
+- [ ] clone (Also an allocator)
 # Array properties
-- [ ] clone
 - [ ] is_scalar
 - [ ] numel
 - [ ] size
@@ -77,9 +77,6 @@
 # Matrix concatanate 
 - [ ] horzcat (Concatenate matrices horizontally)
 - [ ] vertcat
-
-
-
 # Constants
 - [ ] e
 - [ ] PI
