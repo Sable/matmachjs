@@ -28,8 +28,12 @@ In memory this type lattice is going to be represented by.
 ![alt text][logo]
 
 The following is the homogeneous array in memory representation, each of the box represents a 32 bit number except for the Type Attribute which is 64bits. Although I will not support complex numbers, I will leave the space as is in case of future work done in this area.
+The only point of discussion here was how to handle 
+complex arrays, however with complex arrays both the
+real and imaginary byte size is the same.
 
-
+The metadata will also be allocated at a different place
+in memory.
 ![array memory][array_memory]
 
 [logo]: ./images/type_attri.png "Type Attribute"
@@ -42,7 +46,7 @@ When it comes to complex numbers the combination of comple/real and element byte
 Every high-level structure will have two memory segments. The headers, which will contain information about the variable, similar to the `whos` function in Matlab and the data segment, 
 which will contain actual data.
 
-
+We will also 
 # Handling Matlab literals
 
 In Matlab we can have literals in this fashion:

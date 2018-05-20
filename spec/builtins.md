@@ -9,9 +9,15 @@
 
 # Matrix Allocators
 - [ ] set_header
+- [x] set_type_attribute
 - [ ] create_array_1D
 - [ ] create_array_ND
-- [ ] new_from_array
+- [ ] clone_from_array 
+## Testing & Debugging functions
+- [ ] get_class
+- [ ] get_simple_class
+- [ ] get_elem_size
+- [ ] is_real
 # Matrix Constructors
 - [ ] rand
 - [ ] randn

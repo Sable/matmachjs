@@ -33,6 +33,9 @@ module.exports = {
         "printString":printString,
         "printDouble":printDouble,
         "assert_header":1
+    },
+    "test":{
+        "assert":assert
     }
 };
 
@@ -56,4 +59,18 @@ String.prototype.hexDecode = function(){
     }
 
     return back;
+}
+
+/////////////// ASSERT ////////////////////
+
+function assert(condition, error_number) {
+    let errors = {
+        "0":"Invalid Assertion: mclass number is incorrect in function $get_mclass",
+        "1":"Invalid Assertion: simpleclass number is incorrect in function $get_simple_class",
+        "2":"Invalid Assertion: elem_byte_size number is incorrect in function $get_elem_byte_size"
+    };
+    if(condition)
+    {
+        throw new Error(errors[error_number]);
+    }
 }

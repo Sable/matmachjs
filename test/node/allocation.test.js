@@ -37,35 +37,37 @@ describe("Memory",()=>{
             expect(malloc.bind(malloc, -2)).to.throw();
         });
         it("Expect heap top to grow correctly when input is unaligned",()=>{
-            // Total: 16(footer/header)+ 10(size) + 6(alignment) = 32
+            // Total: 8(footer/header)+ 10(size) + 6(alignment) = 24
             let heap_top_start = wasmInstance.get_heap_top();
             let a = malloc(10);
             let heap_top_end = wasmInstance.get_heap_top();
-            expect(a).to.equal(heap_top_start+8);
-            expect(heap_top_end-heap_top_start).to.equal(32);
+            expect(a).to.equal(heap_top_start+4);
+            expect(heap_top_end-heap_top_start).to.equal(24);
         });
         it("Expect heap top to grow correctly when input is aligned",()=>{
-            // Total: 16(footer/header)+ 8(size) + 0(alignment) = 24
+            // Total: 8(footer/header)+ 8(size) + 0(alignment) = 24
+            let header_plus_footer = 8;
             let heap_top_start = wasmInstance.get_heap_top();
             let a = malloc(8);
             let heap_top_end = wasmInstance.get_heap_top();
-            expect(a).to.equal(heap_top_start+8);
-            expect(heap_top_end-heap_top_start).to.equal(24);
+            expect(a).to.equal(heap_top_start+4);
+            expect(heap_top_end-heap_top_start).to.equal(16);
         });
         it("Should return the correct position for the pointer",()=>{
-            // Total: 16(footer/header)+ 8(size) + 0(alignment) = 24
+            // Total: 8(footer/header)+ 8(size) + 0(alignment) = 24
             let heap_top_start = wasmInstance.get_heap_top();
             let a = malloc(8);
-            expect(a).to.equal(heap_top_start+8);
+            expect(a).to.equal(heap_top_start+4);
         });
         it("Should have set the free bits to one in the correct memory positions",()=>{
-        	// 10 bytes, + 2 alignment + 8(last element, size)
+        	// 10 bytes, + 6 alignment + 4(last element, size)
             let array = malloc(10);
             expect(wasmInstance.get_mem_free_bit(array)).to.equal(1);
-	        expect((new Int32Array(wasmInstance.mem.buffer, array+20,1))[0]).to.equal(1);
+	        expect(wasmInstance.get_mem_free_bit_footer(array)).to.equal(1);
         });
-        it("Should have set the size to the correct payload for both aligned/unaligned accesses",()=>{
-            let array = malloc(10);
+        it(`Should have set the size to the correct payload for both 
+            aligned/unaligned accesses`,()=>{
+            let array = malloc(10); // Should align to 16
             expect(wasmInstance.get_mem_payload_size(array)).to.equal(16);
             let array2 = malloc(8);
             expect(wasmInstance.get_mem_payload_size(array2)).to.equal(8);
@@ -95,7 +97,7 @@ describe("Memory",()=>{
         	// Start + 8 for header + 12(10 for allocated, 6 for alignment / always 64 bit aligned), should give the footer
 	        let start = wasmInstance.malloc(10);
 	        let mem = new Int32Array(wasmInstance.mem.buffer,start+16,1);
-	        expect(mem[0]).to.equal(16);
+	        expect(mem[0]-1).to.equal(16); // Minus one from free-bit
 
         });
 
