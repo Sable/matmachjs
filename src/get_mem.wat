@@ -151,10 +151,9 @@
         (return (get_local $type_size))
     )
     (export "create_array_1d" (func $create_array_1d))
-    (func $create_array_1d (param $n i32)(param $simple_class i32)
-        (param $type_size i32) (result i32)
+    (func $create_array_1d (param $n i32) (param  $type i32) (result i32)
         (local $sizepayload i32) (local $pointer i32) (local $meta_size i32)(local $total_length i32)(local $array_ptr i32)
-        (local $realsize i32)
+        (local $type_size i32) (local $realsize i32)
         ;; @name create_array_1d#memory  
         ;; @param $n i32, length of one d array
         ;; @param $type i32,  Contains the type for the array, 
@@ -172,7 +171,9 @@
             set_local $n
         end
        
-       
+        ;; Get the size of bytes for type
+        (set_local $type_size (call $size_s (get_local $type)))
+  
         ;; Calculate size of payload and allocate memory
         (tee_local $total_length (i32.mul (get_local $type_size) (get_local $n) )) ;; Add number of array elements
         i32.const 24 ;; 4 for total size, 4 for num dimensions,
@@ -197,11 +198,8 @@
         i32.store offset=12 align=2
         ;; Store type
         get_local $pointer
-        i32.const 1
-        get_local $type_size
-        get_local $simple_class
-        get_local $complex
-        call  $set_type_attribute
+        get_local $type
+        i32.store offset=16 align=2
         ;; Store array length
         get_local $pointer
         get_local $n
@@ -664,10 +662,8 @@
     (export "set_type_attribute" (func $set_type_attribute))
     (func $set_type_attribute
         (param $address i32)
-        (param $size i32)
-        (param $class i32)
-        (param $simple_class i32)
-        (param $complex i32)
+        (param $class i32)(param $simple_class i32)
+        (param $size i32)(param $complex i32)
         get_local $address
         get_local $class
         i32.store offset=0 align=1
@@ -678,7 +674,7 @@
         get_local $size
         i32.store offset=2 align=1
         get_local $address
-        get_local $size
+        get_local $complex
         i32.store offset=3 align=1
     )
     ;; Test & Debug
