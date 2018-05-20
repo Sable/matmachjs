@@ -31,7 +31,10 @@ describe("Memory",()=>{
 		    wasmInstance = wasmInstance.instance.exports;
 		    memory = wasmInstance.mem;
 		    malloc = wasmInstance.malloc;
-	    });
+        });
+        it("Should always allocate and leave the next free segment with 4 byte alignment",()=>{
+
+        });
         it("Throws error when size is negative", ()=>{
 			let malloc = wasmInstance.malloc;
             expect(malloc.bind(malloc, -2)).to.throw();

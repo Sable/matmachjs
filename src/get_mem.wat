@@ -14,8 +14,8 @@
     (memory $mem 1 5)
     (export "mem" (memory $mem))
 
-    (global $HEAP_TOP (mut i32) (i32.const 32768))
-    (global $HEAP_START (mut i32) (i32.const 32768))
+    (global $HEAP_TOP (mut i32) (i32.const 32764)) ;; For off from alignment due to the footer/header size of four
+    (global $HEAP_START (mut i32) (i32.const 32764))
     (global $PAGE_SIZE i32 (i32.const 65536))
     (global $FLAG_CHECK_SIZE_MEM (mut i32) (i32.const 1)) ;; Should be imported
     ;; (start $init)
@@ -150,6 +150,50 @@
         end
         (return (get_local $type_size))
     )
+    (export "create_array_1D" (func $create_array_1d))
+    (func $create_array_1D 
+        (param $n i32)(param $type_size i32)(param $simple_class i32)(param $complex i32) 
+        (param $size_header i32)(param $size_array i32)(param $header_pointer i32)(param $array_pointer i32)(result i32)
+        (set_local $size_array (i32.mul (get_local $type_size)(get_local $n)))
+        ;; 4 for type attribute, 4 for number of elements, 4 for number of dimensions, 8 for 2 dimensions, 4 for array pointer
+        (set_local $size_header (i32.const 24)) 
+
+        ;; Allocate header memory
+        get_local $size_header
+        call $malloc
+        tee_local $header_pointer
+
+        ;; Allocate array memory
+        get_local $size_array
+        call $malloc
+        i32.store offset=0 align=4 ;; Store pointer to array
+        
+        ;; Set type attribute
+        get_local $header_pointer
+        i32.const 4
+        i32.add
+        i32.const 1
+        get_local $type_size
+        get_local $simple_class
+        get_local $complex
+        call $set_type_attribute
+        ;; call set size of array
+        get_local $header_pointer
+        get_local $size_array
+        i32.store offset=8 align=4 ;; Store pointer to array
+        get_local $header_pointer
+        i32.const 2
+        i32.store offset=12 align=4
+        get_local $header_pointer
+        i32.const 1
+        i32.store offset=16 align=4
+        get_local $header_pointer
+        get_local $n
+        i32.store offset=20 align=4
+        get_local $header_pointer
+        return
+    )
+    
     (export "create_array_1d" (func $create_array_1d))
     (func $create_array_1d (param $n i32) (param  $type i32) (result i32)
         (local $sizepayload i32) (local $pointer i32) (local $meta_size i32)(local $total_length i32)(local $array_ptr i32)
@@ -419,7 +463,7 @@
         ;;      Allocate a given payload based on provided size plus, alignment bits
         ;;      Save size, flag at beginning and end occupying 16bytes
         ;; TODO: Flag import, and memory import
-
+        ;; TODO: Check the alignment with the new footer/header
         ;; Check for a positive size
         (i32.le_s (get_local $size) (i32.const 0))
         if 
