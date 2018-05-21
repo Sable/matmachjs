@@ -46,7 +46,28 @@ When it comes to complex numbers the combination of comple/real and element byte
 Every high-level structure will have two memory segments. The headers, which will contain information about the variable, similar to the `whos` function in Matlab and the data segment, 
 which will contain actual data.
 
-We will also 
+```
+simple_class= {
+    0:'double',
+    1:'single',
+    2:'int16',
+    3:'int8',
+    4:'int64',
+    5:'int32',
+    6:'uint16',
+    7:'uint8',
+    8:'uint64',
+    9:'uint32',
+    11:'char',
+    13:'string'
+    15:'logical'
+};
+```
+There are two reasons to separate the array header and data.
+First because is because of dynamic array nature in Matlab, which means
+when we try to set an element larger than the array itself, the array
+size doubles, under this separate header scenario we would only need to
+allocate for the new data as opposed to the header again.
 # Handling Matlab literals
 
 In Matlab we can have literals in this fashion:

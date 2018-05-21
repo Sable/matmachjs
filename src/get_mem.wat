@@ -150,11 +150,57 @@
         end
         (return (get_local $type_size))
     )
+    (func $get_array_start (param $arr_header)(result i32)
+        get_local $arr_header
+        i32.load offset=0 align=4
+        return
+    )
+    (export "create_array_ND" (func $create_array_ND))
+    (func $create_array_ND (param $dim_array i32) (param $simple_class i32)(param $complex i32) (result i32)
+        (local $type_size i32) (local $dim_number i32)(local $array_length i32)
+        (local $i i32) (local $dim_array_ptr i32)
+        ;; Get the size of bytes for type
+        (set_local $type_size (call $get_simple_class_byte_size (get_local $simple_class)))
+        (set_local $dim_number (i32.load offset=8 align=4 (get_local $dim_array)))
+        ;; Get total array size
+        (set_local $array_length (i32.const 1))
+
+        (set_local $dim_number (get_local get_array_start))
+        loop
+            block ;; array iteration
+            (i32.ge_s (get_local $i)(get_local $array_dim) )
+            br_if 0
+            ;; Get dimension size, if its empty or less than 0, return null
+            
+            (tee_local $dim_temp (i32.load (i32.add (get_local $dimensions_array) (i32.mul (i32.const 4)(get_local $i)))))
+            i32.const 0
+            i32.le_s
+            if
+              i32.const 0
+              return  
+            end
+            (set_local $array_length 
+                (i32.mul (get_local $array_length) (get_local $dim_temp)))
+            (set_local $i (i32.add (get_local $i)(i32.const 1))) ;; Increase loop counter
+            br 1
+            end
+        end
+        i32.const 3
+    )
+
     (export "create_array_1D" (func $create_array_1d))
     (func $create_array_1D 
-        (param $n i32)(param $type_size i32)(param $simple_class i32)(param $complex i32) 
-        (param $size_header i32)(param $size_array i32)(param $header_pointer i32)(param $array_pointer i32)(result i32)
-        (set_local $size_array (i32.mul (get_local $type_size)(get_local $n)))
+        (param $n i32)(param $simple_class i32)(param $complex i32) (result i32)
+        (local $size_header i32)(local $size_array i32)
+        (local $header_pointer i32)(local $array_pointer i32)
+        (;
+        
+        
+        ;)
+        (set_local $size_array 
+            (i32.mul 
+                (call $get_simple_class_byte_size (get_local $simple_class))
+                (get_local $n)))
         ;; 4 for type attribute, 4 for number of elements, 4 for number of dimensions, 8 for 2 dimensions, 4 for array pointer
         (set_local $size_header (i32.const 24)) 
 
@@ -172,28 +218,38 @@
         get_local $header_pointer
         i32.const 4
         i32.add
-        i32.const 1
-        get_local $type_size
+        ;; Set type attribute call
+        i32.const 0
         get_local $simple_class
         get_local $complex
         call $set_type_attribute
+
         ;; call set size of array
         get_local $header_pointer
         get_local $size_array
         i32.store offset=8 align=4 ;; Store pointer to array
+        ;; Set number of dimensions
         get_local $header_pointer
         i32.const 2
-        i32.store offset=12 align=4
-        get_local $header_pointer
-        i32.const 1
-        i32.store offset=16 align=4
+        i32.store offset=12 align=4 ;; Store 
+        ;; Set first dimension
         get_local $header_pointer
         get_local $n
         i32.store offset=20 align=4
+        ;; Set second dimension
+        get_local $header_pointer
+        i32.const 1
+        i32.store offset=16 align=4
+        ;; Return header pointer
         get_local $header_pointer
         return
     )
-    
+
+
+
+
+
+
     (export "create_array_1d" (func $create_array_1d))
     (func $create_array_1d (param $n i32) (param  $type i32) (result i32)
         (local $sizepayload i32) (local $pointer i32) (local $meta_size i32)(local $total_length i32)(local $array_ptr i32)
@@ -471,9 +527,6 @@
             call $throwError
         end
 
-   
-        
-
         ;; Add bytes to make allocation mod 64
         (tee_local $realsize (i32.rem_s (get_local $size) (i32.const 8)))
         if 
@@ -517,7 +570,7 @@
         (get_global $HEAP_TOP)
         (get_local $realsize)
         i32.const 1 ;; Free-bit
-        i32.xor ;; Free-bit
+        i32.add ;; Free-bit
         (i32.store offset=0 align=4)
 
         ;;Add to end of block as well
@@ -527,9 +580,9 @@
         (get_local $realsize) 
         i32.add ;; add size of payload  
         (tee_local $end) ;; Set end
-        (get_local $realsize) ;;Add 16 to allocated size to account for header and footer
+        (get_local $realsize) ;;Add 8 to allocated size to account for header and footer
         i32.const 1 ;; Free-bit
-        i32.xor ;; Free-bit
+        i32.add ;; Free-bit
         (i32.store offset=0 align=4)
         ;; prepare return pointer value
         (i32.add (get_global $HEAP_TOP) (i32.const 4)) 
@@ -702,12 +755,14 @@
          Matrix Allocators  
     
     ;)
+    
 
     (export "set_type_attribute" (func $set_type_attribute))
     (func $set_type_attribute
         (param $address i32)
-        (param $class i32)(param $simple_class i32)
-        (param $size i32)(param $complex i32)
+        (param $class i32)
+        (param $simple_class i32)
+        (param $complex i32)
         get_local $address
         get_local $class
         i32.store offset=0 align=1
@@ -715,11 +770,33 @@
         get_local $simple_class
         i32.store offset=1 align=1
         get_local $address
-        get_local $size
-        i32.store offset=2 align=1
-        get_local $address
         get_local $complex
-        i32.store offset=3 align=1
+        i32.store offset=2 align=1
+    )
+    ;; Helpers
+    (export "get_simple_class_byte_size" (func $get_simple_class_byte_size))
+    (func $get_simple_class_byte_size (param $simple_class i32) (result i32)
+        block  block block block
+            block
+                get_local 0
+                i32.const 4
+                i32.rem_s
+                br_table 0 1 2 3
+            end
+                i32.const 8
+                return
+            end
+                i32.const 4
+                return
+            end
+                i32.const 2
+                return
+            end
+                i32.const 1
+                return
+        end        
+        i32.const -1
+        return
     )
     ;; Test & Debug
     (export "get_mclass" (func $get_mclass))

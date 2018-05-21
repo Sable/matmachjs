@@ -21,7 +21,7 @@ let wasmInstance;
 let memory;
 let malloc;
 const PAGE_SIZE = 65536;
-let HEAP_OFFSET = 64;
+let HEAP_OFFSET = 32764;
 describe("Memory",()=>{
 	
 	// TODO: Modify 
@@ -82,9 +82,10 @@ describe("Memory",()=>{
 			wasmInstance= await WebAssembly.instantiate(file,libjs);
 	        wasmInstance = wasmInstance.instance.exports;
 			HEAP_OFFSET =  wasmInstance.get_heap_top();			
-			malloc = wasmInstance.malloc;
+            malloc = wasmInstance.malloc;
+            console.log(5*PAGE_SIZE - HEAP_OFFSET );
             expect(malloc.bind(malloc,
-                5*PAGE_SIZE - HEAP_OFFSET - 16)).to.not.throw();//16 bits for header/footer of malloc.
+                5*PAGE_SIZE - HEAP_OFFSET - 20)).to.not.throw();//16 bits for header/footer of malloc.
         });
         it("Should throw correct unreachable error if it cannot grow memory anymore",async ()=>{
 			// Max Page Size: 5,
@@ -94,7 +95,7 @@ describe("Memory",()=>{
 			HEAP_OFFSET = wasmInstance.get_heap_top();
 	        malloc = wasmInstance.malloc;
             expect(malloc.bind(malloc,
-                5*PAGE_SIZE - HEAP_OFFSET - 15)).to.throw();//One more bit than the maximum allocated data
+                5*PAGE_SIZE - HEAP_OFFSET - 19)).to.throw();//One more bit than the maximum allocated data
         });
         it("Should set footer correctly",()=>{
         	// Start + 8 for header + 12(10 for allocated, 6 for alignment / always 64 bit aligned), should give the footer

@@ -8,7 +8,6 @@
 - [ ] Free
 
 # Matrix Allocators
-- [ ] set_header
 - [x] set_type_attribute
 - [ ] create_array_1D
 - [ ] create_array_ND
