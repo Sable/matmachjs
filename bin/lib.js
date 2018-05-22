@@ -74,3 +74,4 @@ function assert(condition, error_number) {
         throw new Error(errors[error_number]);
     }
 }
+// console.log("Error: Subscript indices must either be real positive integers or logicals".length);

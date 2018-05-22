@@ -9,8 +9,8 @@
 
 # Matrix Allocators
 - [x] set_type_attribute
-- [ ] create_array_1D
-- [ ] create_array_ND
+- [x] create_array_1D
+- [x] create_array_ND
 - [ ] clone_from_array 
 ## Testing & Debugging functions
 - [ ] get_class

@@ -25,7 +25,7 @@ const PAGE_SIZE = 65536;
 let HEAP_OFFSET = 64; 
 describe('Allocate Matlab Arrays', () => {
     describe("#set_type_attribute",()=>{
-        
+
     });
     describe("#set_header",()=>{
         beforeEach(async ()=>{
@@ -120,14 +120,16 @@ describe('Allocate Matlab Arrays', () => {
     });
     describe("#create_array",()=>{
         let create_array;
-        
         beforeEach(async ()=>{
             wasmInstance= await WebAssembly.instantiate(file,libjs);
             wasmInstance = wasmInstance.instance.exports;
             memory = wasmInstance.mem;
             create_array = wasmInstance.create_array;
+            create_array_1D = wasmInstance.create_array_1D;
+            get_array_start = wasmInstance.get_array_start;
             
         });
+
         it("Should return 0 if dimensions are negative or 0",()=>{
             let arr_1d = wasmInstance.create_array_1d(2,1);
             let arr = new Int32Array(memory.buffer, arr_1d, 2);
