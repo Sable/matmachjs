@@ -8,15 +8,19 @@
 - [ ] Free
 
 # Matrix Allocators
-- [x] set_type_attribute
+
 - [x] create_array_1D
 - [x] create_array_ND
-- [ ] clone_from_array 
+## Helpers
+- [x] set_type_attribute
 ## Testing & Debugging functions
-- [ ] get_class
-- [ ] get_simple_class
-- [ ] get_elem_size
-- [ ] is_real
+- [x] get_class
+- [x] get_simple_class
+- [x] get_elem_size
+- [x] is_real
+## Array get and set
+- [ ] array_get (get from indices)
+- [ ] array_set ()
 # Matrix Constructors
 - [ ] rand
 - [ ] randn

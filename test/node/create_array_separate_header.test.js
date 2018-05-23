@@ -9,7 +9,6 @@ const sinon = require("sinon");
 const sinonChai = require("sinon-chai");
 const fs = require("fs");
 const path = require("path");
-// TODO: Create import object into wasm, separate both wasm-interp,wasm-node etc.
 chai.use(sinonChai);
 
 
@@ -139,56 +138,129 @@ describe('Allocate Matlab Arrays', () => {
             expect(get_simple_class_byte_size(15)).to.equal(1);//logical
         });
     });
+    describe("#get_elem_array_index_NS", ()=> {
+        let create_array;
+        let create_array_1D;
+        let get_array_start;
+        beforeEach(async ()=>{
+            wasmInstance= await WebAssembly.instantiate(file,libjs);
+            wasmInstance = wasmInstance.instance.exports;
+            memory = wasmInstance.mem;
+            create_array = wasmInstance.create_array_ND;
+            create_array_1D = wasmInstance.create_array_1D;
+            get_array_start = wasmInstance.get_array_start;
+
+            
+        });
+        it("should get the right element for different size arrays", ()=>{
+            
+        });
+        it("should throw error when index is less than 1", () => {
+
+        });
+        it('should throw error when index is larger than the array length', () => {
+            
+        });
+    });
     describe("#set_elem_array_index_NS", () => {
-	    let create_array;
-	    let create_array_ND;
+
+        let memory;
+        let arr_1d;
+        let arr_header_nd;
+        let arr_data_nd;
+        let head_nd;
+        let data_nd;
+        let printErrorSpy;
 	    beforeEach(async ()=>{
 		    wasmInstance= await WebAssembly.instantiate(file,libjs);
 		    wasmInstance = wasmInstance.instance.exports;
 		    memory = wasmInstance.mem;
-		    create_array = wasmInstance.create_array;
-		    create_array_ND = wasmInstance.create_array_ND;
+            arr_1d = wasmInstance.create_array_1D(4,5);
+		    wasmInstance.set_elem_array_index_i32(arr_1d, 1,30);
+		    wasmInstance.set_elem_array_index_i32(arr_1d, 2,2);
+		    wasmInstance.set_elem_array_index_i32(arr_1d, 3,4);
+            wasmInstance.set_elem_array_index_i32(arr_1d, 4,6);
+            head_nd = wasmInstance.create_array_ND(arr_1d,5/*int16*/);
+            data_nd = wasmInstance.get_array_start(head_nd);
+            printErrorSpy = sinon.spy(libjs.js, 'printError');
+		    arr_data_nd = new Int32Array(memory.buffer, data_nd, 4);
 	    });
 	    it("Should reallocate array when index is more than length",() =>{
-
+           // TODO(dherre3): Implement this!
 	    });
 
-	    it("Should throw an error if value passed does not match what is expected",() =>{
-
-	    });
 	    it("Should throw an error when index is less than 1",() =>{
-
-	    });
-	    it("Should update pointer in header of array when index is more than length",() =>{
-
-	    });
-
-	    it("Should correctly set value for all the various simple classes",() =>{
-
-	    });
+            try{
+                wasmInstance.set_elem_array_index_i32(head_nd,1,232);
+                wasmInstance.set_elem_array_index_i32(head_nd,-1,232);
+                expect("I did not throw error").to.equal("I threw error");
+            }catch( err ) {
+                expect(err.message).to.equal("Subscript indices must either be real positive integers or logicals");
+            } 
+           
+            
+        });
+        
+	    it("Should correctly set value for i32",() =>{
+            wasmInstance.set_elem_array_index_i32(head_nd, 1,2);
+            wasmInstance.set_elem_array_index_i32(head_nd, 2,4);
+            wasmInstance.set_elem_array_index_i32(head_nd, 3,123);
+            wasmInstance.set_elem_array_index_i32(head_nd, 4,12312);
+            expect(Array.from(arr_data_nd)).to.deep.equal([2,4,123,12312])
+        });
+        afterEach(() => {
+            printErrorSpy.restore();
+        });
     });
 	describe("#get_elem_array_index_NS", () => {
-		let create_array;
-		let create_array_ND;
-		beforeEach(async ()=>{
-			wasmInstance= await WebAssembly.instantiate(file,libjs);
-			wasmInstance = wasmInstance.instance.exports;
-			memory = wasmInstance.mem;
-			create_array = wasmInstance.create_array;
-			create_array_ND = wasmInstance.create_array_ND;
-		});
-
+        let memory;
+        let arr_1d;
+        let arr_header_nd;
+        let arr_data_nd;
+        let head_nd;
+        let data_nd;
+	    beforeEach(async ()=>{
+		    wasmInstance= await WebAssembly.instantiate(file,libjs);
+		    wasmInstance = wasmInstance.instance.exports;
+		    memory = wasmInstance.mem;
+            arr_1d = wasmInstance.create_array_1D(4,5);
+		    wasmInstance.set_elem_array_index_i32(arr_1d, 1,30);
+		    wasmInstance.set_elem_array_index_i32(arr_1d, 2,2);
+		    wasmInstance.set_elem_array_index_i32(arr_1d, 3,4);
+            wasmInstance.set_elem_array_index_i32(arr_1d, 4,6);
+            head_nd = wasmInstance.create_array_ND(arr_1d,5/*int16*/);
+            data_nd = wasmInstance.get_array_start(head_nd);
+		    arr_data_nd = new Int32Array(memory.buffer, data_nd, 8);
+	    });
+        it("Should correctly return value at index for all the various simple classes",() =>{
+            wasmInstance.set_elem_array_index_i32(head_nd, 1,2);
+            wasmInstance.set_elem_array_index_i32(head_nd, 2,4);
+            expect(wasmInstance.get_elem_array_index_i32(head_nd, 1)).to.equal(2);
+            expect(wasmInstance.get_elem_array_index_i32(head_nd, 2)).to.equal(4);
+ 		});
 
 		it("Should throw an error if index is less than 1",() =>{
-
+            try{
+                wasmInstance.set_elem_array_index_i32(head_nd,1,232);
+                wasmInstance.get_elem_array_index_i32(head_nd,-1,232);
+                expect("I did not throw error").to.equal("I threw error");
+            }catch( err ) {
+                expect(err.message).to.equal("Subscript indices must either be real positive integers or logicals");
+            } 
+            // expect(wasmInstance.get_elem_array_index_i32(arr_header_nd, 1)).to.throw;
+            // console.log('sa');
+            
 		});
 		it("Should throw an error if index is larger than array length",() =>{
-
+            try{
+                wasmInstance.get_elem_array_index_i32(head_nd,1441,232);
+                expect("I did not throw error").to.equal("I threw error");
+            }catch( err ) {
+                expect(err.message).to.equal("Index exceeds matrix dimensions");
+            } 
 		});
 
-		it("Should correctly return value at index for all the various simple classes",() =>{
-
-		});
+		
 	});
     describe("#create_array",()=>{
         let create_array;
@@ -220,7 +292,7 @@ describe('Allocate Matlab Arrays', () => {
 		    expect(arr_header_nd[6]).to.deep.equal(4); // Third dim
 		    expect(arr_header_nd[7]).to.deep.equal(6); // Fourth dim
 	    });
-        it("Should return 0 if dimensions are negative or 0",()=>{
+        it("Should set array pointer in header to -1 if size maps to zero",()=>{
             let arr_1d = wasmInstance.create_array_1d(2,1);
             let arr = new Int32Array(memory.buffer, arr_1d, 2);
             // Two dimensions
@@ -235,6 +307,9 @@ describe('Allocate Matlab Arrays', () => {
             arr[0] = 2;
             arr[1] = 10;
             expect(wasmInstance.create_array(arr_1d,0)).to.not.equal(0);
+        });
+        it('should handle zero dimensions well', () => {
+            
         });
         it("Should test the heap top ends in the right position for many multidimensional entries ",()=>{
             

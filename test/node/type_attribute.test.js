@@ -9,7 +9,6 @@ const sinon = require("sinon");
 const sinonChai = require("sinon-chai");
 const fs = require("fs");
 const path = require("path");
-// TODO: Create import object into wasm, separate both wasm-interp,wasm-node etc.
 chai.use(sinonChai);
 const libjs = require(path.join(__dirname,"../../")+"/bin/lib.js");
 const file = fs.readFileSync(path.join(__dirname,"../../")+"/bin/get_mem.wasm");

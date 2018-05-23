@@ -9,7 +9,6 @@ const sinon = require("sinon");
 const sinonChai = require("sinon-chai");
 const fs = require("fs");
 const path = require("path");
-// TODO: Create import object into wasm, separate both wasm-interp,wasm-node etc.
 chai.use(sinonChai);
 
 
@@ -118,6 +117,7 @@ describe('Allocate Matlab Arrays', () => {
             expect(size_s(3)).to.equal(1);
         });
     });
+
     describe("#create_array",()=>{
         let create_array;
         beforeEach(async ()=>{

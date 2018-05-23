@@ -64,10 +64,10 @@
        
     )
 
-    (data $mem (i32.const 0) "Error: Out-of-memory, trying to allocate a larger memory than available\n\00\00\00\00\00\00\00\00Error: Negative length is not allowed in this context\n")
-    (data $mem (i32.const 136) "Error: Index out-of-bound\n\00\00\00\00\00\00")
-    (data $mem (i32.const 160) "Error: Index exceeds matrix dimensions\00\00")
-    (data $mem (i32.const 198) "Error: Subscript indices must either be real positive integers or logicals\00\00\00\00\00\00")
+    (data $mem (i32.const 0) "Out-of-memory, trying to allocate a larger memory than available\n\00\00\00\00\00\00\00\00Error: Negative length is not allowed in this context\n")
+    (data $mem (i32.const 136) "Index out-of-bound\n\00\00\00\00\00\00")
+    (data $mem (i32.const 160) "Index exceeds matrix dimensions\00\00")
+    (data $mem (i32.const 198) "Subscript indices must either be real positive integers or logicals\00\00\00\00\00\00")
 
     ;; (data $mem (i32.const 136) "\f3\e0\01\00")
 
@@ -86,23 +86,23 @@
             br_table 0 1 2 3 4
             end
                (set_local $offset (i32.const 0))
-               (set_local $length (i32.const 72))
+               (set_local $length (i32.const 65))
                br 4
             end
                (set_local $offset (i32.const 80))
-               (set_local $length (i32.const 54))
+               (set_local $length (i32.const 47))
                br 3
             end 
               (set_local $offset (i32.const 136))
-              (set_local $length (i32.const 17)) 
+              (set_local $length (i32.const 10)) 
                br 2
             end
                 (set_local $offset (i32.const 160))
-                (set_local $length (i32.const 38)) 
+                (set_local $length (i32.const 31)) 
                 br 1
             end
                 (set_local $offset (i32.const 198))
-                (set_local $length (i32.const 74)) 
+                (set_local $length (i32.const 67)) 
                 br 0
         end 
         get_local $offset
@@ -167,7 +167,7 @@
         (local $type_size i32) (local $dim_number i32)(local $array_length i32)
         (local $i i32) (local $dim_array_ptr i32) (local $temp i32) (local $header_size i32) (local $array_size i32)
         (local $byte_elem_size i32) (local $array_data_ptr i32)(local $array_header_ptr i32)
-     
+        ;; TODO(dherre3): handle array dimensions correctly when they are zero
         ;; Get the size of bytes for type
         (set_local $type_size (call $get_simple_class_byte_size (get_local $simple_class)))
         (set_local $dim_number (i32.load offset=8 align=4 (get_local $dim_array)))
@@ -244,7 +244,25 @@
     (export "get_elem_array_index_i32" (func $get_elem_array_index_i32))
     (func $get_elem_array_index_i32 (param $array_ptr i32)(param $i i32)(result i32)
         get_local $array_ptr
+        call $get_array_length
+        get_local $i
+        i32.lt_s
+        if
+            i32.const 3
+            call $throwError
+        end
+        (set_local $i (i32.sub (get_local $i)(i32.const 1)))
+        get_local $i
+        i32.const 0
+        i32.lt_s
+        if
+            i32.const 4
+            call $throwError
+        end
+        get_local $array_ptr
         call $get_array_byte_size
+        get_local $i
+        i32.mul
         get_local $array_ptr
         call $get_array_start
         i32.add
@@ -259,8 +277,7 @@
         get_local $i
         i32.lt_s
         if
-            i32.const 3
-            call $throwError
+            ;; TODO(dherre3): Grow array to require size
         end
         (set_local $i (i32.sub (get_local $i)(i32.const 1)))
         get_local $i
@@ -494,6 +511,7 @@
         (i32.load (i32.sub (get_local $array) (i32.const 12)))
         return
     )
+    
     (export "array_length" (func $array_length))
     (func $array_length (param $array i32) (result i32)
         ;; @name array_length#memory 
@@ -876,6 +894,14 @@
         (param $elem_size i32)
         (param $simple_class i32)
         (param $complex i32)
+        (call $assert (;Condition;)(i32.and (i32.ge_s (get_local $class)(i32.const 0))(i32.le_s (get_local $class)(i32.const 4)))
+                    (;Error;)(i32.const 0))
+        (call $assert (;Condition;)(i32.and (i32.ge_s (get_local $elem_size)(i32.const 0))(i32.eqz (i32.rem_s (get_local $elem_size)(i32.const 2))))
+                    (;Error;)(i32.const 1))
+        (call $assert (;Condition;)(i32.and (i32.ge_s (get_local $simple_class)(i32.const 0)) (i32.le_s (get_local $simple_class)(i32.const 15)))
+                    (;Error;)(i32.const 2))
+        (call $assert (;Condition;)(i32.and (i32.ge_s (get_local $complex)(i32.const 0)) (i32.le_s (get_local $complex)(i32.const 1)))
+                    (;Error;)(i32.const 3))
         get_local $address
         get_local $class
         i32.store offset=0 align=1
@@ -917,16 +943,12 @@
     ;; Test & Debug
     (export "get_mclass" (func $get_mclass))
     (func $get_mclass (param $type_attr_address i32)(result i32)
-        ;; Assert class is between 0 and 4
-        (call $assert (i32.or (i32.gt_s (i32.const 0)(get_local 0))(i32.lt_s (i32.const 4) (get_local 0)))(i32.const 0))
         get_local $type_attr_address
         i32.load8_u offset=0 align=1
     )
 
     (export "get_simple_class" (func $get_simple_class))
     (func $get_simple_class (param $type_attr_address i32)(result i32)
-        ;; Assert class is between 0 and 6
-        (call $assert (i32.or (i32.gt_s (i32.const 0)(get_local 0))(i32.lt_s (i32.const 6) (get_local 0)))(i32.const 1))
         get_local $type_attr_address
         i32.load8_u offset=2 align=1
     )
@@ -937,27 +959,28 @@
         i32.add 
         call $get_elem_byte_size
     )
-    (export "get_array_length" (func $get_array_length))
-    (func $get_array_length (param $array_ptr i32)(result i32)
-        get_local $array_ptr
-        i32.const 8
-        i32.add
-        i32.load 
+     (export "get_array_length" (func $get_array_length))
+    (func $get_array_length (param $arr_ptr i32) (result i32)
+        ;; @name array_length#memory 
+        ;; @param $array i32, Pointer to array whose dimensions will be returned 
+        ;; @return i32, Array length
+        ;; @description
+        ;;      Gets the array "total" number of items, or length
+        (i32.load offset=8 align=4 (get_local $arr_ptr))
+        return
     )
      (export "get_elem_byte_size" (func $get_elem_byte_size))
     (func $get_elem_byte_size (param $type_attr_address i32)(result i32)
-        ;; Assert byte size divisible by 2 and less than 32
-        (call $assert (i32.and (i32.eqz (i32.rem_s (get_local 0)(i32.const 2)))(i32.le_s  (get_local 0) (i32.const 32)))(i32.const 2))
         get_local $type_attr_address
         i32.load8_u offset=1 align=1
     )
         ;; Test & Debug
-    (export "get_complex" (func $get_complex))
-    (func $get_complex (param $type_attr_address i32)(result i32)
-        ;; Assert class is between 0 and 2
-        (call $assert (i32.or (i32.gt_s (i32.const 0)(get_local 0))(i32.lt_s (i32.const 2) (get_local 0)))(i32.const 0))
+    (export "is_real" (func $is_real))
+    (func $is_real (param $type_attr_address i32)(result i32)
         get_local $type_attr_address
         i32.load8_u offset=3 align=1
+        i32.const 1
+        i32.and
     )
     
 

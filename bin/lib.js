@@ -3,7 +3,7 @@ const { TextDecoder,TextEncoder } = require('util');
 function printError(offset, length) {
     var bytes = new Uint8Array(module.exports.js.mem.buffer, offset, length);
     var string = new TextDecoder('utf8').decode(bytes);
-    console.error(string);
+    throw new Error(string);
 }
 
 function printString(offset, length) {
@@ -65,13 +65,14 @@ String.prototype.hexDecode = function(){
 
 function assert(condition, error_number) {
     let errors = {
-        "0":"Invalid Assertion: mclass number is incorrect in function $get_mclass",
-        "1":"Invalid Assertion: simpleclass number is incorrect in function $get_simple_class",
-        "2":"Invalid Assertion: elem_byte_size number is incorrect in function $get_elem_byte_size"
+        "0":"Invalid Assertion: class number is incorrect in function $get_mclass",
+        "1":"Invalid Assertion: elem_size number is incorrect in function $set_type_attribute",
+        "2":"Invalid Assertion: simple_class number is incorrect in function $set_type_attribute",
+        "3":"Invalid Assertion: complex number is incorrect in function $set_type_attribute"
     };
-    if(condition)
+    if(!condition)
     {
         throw new Error(errors[error_number]);
     }
 }
-// console.log("Error: Subscript indices must either be real positive integers or logicals".length);
+console.log("Subscript indices must either be real positive integers or logicals".length);

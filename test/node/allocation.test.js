@@ -8,7 +8,6 @@ const sinon = require("sinon");
 const sinonChai = require("sinon-chai");
 const fs = require("fs");
 const path = require("path");
-// TODO: Create import object into wasm, separate both wasm-interp,wasm-node etc.
 chai.use(sinonChai);
 
 
@@ -24,7 +23,6 @@ const PAGE_SIZE = 65536;
 let HEAP_OFFSET = 32764;
 describe("Memory",()=>{
 	
-	// TODO: Modify 
     describe("#malloc",()=>{
 	    beforeEach(async ()=>{
 		    wasmInstance= await WebAssembly.instantiate(file,libjs);
@@ -83,7 +81,6 @@ describe("Memory",()=>{
 	        wasmInstance = wasmInstance.instance.exports;
 			HEAP_OFFSET =  wasmInstance.get_heap_top();			
             malloc = wasmInstance.malloc;
-            console.log(5*PAGE_SIZE - HEAP_OFFSET );
             expect(malloc.bind(malloc,
                 5*PAGE_SIZE - HEAP_OFFSET - 20)).to.not.throw();//16 bits for header/footer of malloc.
         });
