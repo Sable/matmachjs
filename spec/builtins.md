@@ -27,8 +27,7 @@
 - [x] is_scalar
 - [x] numel
 - [x] size
-- [ ] stride
-- [ ] dims
+- [x] num_dim
 - [ ] get_colon
 - [ ] get_index
 - [ ] set_colon
