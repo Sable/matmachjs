@@ -68,7 +68,8 @@ function assert(condition, error_number) {
         "0":"Invalid Assertion: class number is incorrect in function $get_mclass",
         "1":"Invalid Assertion: elem_size number is incorrect in function $set_type_attribute",
         "2":"Invalid Assertion: simple_class number is incorrect in function $set_type_attribute",
-        "3":"Invalid Assertion: complex number is incorrect in function $set_type_attribute"
+        "3":"Invalid Assertion: complex number is incorrect in function $set_type_attribute",
+        "4":"Invalid Assertion: operation only valid for array type"
     };
     if(!condition)
     {

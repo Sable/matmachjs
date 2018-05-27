@@ -19,8 +19,19 @@
 - [x] get_elem_size
 - [x] is_real
 ## Array get and set
-- [ ] array_get (get from indices)
-- [ ] array_set ()
+- [x] array_get (get from indices)
+- [x] array_set (get from indices)
+- [ ] array_get (columns)
+- [ ] array_set (columns)
+# Array properties
+- [x] is_scalar
+- [x] numel
+- [x] size
+- [ ] stride
+- [ ] dims
+- [ ] get_colon
+- [ ] get_index
+- [ ] set_colon
 # Matrix Constructors
 - [ ] rand
 - [ ] randn
@@ -30,15 +41,7 @@
 - [ ] eye
 - [ ] colon(start,stop,step) 
 - [ ] clone (Also an allocator)
-# Array properties
-- [ ] is_scalar
-- [ ] numel
-- [ ] size
-- [ ] stride
-- [ ] dims
-- [ ] get_colon
-- [ ] get_index
-- [ ] set_colon
+
     - **requires:** compute_indeces
 - [ ] set_index
 - [ ] compute_indeces
