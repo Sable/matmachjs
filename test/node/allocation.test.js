@@ -31,11 +31,22 @@ describe("Memory",()=>{
 		    malloc = wasmInstance.malloc;
         });
         it("Should always allocate and leave the next free segment with 4 byte alignment",()=>{
-
+            let top = wasmInstance.get_heap_top();
+            expect(top % 4).to.equal(0);
+            expect(top % 8).to.equal(4);
+            malloc(20);
+            let end = wasmInstance.get_heap_top();
+            expect(end % 4).to.equal(0);
+            expect(end % 8).to.equal(4);
+            malloc(24);
+            end = wasmInstance.get_heap_top();
+            expect(end % 4).to.equal(0);
+            expect(end % 8).to.equal(4);
+            
         });
         it("Throws error when size is negative", ()=>{
 			let malloc = wasmInstance.malloc;
-            expect(malloc.bind(malloc, -2)).to.throw();
+            expect(malloc(-2)).to.equal(-1);
         });
         it("Expect heap top to grow correctly when input is unaligned",()=>{
             // Total: 8(footer/header)+ 10(size) + 6(alignment) = 24

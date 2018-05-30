@@ -17,114 +17,184 @@ const libjs = require(path.join(__dirname,"../../")+"/bin/lib.js");
 
 
 const file = fs.readFileSync(path.join(__dirname,"../../")+"/bin/get_mem.wasm");
-let wasmInstance;
+let wi; // wasmInstance
 let memory;
 let malloc;
 const PAGE_SIZE = 65536;
 let HEAP_OFFSET = 64;
 describe('Allocate Matlab Arrays', () => {
-    describe("#set_header",()=>{
+
+
+    describe("#create_mxvector",()=>{
         beforeEach(async ()=>{
             libjs.js.mem = WebAssembly.Memory({initial:1});
-            wasmInstance= await WebAssembly.instantiate(file,libjs);
-            wasmInstance = wasmInstance.instance.exports;
-            memory = wasmInstance.mem;
-            malloc = wasmInstance.malloc;
-            // console.log(wasmInstance)
-        });
-        it("Should set type attribute correctly",()=>{
-            
-        });
-    });
-
-    describe("#create_array_1D",()=>{
-        beforeEach(async ()=>{
-            libjs.js.mem = WebAssembly.Memory({initial:1});
-            wasmInstance= await WebAssembly.instantiate(file,libjs);
-            wasmInstance = wasmInstance.instance.exports;
-            memory = wasmInstance.mem;
-            malloc = wasmInstance.malloc;
+            wi= await WebAssembly.instantiate(file,libjs);
+            wi = wi.instance.exports;
+            memory = wi.mem;
+            malloc = wi.malloc;
 
         });
-        it("Should start array at correct section",()=>{
-            let heap_top = wasmInstance.get_heap_top();
-            let arr = wasmInstance.create_array_1D(5,0);
-            let arr_start = wasmInstance.get_array_start(arr);
+        it("should create an empty array correctly", ()=>{
+            let arr = wi.create_mxvector(0);
+            let arr_size = wi.numel(arr);
+            expect(wi.numel(arr)).to.equal(0);
+            expect(wi.get_mclass(arr)).to.equal(0);
+            expect(wi.get_simple_class(arr)).to.equal(0);
+            expect(wi.ndims(arr)).to.equal(2);
+            expect(wi.isscalar(arr)).to.equal(0);
+	        let size_arr = wi.size(arr);
+	        expect(wi.get_array_index_f64(size_arr, 1)).to.equal(1);
+	        expect(wi.get_array_index_f64(size_arr, 2)).to.equal(0);
+        });
+        it("should start array at correct section",()=>{
+            let heap_top = wi.get_heap_top();
+            let arr = wi.create_mxvector(5,0);
+            let arr_start = wi.get_array_start(arr);
             // 24 for metadata, 4 for malloc header
             expect(arr_start).to.be.equal(arr+24/*meta info*/ + 4/*footer*/+12/*header_arr*/);
         });
 
 	    it('Should insert type attribute correctly', () => {
-		    let ar = new Int8Array(wasmInstance.mem.buffer);
-		    let arr_pointer = wasmInstance.create_array_1D(5,0);
-		    let heap_top = wasmInstance.get_heap_top();
-		    ar[heap_top] = wasmInstance.set_type_attribute(heap_top);
+		    let ar = new Int8Array(wi.mem.buffer);
+		    let arr_pointer = wi.create_mxvector(5,0);
+		    let heap_top = wi.get_heap_top();
+		    ar[heap_top] = wi.set_type_attribute(heap_top);
 		    expect(ar[arr_pointer]).to.equal(ar[heap_top]);
         });
         
 	    it("Should set other meta data correctly",()=>{
-            let arr_8 = new Int8Array(wasmInstance.mem.buffer);
-            let arr_pointer = wasmInstance.create_array_1D(5,0);
-            let arr_32 = new Int32Array(wasmInstance.mem.buffer,arr_pointer,6);
+            let arr_8 = new Int8Array(wi.mem.buffer);
+            let arr_pointer = wi.create_mxvector(5,0);
+            let arr_32 = new Int32Array(wi.mem.buffer,arr_pointer,6);
             expect([arr_32[1],arr_32[3], arr_8[arr_pointer + 20],arr_8[arr_pointer + 21]]).to.deep.equal([5,2,0,0]);
         });
         it('Should set dimensions correctly', () => {
-            let arr_pointer = wasmInstance.create_array_1D(5,0);
-            let arr = new Int32Array(wasmInstance.mem.buffer,arr_pointer);
+            let arr_pointer = wi.create_mxvector(5,0);
+            
+            let arr = new Int32Array(wi.mem.buffer,arr_pointer);
             let dim_ptr = arr[4];
-            let arr_32 = new Int32Array(wasmInstance.mem.buffer, dim_ptr, 4);
-            expect([arr_32[0],arr_32[1]]).to.deep.equal([1,5]);
+            let arr_f64 = new Float64Array(wi.mem.buffer, dim_ptr, 4);
+            expect([arr_f64[0],arr_f64[1]]).to.deep.equal([1,5]);
+            // Testing transpose
+            arr_pointer = wi.create_mxvector(5,0,0,0,1);
+
+            arr = new Int32Array(wi.mem.buffer,arr_pointer);
+             dim_ptr = arr[4];
+             arr_f64 = new Float64Array(wi.mem.buffer, dim_ptr, 4);
+            expect([arr_f64[0],arr_f64[1]]).to.deep.equal([5,1]);
+
         });
+        
         it("Should correctly allocate elements of different types",()=>{
             // Allocate 10, int16 elements, 10*2 = 20 bytes + 4 for alignment+4. Type: 1->16bit
             // Checked by checking for the footer of the memory
-           // let memBytes = new Int8Array(wasmInstance.mem.buffer);
-            // let arr4 = wasmInstance.create_array_1d(10,3); // 8 bit allocation
-            // expect((new Int32Array(wasmInstance.mem.buffer,arr4+16, 1))[0], 1).to.equal(1);
-            // let arr = wasmInstance.create_array_1d(10,2);// 16 bit allocation
-            // expect((new Int32Array(wasmInstance.mem.buffer,arr+28, 1))[0], 1).to.equal(1);
-            // let arr2 = wasmInstance.create_array_1d(10,1); // 32 bit allocation
-            // expect((new Int32Array(wasmInstance.mem.buffer,arr2+44, 1))[0], 1).to.equal(1);
-            // let arr3 = wasmInstance.create_array_1d(10,0);// 64 bit allocation
-            // expect((new Int32Array(wasmInstance.mem.buffer,arr3+84, 1))[0], 1).to.equal(1);
+        //    let memBytes = new Int8Array(wi.mem.buffer);
+        //     let arr4 = wi.create_array_1d(10,3); // 8 bit allocation
+        //     expect((new Int32Array(wi.mem.buffer,arr4+16, 1))[0], 1).to.equal(1);
+        //     let arr = wi.create_array_1d(10,2);// 16 bit allocation
+        //     expect((new Int32Array(wi.mem.buffer,arr+28, 1))[0], 1).to.equal(1);
+        //     let arr2 = wi.create_array_1d(10,1); // 32 bit allocation
+        //     expect((new Int32Array(wi.mem.buffer,arr2+44, 1))[0], 1).to.equal(1);
+        //     let arr3 = wi.create_array_1d(10,0);// 64 bit allocation
+        //     expect((new Int32Array(wi.mem.buffer,arr3+84, 1))[0], 1).to.equal(1);
         });
 
-        it("Should correctly set the type",()=>{
-            let array = wasmInstance.create_array_1d(10,0);
-            expect(wasmInstance.get_array_type(array)).to.be.equal(0);
-            let array2 = wasmInstance.create_array_1d(20,0);
-            expect(wasmInstance.get_array_type(array2)).to.be.equal(0);
-        });
+
         it("Should create array and set the length should be set appropriately",()=>{
-            let array = wasmInstance.create_array_1d(10,0);
-            expect(wasmInstance.array_length(array)).to.be.equal(10);
-            let array2 = wasmInstance.create_array_1d(20,0);
-            expect(wasmInstance.array_length(array2)).to.be.equal(20);
+            let array = wi.create_mxvector(10,0);
+            expect(wi.get_array_length(array)).to.be.equal(10);
+            let array2 = wi.create_mxvector(20,0);
+            expect(wi.get_array_length(array2)).to.be.equal(20);
         });
     
         it("Should correctly give dimensions",()=>{
-            let array = wasmInstance.create_array_1d(10,0);
-            expect(wasmInstance.array_dim_num(array)).to.be.equal(2);
-            let array2 = wasmInstance.create_array_1d(20,0);
-            expect(wasmInstance.array_dim_num(array2)).to.be.equal(2);
-    
+            let array = wi.create_mxvector(10,0);
+            expect(wi.ndims(array)).to.be.equal(2);
+            let array2 = wi.create_mxvector(20,0);
+            expect(wi.ndims(array2)).to.be.equal(2);
         });
         it("Should allocate metadata correctly even if array length is negative",()=>{
-            let array = wasmInstance.create_array_1d(-1,0);
-            expect(wasmInstance.array_dim_num(array)).to.be.equal(2);
-            expect(wasmInstance.array_length(array)).to.be.equal(0);
+            let array = wi.create_array_1d(-1,0);
+            expect(wi.array_dim_num(array)).to.be.equal(2);
+            expect(wi.array_length(array)).to.be.equal(0);
         });
+    });
+    describe("#get_mxarray_dimension_number", ()=>{
+        beforeEach(async ()=>{
+            libjs.js.mem = WebAssembly.Memory({initial:1});
+            wi= await WebAssembly.instantiate(file,libjs);
+            wi = wi.instance.exports;
+            memory = wi.mem;
+            malloc = wi.malloc;
+
+        });
+        it("should return 1 when the input is 1", ()=>{
+            let arr = wi.create_mxvector(1);
+            wi.set_array_index_f64(arr,1,1);
+            let dim_num = wi.get_mxarray_dimension_number(arr);
+            expect(dim_num).to.equal(1);
+        });
+        it('should return the same number of none of the last dimensions are one', () => {
+            let arr = wi.create_mxvector(5);
+            wi.set_array_index_f64(arr,1,10);
+            wi.set_array_index_f64(arr,2,2);
+            wi.set_array_index_f64(arr,3,3);
+            wi.set_array_index_f64(arr,4,4);
+            wi.set_array_index_f64(arr,5,5);
+            let dim_num = wi.get_mxarray_dimension_number(arr);
+            // console.log("What", dim_num);
+            expect(dim_num).to.equal(5);
+        });
+        it('should return the same number if some dimensions are zero', () => {
+            let arr = wi.create_mxvector(5);
+            wi.set_array_index_f64(arr,1,4);
+            let dim_num = wi.get_mxarray_dimension_number(arr);
+            console.log(dim_num);
+            expect(dim_num).to.equal(5);
+        });
+        it('should return 1 if the dimensions are less than 2', () => {
+            let arr = wi.create_mxvector(1);
+            wi.set_array_index_f64(arr,1,10);
+            let dim_num = wi.get_mxarray_dimension_number(arr);
+            expect(dim_num).to.equal(1);
+        });
+         it('should return the 4 if the dimensions after the fourth one are all 1', () => {
+            let arr = wi.create_mxvector(8);
+            wi.set_array_index_f64(arr,1,10);
+            wi.set_array_index_f64(arr,2,10);
+            wi.set_array_index_f64(arr,3,10);
+            wi.set_array_index_f64(arr,4,0);
+            wi.set_array_index_f64(arr,5,1);
+            wi.set_array_index_f64(arr,6,1);
+            wi.set_array_index_f64(arr,7,1);
+            wi.set_array_index_f64(arr,8,1);
+            let dim_num = wi.get_mxarray_dimension_number(arr);
+            expect(dim_num).to.equal(4);
+        });
+	    it('should return the 6 after dimension 6th is 0', () => {
+		    let arr = wi.create_mxvector(8);
+		    wi.set_array_index_f64(arr,1,10);
+		    wi.set_array_index_f64(arr,2,10);
+		    wi.set_array_index_f64(arr,3,10);
+		    wi.set_array_index_f64(arr,4,0);
+		    wi.set_array_index_f64(arr,5,1);
+		    wi.set_array_index_f64(arr,6,0);
+		    wi.set_array_index_f64(arr,7,1);
+		    wi.set_array_index_f64(arr,8,1);
+		    let dim_num = wi.get_mxarray_dimension_number(arr);
+		    expect(dim_num).to.equal(6);
+	    });
     });
     describe("#get_simple_class_byte_size",()=>{
         let get_simple_class_byte_size;
         beforeEach(async ()=>{
             libjs.js.mem = WebAssembly.Memory({initial:1});
-            wasmInstance= await WebAssembly.instantiate(file,libjs );
-            wasmInstance = wasmInstance.instance.exports;
-            memory = wasmInstance.mem;
-            get_simple_class_byte_size = wasmInstance.get_simple_class_byte_size;
+            wi= await WebAssembly.instantiate(file,libjs );
+            wi = wi.instance.exports;
+            memory = wi.mem;
+            get_simple_class_byte_size = wi.get_simple_class_byte_size;
     
-            // console.log(wasmInstance)
+            // console.log(wi)
         });
         it("Should give the correct size for a given type",()=>{
             expect(get_simple_class_byte_size(0)).to.equal(8);//Double
@@ -141,216 +211,96 @@ describe('Allocate Matlab Arrays', () => {
             expect(get_simple_class_byte_size(13)).to.equal(4);//string
             expect(get_simple_class_byte_size(15)).to.equal(1);//logical
         });
+        it("Should create cell array correctly", ()=>{
+
+        });
     });
-    describe("#set_elem_array_index_NS", () => {
 
-        let memory;
-        let arr_1d;
-        let arr_header_nd;
-        let arr_data_nd;
-        let head_nd;
-        let data_nd;
-        let printErrorSpy;
-	    beforeEach(async ()=>{
-		    wasmInstance= await WebAssembly.instantiate(file,libjs);
-		    wasmInstance = wasmInstance.instance.exports;
-		    memory = wasmInstance.mem;
-            arr_1d = wasmInstance.create_array_1D(4,5);
-		    wasmInstance.set_array_index_i32(arr_1d, 1,30);
-		    wasmInstance.set_array_index_i32(arr_1d, 2,2);
-		    wasmInstance.set_array_index_i32(arr_1d, 3,4);
-            wasmInstance.set_array_index_i32(arr_1d, 4,6);
-            head_nd = wasmInstance.create_array_ND(arr_1d,5/*int32*/);
-            data_nd = wasmInstance.get_array_start(head_nd);
-		    arr_data_nd = new Int32Array(memory.buffer, data_nd, 4);
-	    });
-	    it("Should reallocate array when index is more than length",() =>{
-           // TODO(dherre3): Implement this!
-	    });
 
-	    it("Should throw an error when index is less than 1",() =>{
-            try{
-                wasmInstance.set_array_index_i32(head_nd,1,232);
-                wasmInstance.set_array_index_i32(head_nd,-1,232);
-                expect("I did not throw error").to.equal("I threw error");
-            }catch( err ) {
-                expect(err.message).to.equal("Subscript indices must either be real positive integers or logicals");
-            } 
-           
-            
-        });
-        
-	    it("Should correctly set value for i32",() =>{
-            let a = new Int32Array(memory.buffer, arr_1d, 6);
-            console.log(a);            
-            wasmInstance.set_array_index_i32(head_nd, 1,2);
-            wasmInstance.set_array_index_i32(head_nd, 2,4);
-            wasmInstance.set_array_index_i32(head_nd, 3,123);
-            wasmInstance.set_array_index_i32(head_nd, 4,12312);
-            // expect(Array.from(arr_data_nd)).to.deep.equal([2,4,123,12312])
-        });
 
-    });
-	describe("#get_elem_array_index_NS", () => {
-        let memory;
-        let arr_1d;
-        let arr_header_nd;
-        let arr_data_nd;
-        let head_nd;
-        let data_nd;
-	    beforeEach(async ()=>{
-		    wasmInstance= await WebAssembly.instantiate(file,libjs);
-		    wasmInstance = wasmInstance.instance.exports;
-		    memory = wasmInstance.mem;
-            arr_1d = wasmInstance.create_array_1D(4,5);
-		    wasmInstance.set_array_index_i32(arr_1d, 1,30);
-		    wasmInstance.set_array_index_i32(arr_1d, 2,2);
-		    wasmInstance.set_array_index_i32(arr_1d, 3,4);
-            wasmInstance.set_array_index_i32(arr_1d, 4,6);
-            head_nd = wasmInstance.create_array_ND(arr_1d,5/*int32*/);
-            data_nd = wasmInstance.get_array_start(head_nd);
-		    arr_data_nd = new Int32Array(memory.buffer, data_nd, 8);
-        });
-        it("Should correctly return value at index for uint32",() =>{
-            head_nd = wasmInstance.create_array_ND(arr_1d,9/*int32*/);
-            wasmInstance.set_array_index_i32(head_nd, 1,2);
-            wasmInstance.set_array_index_i32(head_nd, 2,2147483647);
-            wasmInstance.set_array_index_i32(head_nd, 3,-12321);
-            wasmInstance.set_array_index_i32(head_nd, 4,-1321);
-            expect(wasmInstance.get_array_index_i32(head_nd, 1)).to.equal(2);
-            expect(wasmInstance.get_array_index_i32(head_nd, 2)).to.equal(2147483647);
-            expect(wasmInstance.get_array_index_i32(head_nd, 3)).to.equal(0);
-            expect(wasmInstance.get_array_index_i32(head_nd, 4)).to.equal(0);
-
-         });
-        it("Should correctly return value at index for int32",() =>{
-            head_nd = wasmInstance.create_array_ND(arr_1d,5/*int32*/);
-            console.log("Signed", wasmInstance.is_signed(arr_1d));
-            wasmInstance.set_array_index_i32(head_nd, 1,2);
-            wasmInstance.set_array_index_i32(head_nd, 3,2147483647);
-            wasmInstance.set_array_index_i32(head_nd, 4,-2147483648);
-            wasmInstance.set_array_index_i32(head_nd, 2,4);
-            expect(wasmInstance.get_array_index_i32(head_nd, 1)).to.equal(2);
-            expect(wasmInstance.get_array_index_i32(head_nd, 3)).to.equal(2147483647);
-            expect(wasmInstance.get_array_index_i32(head_nd, 4)).to.equal(-2147483648);
-            expect(wasmInstance.get_array_index_i32(head_nd, 2)).to.equal(4);
-         });
-         it("Should correctly return value at index for f64",() =>{
-            head_nd = wasmInstance.create_array_ND(arr_1d);
-            wasmInstance.set_array_index_f64(head_nd, 1,2.12313);
-            wasmInstance.set_array_index_f64(head_nd, 2,4.2131);
-            wasmInstance.set_array_index_f64(head_nd, 1000,1000.1221);
-            expect(wasmInstance.get_array_index_f64(head_nd, 1)).to.equal(2.12313);
-            expect(wasmInstance.get_array_index_f64(head_nd, 2)).to.equal(4.2131);
-            expect(wasmInstance.get_array_index_f64(head_nd, 1000)).to.equal(1000.1221);
-         });
-         it("Should correctly return value at index for f32",() =>{
-            head_nd = wasmInstance.create_array_ND(arr_1d);
-            wasmInstance.set_array_index_f64(head_nd, 1,2.12313);
-            wasmInstance.set_array_index_f64(head_nd, 2,4.2131);
-            wasmInstance.set_array_index_f64(head_nd, 1000,1000.1221);
-            expect(wasmInstance.get_array_index_f64(head_nd, 1)).to.equal(2.12313);
-            expect(wasmInstance.get_array_index_f64(head_nd, 2)).to.equal(4.2131);
-            expect(wasmInstance.get_array_index_f64(head_nd, 1000)).to.equal(1000.1221);
-         });
-         it("Should correctly return value at index for int8",() =>{
-            head_nd = wasmInstance.create_array_ND(arr_1d,3);
-            let start_arr = wasmInstance.get_array_start(head_nd);
-            wasmInstance.set_array_index_i8(head_nd, 1,-127);
-            wasmInstance.set_array_index_i8(head_nd, 2,256);
-            wasmInstance.set_array_index_i8(head_nd, 3,-256);
-            wasmInstance.set_array_index_i8(head_nd, 4,-1);
-            wasmInstance.set_array_index_i8(head_nd, 5,127);
-            wasmInstance.set_array_index_i8(head_nd, 6,12);
-            expect(wasmInstance.get_array_index_i8(head_nd, 1)).to.equal(-127);
-            expect(wasmInstance.get_array_index_i8(head_nd, 2)).to.equal(127);
-            expect(wasmInstance.get_array_index_i8(head_nd, 3)).to.equal(-128);
-            expect(wasmInstance.get_array_index_i8(head_nd, 4)).to.equal(-1);
-            expect(wasmInstance.get_array_index_i8(head_nd, 5)).to.equal(127);
-            expect(wasmInstance.get_array_index_i8(head_nd, 6)).to.equal(12);
-         });
-         it("Should correctly return value at index for uint8",() =>{
-            head_nd = wasmInstance.create_array_ND(arr_1d,7);
-            let start_arr = wasmInstance.get_array_start(head_nd);
-            wasmInstance.set_array_index_i8(head_nd, 1,-127);
-            wasmInstance.set_array_index_i8(head_nd, 2,129);
-            wasmInstance.set_array_index_i8(head_nd, 3,-256);
-            wasmInstance.set_array_index_i8(head_nd, 4,-2121);
-            wasmInstance.set_array_index_i8(head_nd, 5,500);
-            wasmInstance.set_array_index_i8(head_nd, 6,255);
-            expect(wasmInstance.get_array_index_i8(head_nd, 1)).to.equal(0);
-            expect(wasmInstance.get_array_index_i8(head_nd, 2)).to.equal(129);
-            expect(wasmInstance.get_array_index_i8(head_nd, 3)).to.equal(0);
-            expect(wasmInstance.get_array_index_i8(head_nd, 4)).to.equal(0);
-            expect(wasmInstance.get_array_index_i8(head_nd, 5)).to.equal(255);
-            expect(wasmInstance.get_array_index_i8(head_nd, 6)).to.equal(255);
- 		});
-         
-		it("Should throw an error if index is less than 1",() =>{
-            try{
-                wasmInstance.set_array_index_i32(head_nd,1,232);
-                wasmInstance.get_array_index_i32(head_nd,-1,232);
-                expect("I did not throw error").to.equal("I threw error");
-            }catch( err ) {
-                expect(err.message).to.equal("Subscript indices must either be real positive integers or logicals");
-            } 
-		});
-		it("Should throw an error if index is larger than array length",() =>{
-            try{
-                wasmInstance.get_array_index_i32(head_nd,1441,232);
-                expect("I did not throw error").to.equal("I threw error");
-            }catch( err ) {
-                expect(err.message).to.equal("Index exceeds matrix dimensions");
-            } 
-		});
-
-		
-	});
     describe("#create_array",()=>{
         let create_array;
-        let create_array_ND;
+        let create_mxarray_ND;
         beforeEach(async ()=>{
-            wasmInstance= await WebAssembly.instantiate(file,libjs);
-            wasmInstance = wasmInstance.instance.exports;
-            memory = wasmInstance.mem;
-            create_array = wasmInstance.create_array;
-	        create_array_ND = wasmInstance.create_array_ND;
+	        libjs.js.mem = WebAssembly.Memory({initial:10});
+	        wi= await WebAssembly.instantiate(file,libjs);
+            wi = wi.instance.exports;
+	        memory = wi.mem;
+        });
+        it('should throw error if input is not a row vector',  () => {
+            let arr_1d = wi.create_mxvector(4,0,0,0,1);
+		    wi.set_array_index_f64(arr_1d, 1,30);
+		    wi.set_array_index_f64(arr_1d, 2,2);
+		    wi.set_array_index_f64(arr_1d, 3,4);
+            wi.set_array_index_f64(arr_1d, 4,6);
+            // console.log(wi.is_row_vector(arr_1d));
+            try {
+                wi.create_mxarray_ND(arr_1d);
+                expect(1+1).to.throw(3);
+            }catch(err)
+            {
+                expect(err.message).to.equal("Size vector should be a row vector with real elements.");
+            }
+        });
+        it("should create square matrix if input array has size 1", () => {
+            let arr_1d = wi.create_mxvector(1);
+            wi.set_array_index_f64(arr_1d, 1,2);
+            let arr_size = wi.size(wi.create_mxarray_ND(arr_1d));
+            expect([wi.get_array_index_f64(arr_size,1),wi.get_array_index_f64(arr_size,2)]).to.deep.equal([2,2]);
+        });
+        it('should set the number of elements correctly for normal case', () => {
+            let arr_1d = wi.create_mxvector(4);
+            wi.set_array_index_f64(arr_1d, 1,2);
+            wi.set_array_index_f64(arr_1d, 2,2);
+            wi.set_array_index_f64(arr_1d, 3,2);
+            wi.set_array_index_f64(arr_1d, 4,2);
+            let arr = wi.create_mxarray_ND(arr_1d);
+            expect(wi.numel(arr)).to.equal(16);
+        });
+        it('should set the number of elements correctly for square matrix', () => {
+            let arr_1d = wi.create_mxvector(1);
+            wi.set_array_index_f64(arr_1d, 1,3);
+            expect(wi.numel(wi.create_mxarray_ND(arr_1d))).to.deep.equal(9);
+        });
+        it('should set the number of elements correctly for zero input',() => {
+            let arr_1d = wi.create_mxvector(4);
+            let arr = wi.create_mxarray_ND(arr_1d);
+	        let arr_size = wi.size(arr);
+	        expect(wi.ndims(arr)).to.equal(4);
+	        expect(wi.numel(arr)).to.equal(0);
+	        expect(wi.get_array_index_f64(arr_size,1)).to.equal(0);
+	        expect(wi.get_array_index_f64(arr_size,2)).to.equal(0);
+	        expect(wi.get_array_index_f64(arr_size,3)).to.equal(0);
+	        expect(wi.get_array_index_f64(arr_size,4)).to.equal(0);
         });
 	    it('Should correctly set array header',  () => {
-		    let arr_1d = wasmInstance.create_array_1D(4,5);
+            let arr_1d = wi.create_mxvector(4);
 		    let arr_header = new Int32Array(memory.buffer, arr_1d, 6);
-		    let arr_data = new Int32Array(memory.buffer, wasmInstance.get_array_start(arr_1d), 4);
-		    // console.log(wasmInstance.set_array_index_i32(arr_1d, 1,20));
-		    wasmInstance.set_array_index_i32(arr_1d, 1,30);
-		    wasmInstance.set_array_index_i32(arr_1d, 2,2);
-		    wasmInstance.set_array_index_i32(arr_1d, 3,4);
-		    wasmInstance.set_array_index_i32(arr_1d, 4,6);
-
-            let arr_nd = wasmInstance.create_array_ND(arr_1d);
-
+		    let arr_data = new Float64Array(memory.buffer, wi.get_array_start(arr_1d), 4);
+		    wi.set_array_index_f64(arr_1d, 1,30);
+		    wi.set_array_index_f64(arr_1d, 2,2);
+		    wi.set_array_index_f64(arr_1d, 3,4);
+            wi.set_array_index_f64(arr_1d, 4,6);
+            let arr_nd = wi.create_mxarray_ND(arr_1d);
 		    let arr_header_nd = new Int32Array(memory.buffer, arr_nd, 6);
-		    expect(arr_header_nd[1]).to.deep.equal(1440); // Total array length
-		    expect(arr_header_nd[3]).to.deep.equal(4); // Number of dimensions
-		    // expect(arr_header_nd[4]).to.deep.equal(30); // First dim
-		    // expect(arr_header_nd[5]).to.deep.equal(2); // Second dim
-		    // expect(arr_header_nd[6]).to.deep.equal(4); // Third dim
-		    // expect(arr_header_nd[7]).to.deep.equal(6); // Fourth dim
+		    expect(arr_header_nd[1]).to.equal(1440); // Total array length
+		    expect(arr_header_nd[3]).to.equal(4); // Number of dimensions
 	    });
         it("Should set array pointer in header to -1 if size maps to zero",()=>{
-            let arr_1d = wasmInstance.create_array_1d(2,1);
+            let arr_1d = wi.create_array_1d(2,1);
             let arr = new Int32Array(memory.buffer, arr_1d, 2);
             // Two dimensions
             arr[0] = -2;
             arr[1] = 10;
-            expect(wasmInstance.create_array(arr_1d,0)).to.equal(0);
+            expect(wi.create_array(arr_1d,0)).to.equal(0);
             // Two dimensions
             arr[0] = 0;
             arr[1] = 10;
-            expect(wasmInstance.create_array(arr_1d,0)).to.equal(0);
+            expect(wi.create_array(arr_1d,0)).to.equal(0);
             // Two dimensions
             arr[0] = 2;
             arr[1] = 10;
-            expect(wasmInstance.create_array(arr_1d,0)).to.not.equal(0);
+            expect(wi.create_array(arr_1d,0)).to.not.equal(0);
         });
         it('should handle zero dimensions well', () => {
             
@@ -382,16 +332,16 @@ describe('Allocate Matlab Arrays', () => {
     });
     describe('#set_type_attribute', () => {
         beforeEach(async ()=>{
-            wasmInstance= await WebAssembly.instantiate(file,libjs);
-            wasmInstance = wasmInstance.instance.exports;
-            memory = wasmInstance.mem;
+            wi= await WebAssembly.instantiate(file,libjs);
+            wi = wi.instance.exports;
+            memory = wi.mem;
         });
         it("should verify type attribute works well",()=>{
-            wasmInstance.set_type_attribute(wasmInstance.get_heap_top(),0,16,5);
-            let arr_8 = new Int8Array(memory.buffer,wasmInstance.get_heap_top(),4);
+            wi.set_type_attribute(wi.get_heap_top(),0,16,5);
+            let arr_8 = new Int8Array(memory.buffer,wi.get_heap_top(),4);
             expect([arr_8[0],arr_8[1],arr_8[2],arr_8[3]]).to.deep.equal([0,16,5,1]);
             // Test with 1 bit
-            wasmInstance.set_type_attribute(wasmInstance.get_heap_top(),0,1,3);
+            wi.set_type_attribute(wi.get_heap_top(),0,1,3);
         });
     });
 });

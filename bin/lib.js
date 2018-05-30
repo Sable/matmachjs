@@ -22,7 +22,8 @@ function printWhos(size, bytes, class_type)
 }
 function printDouble(number)
 {
-    console.log(number);
+    console.log("NUMBER:", number);
+    return number;
 }
 
 module.exports = {
@@ -32,6 +33,8 @@ module.exports = {
         "printWho":printWhos,
         "printString":printString,
         "printDouble":printDouble,
+        "printDoubleNumber":printDouble,
+        "js_set_array_f64":set_array_f64,
         "assert_header":1
     },
     "test":{
@@ -77,3 +80,11 @@ function assert(condition, error_number) {
     }
 }
 console.log("Subscript indices must either be real positive integers or logicals".length);
+
+
+///// JAVASCRIPT API
+
+function set_array_f64(arr,indeces, values)
+{
+
+}

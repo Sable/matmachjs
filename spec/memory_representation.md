@@ -68,6 +68,19 @@ First because is because of dynamic array nature in Matlab, which means
 when we try to set an element larger than the array itself, the array
 size doubles, under this separate header scenario we would only need to
 allocate for the new data as opposed to the header again.
+
+# Class attribute
+
+The class attribute in this representation will be given by 
+```
+let class_attribute = {
+    '0':array,
+    '1':cell_array,
+    '2':struct,
+    '3':string,
+    '4':function_handle
+};
+```
 # Handling Matlab literals
 
 In Matlab we can have literals in this fashion:

@@ -1,12 +1,12 @@
 
-//@flow 
+// @flow
 // Optimization if you asked for the tranpose of a colon operation
 function get_colon_transpose(total/*:Array<number>*/,target/*:Array<number>*/,shape/*:Array<number>*/,
          b/*:Array<Array<number>>*/,dim/*:number*/, mult/*:number*/, offset/*:number*/)/*:number*/ {
     /// assumes that indeces are well behaved
    b[dim].forEach(elem => {
-       var new_offset = offset + mult*(elem-1);
-       var new_mult = mult * shape[dim];
+       let new_offset = offset + mult*(elem-1);
+       let new_mult = mult * shape[dim];
        if(dim === b.length-1)
        {
            total.push(target[new_offset]);
@@ -16,16 +16,16 @@ function get_colon_transpose(total/*:Array<number>*/,target/*:Array<number>*/,sh
    });
     return 1;
 }
-var total/*:Array<number>*/ = [];
+let total/*:Array<number>*/ = [];
 function get_colon(total/*:Array<number>*/, target/*:Array<number>*/,shape/*:Array<number>*/,
          b/*:Array<Array<number>>*/,dim/*:number*/, mult/*:number*/, offset/*:number*/
          ,mult_ind/*:number*/, offset_ind/*:number*/)/*:void*/ {
     /// assumes that indeces are well behaved, that is in increasing order and within range
    b[dim].forEach((elem,ind) => {
-       var new_offset = offset + mult*(elem-1);
-       var new_mult = mult * shape[dim];
-       var new_offset_ind = offset_ind + mult_ind*ind;
-       var new_mult_in = mult_ind * b[dim].length;
+       let new_offset = offset + mult*(elem-1);
+       let new_mult = mult * shape[dim];
+       let new_offset_ind = offset_ind + mult_ind*ind;
+       let new_mult_in = mult_ind * b[dim].length;
        if(dim === b.length-1)
        {
            total[new_offset_ind] = target[new_offset];
@@ -38,8 +38,8 @@ function get_colon(total/*:Array<number>*/, target/*:Array<number>*/,shape/*:Arr
 function get_colon_algo(arr, indeces)
 {
     let shape = shape_arr(arr);
-    let total = [];
-    verify_incedes_get(arr,shape, indeces);
+    let length = verify_incedes_get(arr,shape, indeces);
+    let total = new Array(length);
     get_colon(total, arr, shape, indeces, 0, 1, 0, 1, 0);
     console.log(total);
 }
@@ -51,7 +51,9 @@ function shape_arr(arr)
 function verify_incedes_get(arr/*:Array<number>*/, shape/*:Array<number>*/, indeces/*:Array<Array<number>>*/)
 {
     let numel = arr.length;
+    let total_elem = 1;
     indeces.forEach( (indeces_dim_arr,i) => {
+        total_elem *= indeces_dim_arr.length;
         indeces_dim_arr.forEach( ind =>{
             if(ind === 0 )
             {
@@ -65,6 +67,7 @@ function verify_incedes_get(arr/*:Array<number>*/, shape/*:Array<number>*/, inde
             }
         });
     });
+    return total_elem;
 }
 /**
 TESTS
@@ -104,10 +107,10 @@ function set_colon(values/*:Array<number>*/, target/*:Array<number>*/,shape/*:Ar
          ,mult_ind/*:number*/, offset_ind/*:number*/)/*:void*/ {
     /// assumes that indeces are well behaved, that is in increasing order and within range
    indeces[dim].forEach((elem,ind) => {
-       var new_offset = offset + mult*(elem-1);
-       var new_mult = mult * shape[dim];
-       var new_offset_ind = offset_ind + mult_ind*ind;
-       var new_mult_in = mult_ind * indeces[dim].length;
+       let new_offset = offset + mult*(elem-1);
+       let new_mult = mult * shape[dim];
+       let new_offset_ind = offset_ind + mult_ind*ind;
+       let new_mult_in = mult_ind * indeces[dim].length;
        if(dim === indeces.length-1)
        {
            target[new_offset] = values[new_offset_ind];
@@ -150,3 +153,5 @@ function set_colon_algo(arr,values, indeces/*:Array<Array<number>>*/)
 }
 set_colon_algo(data, [1,2], [[1],[2],[1,2]]);
 set_colon_algo(data, [1,2], [[1],[2],[1,2]]);
+
+console.log("Size vector should be a row vector with real elements.".length);
