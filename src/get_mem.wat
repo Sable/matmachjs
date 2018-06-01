@@ -73,6 +73,8 @@
     (data $mem (i32.const 272) "Size vector should be a row vector with real elements.")
     (data $mem (i32.const 328) "Not enough input arguments.")
     (data $mem (i32.const 360) "Too many input arguments.")
+    (data $mem (i32.const 384) "Error in null.")
+    
 
     ;; (data $mem (i32.const 136) "\f3\e0\01\00")
 
@@ -86,40 +88,44 @@
                 1: "Negative length is not allowed in this context"
                 2: "Index out-of-bounds"
         ;)
-        block  block  block block block block block block block
+        block  block  block block block block block block block block
             get_local $error
-            br_table 0 1 2 3 4 5 6 7
+            br_table 0 1 2 3 4 5 6 7 8 
             end
                (set_local $offset (i32.const 0))
                (set_local $length (i32.const 65))
-               br 7
+               br 8
             end
                (set_local $offset (i32.const 80))
                (set_local $length (i32.const 47))
-               br 6
+               br 7
             end 
               (set_local $offset (i32.const 136))
               (set_local $length (i32.const 10)) 
-               br 5
+               br 6
             end
                 (set_local $offset (i32.const 160))
                 (set_local $length (i32.const 31)) 
-                br 4
+                br 5
             end
                 (set_local $offset (i32.const 198))
                 (set_local $length (i32.const 67)) 
-                br 3
+                br 4
             end
                 (set_local $offset (i32.const 272))
                 (set_local $length (i32.const 54)) 
-                br 2
+                br 3
             end
                 (set_local $offset (i32.const 328))
                 (set_local $length (i32.const 27)) 
-                br 1
+                br 2
             end
                 (set_local $offset (i32.const 360))
                 (set_local $length (i32.const 24)) 
+                br 1
+            end
+                (set_local $offset (i32.const 384))
+                (set_local $length (i32.const 13)) 
                 br 0
         end 
         get_local $offset
@@ -237,7 +243,7 @@
         call $get_array_length
         i32.eqz
         get_local $dim_array
-        call $is_row_vector
+        call $isrow
         i32.eqz
         i32.or 
         if
@@ -1329,22 +1335,7 @@
     (func $ndims (param $arr_ptr i32) (result i32)
         (i32.load offset=12 align=4 (get_local $arr_ptr))
     )
-    (export "is_row_vector" (func $is_row_vector))
-    (func $is_row_vector (param $arr_ptr i32)(result i32)
-        get_local $arr_ptr
-        i32.load offset=12 align=4
-        i32.const 2
-        i32.eq
-        if (result i32)
-            get_local $arr_ptr
-            i32.load offset=16 align=4
-            f64.load offset=0 align=8
-            f64.const 1
-            f64.eq
-        else
-            i32.const 0
-        end
-    )
+   
     (export "isscalar" (func $isscalar))
     (func $isscalar (param $arr_ptr i32) (result i32)
     (;TODO(dherre3): Check for null;)
@@ -1383,9 +1374,7 @@
         end
         get_local $max
     )
-    (;
-        Matrix constructors
-    ;)
+   
     (func $is_null (param $arr_ptr i32) (result i32)
         get_local $arr_ptr
         i32.eqz
@@ -1402,6 +1391,92 @@
             end
         end
     )
+    (export "ismatrix" (func $ismatrix))
+    (func $ismatrix (param $arr_ptr i32)(result i32)
+        get_local $arr_ptr
+        call $is_null
+        if
+            i32.const 6
+            call $throwError
+        end
+        get_local $arr_ptr
+        i32.load offset=12 align=4
+        i32.const 2
+        i32.eq
+        if (result i32)
+            i32.const 1
+        else
+            i32.const 0
+        end
+    )
+     (export "isempty" (func $isempty))
+    (func $isempty (param $arr_ptr i32)(result i32)
+        get_local $arr_ptr
+        call $is_null
+        if
+            i32.const 6
+            call $throwError
+        end
+        get_local $arr_ptr
+        i32.load offset=4 align=4
+        i32.eqz
+    )
+  
+     (export "isrow" (func $isrow))
+    (func $isrow (param $arr_ptr i32)(result i32)
+        get_local $arr_ptr
+        call $is_null
+        if
+            i32.const 6
+            call $throwError
+        end
+        get_local $arr_ptr
+        i32.load offset=12 align=4
+        i32.const 2
+        i32.eq
+        if (result i32)
+            get_local $arr_ptr
+            i32.load offset=16 align=4
+            f64.load offset=0 align=8
+            f64.const 1
+            f64.eq
+        else
+            i32.const 0
+        end
+    )
+    (export "iscolumn" (func $iscolumn))
+    (func $iscolumn (param $arr_ptr i32)(result i32)
+        get_local $arr_ptr
+        call $is_null
+        if
+            i32.const 6
+            call $throwError
+        end
+        get_local $arr_ptr
+        i32.load offset=12 align=4
+        i32.const 2
+        i32.eq
+        if (result i32)
+            get_local $arr_ptr
+            i32.load offset=16 align=4
+            f64.load offset=8 align=8
+            f64.const 1
+            f64.eq
+        else
+            i32.const 0
+        end
+    )
+      (export "isvector" (func $isvector))
+    (func $isvector (param $arr_ptr i32)(result i32)
+        get_local $arr_ptr
+        call $iscolumn
+        get_local $arr_ptr
+        call $isrow
+        i32.or
+    )
+     (;
+        Matrix constructors
+    ;)
     (export "colon" (func $colon))
     (func $colon (param $parameters i32)(result i32)
         (local $length i32)(local $i f64)(local $j f64)(local $k f64)
@@ -1697,11 +1772,7 @@
                             return     
                         end
                     end
-                
-                    
                 end
-
-
             end
         end
         i32.const 0

@@ -145,20 +145,143 @@ describe('Array Properties', () => {
 
 	    });
     });     
-    describe('#is_row_vector', function () {
+    describe('#isrow', function () {
         it("should return true when row vector of size 0x1", ()=>{
             let arr_pointer = wi.create_mxvector(0);
             let arr = new Int32Array(memory.buffer, arr_pointer, 6);
-            expect(wi.is_row_vector(arr_pointer)).to.equal(1);
+            expect(wi.isrow(arr_pointer)).to.equal(1);
         });
         it("should return true when row vector is created", ()=>{
                let arr_pointer = wi.create_mxvector(5,0);
-               expect(wi.is_row_vector(arr_pointer)).to.equal(1);
+               expect(wi.isrow(arr_pointer)).to.equal(1);
         });
         it("should return false if is not row vector", ()=>{
             let arr_pointer = wi.create_mxvector(5,0,0,0,1);
-            expect(wi.is_row_vector(arr_pointer)).to.equal(0);
+            expect(wi.isrow(arr_pointer)).to.equal(0);
         });
+    });
+    describe('#iscolumn', () => {
+        it('should throw error if input is null', () => {
+	        try{
+		        wi.iscolumn(-1);
+	        }catch(err){
+				expect(err.message).to.equal("Not enough input arguments.")
+	        }
+        });
+        it('should return 0 if input is 1xn', () => {
+	        let arr_pointer = wi.create_mxvector(5);
+	        let size_ptr = wi.size(arr_pointer);
+	        expect(wi.iscolumn(arr_pointer)).to.equal(0);
+        });
+	    it('should return 1 if input is nx1', () => {
+		    let arr_pointer = wi.create_mxvector(5,0,0,0,1);
+		    expect(wi.iscolumn(arr_pointer)).to.equal(1);
+	    });
+	    it('should return 1 if input is 1xn for an mxarray', () => {
+		    let arr_pointer = wi.create_mxvector(2);
+		    wi.set_array_index_f64(arr_pointer,1,5);
+		    wi.set_array_index_f64(arr_pointer,2,1);
+		    let matrix_ptr = wi.create_mxarray_ND(arr_pointer);
+		    expect(wi.iscolumn(matrix_ptr)).to.equal(1);
+	    });
+        it('should return 0 if input is matrix', () => {
+	        let arr_pointer = wi.create_mxvector(2);
+	        wi.set_array_index_f64(arr_pointer,1,2);
+	        wi.set_array_index_f64(arr_pointer,2,3);
+	        let matrix_ptr = wi.create_mxarray_ND(arr_pointer);
+	        expect(wi.iscolumn(matrix_ptr)).to.equal(0);
+        });
+        it('should return 0 if input is 0x0', () => {
+	        let arr_pointer = wi.create_mxvector(2);
+	        let matrix_ptr = wi.create_mxarray_ND(arr_pointer);
+	        expect(wi.iscolumn(matrix_ptr)).to.equal(0);
+        });
+    });
+    describe('#isvector', () => {
+        it('should throw error if input is null', () => {
+	        try{
+		        wi.isvector(-1);
+	        }catch(err){
+		        expect(err.message).to.equal("Not enough input arguments.")
+	        }
+        });
+	    it('should return 1 if input is 1xn', () => {
+		    let arr_pointer = wi.create_mxvector(5);
+		    let size_ptr = wi.size(arr_pointer);
+		    expect(wi.isvector(arr_pointer)).to.equal(1);
+	    });
+	    it('should return 1 if input is nx1', () => {
+		    let arr_pointer = wi.create_mxvector(5,0,0,0,1);
+		    expect(wi.isvector(arr_pointer)).to.equal(1);
+	    });
+	    it('should return 0 if dim > 2', () => {
+		    let arr_pointer = wi.create_mxvector(3);
+		    wi.set_array_index_f64(arr_pointer,1,5);
+		    wi.set_array_index_f64(arr_pointer,2,1);
+		    let matrix_ptr = wi.create_mxarray_ND(arr_pointer);
+		    expect(wi.isvector(matrix_ptr)).to.equal(0);
+	    });
+	    it('should return 0 if nxm where, n & m are both larger than 1', () => {
+		    let arr_pointer = wi.create_mxvector(3);
+		    wi.set_array_index_f64(arr_pointer,1,5);
+		    wi.set_array_index_f64(arr_pointer,2,5);
+		    let matrix_ptr = wi.create_mxarray_ND(arr_pointer);
+		    expect(wi.isvector(matrix_ptr)).to.equal(0);
+	    });
+        it('should return 0 if input is 0x0', () => {
+	        let arr_pointer = wi.create_mxvector(2);
+	        let matrix_ptr = wi.create_mxarray_ND(arr_pointer);
+	        expect(wi.isvector(matrix_ptr)).to.equal(0);
+        });
+    });
+    describe('#ismatrix', () => {
+        it('should throw error if input is null', () => {
+	        try{
+		        wi.ismatrix(-1);
+	        }catch(err){
+		        expect(err.message).to.equal("Not enough input arguments.")
+	        }
+        });
+        it('should return 1 if input is mxn, where m & n>=0', () => {
+	        let arr_pointer = wi.create_mxvector(2);
+	        wi.set_array_index_f64(arr_pointer,1,5);
+	        wi.set_array_index_f64(arr_pointer,2,5);
+	        let matrix_ptr = wi.create_mxarray_ND(arr_pointer);
+	        expect(wi.ismatrix(matrix_ptr)).to.equal(1);
+        });
+        it('should return 0 if more than 2 dim', () => {
+	        let arr_pointer = wi.create_mxvector(3);
+	        wi.set_array_index_f64(arr_pointer,1,5);
+	        wi.set_array_index_f64(arr_pointer,2,5);
+	        let matrix_ptr = wi.create_mxarray_ND(arr_pointer);
+	        expect(wi.ismatrix(matrix_ptr)).to.equal(0);
+        });
+    });
+    describe('#isempty', () => {
+        it('should throw error if input is null', () => {
+	        try{
+		        wi.isempty(-1);
+	        }catch(err){
+		        expect(err.message).to.equal("Not enough input arguments.")
+	        }
+        });
+        it('should return 1 if input is has more than 1 element', () => {
+	        let arr_pointer = wi.create_mxvector(4);
+	        expect(wi.isempty(arr_pointer)).to.equal(0);
+        });
+	    it('should return 1 if input is  0x0x0x0', () => {
+		    let arr_pointer = wi.create_mxvector(4);
+		    let matrix_ptr = wi.create_mxarray_ND(arr_pointer);
+		    expect(wi.isempty(matrix_ptr)).to.equal(1);
+	    });
+        it('should return 1 if input is 0x1', () => {
+	        let arr_pointer = wi.create_mxvector(0);
+	        expect(wi.isempty(arr_pointer)).to.equal(1);
+        });
+	    it('should return 1 if input is 1x0', () => {
+		    let arr_pointer = wi.create_mxvector(0,0,0,0,1);
+		    expect(wi.isempty(arr_pointer)).to.equal(1);
+	    });
     });
 });
 

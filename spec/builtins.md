@@ -27,24 +27,40 @@
     - x = j:k creates a unit-spaced vector x with elements [j,j+1,j+2,...,j+m] where m = fix(k-j)
 - [ ] array_set (columns)
 # Array properties
+**Description**
+array_property(X), where X is a mxarray,
+if X is null, error with size. Otherwise
+return the specified logical
 - [x] is_scalar
 - [x] numel
 - [x] size
 - [x] ndims
 - [x] length (lenght of largest dim)
 - [x] isrow
-- [ ] iscolumn
-- [ ] ismatrix
+- [x] iscolumn
+- [x] ismatrix (returns [m n] where m,n > 0)
+- [x] isvector
+- [x] isempty
+- [ ] ischar (later)
 # Matrix Constructors
-- [ ] colon (`colon(i,j,k)`)
+- [x] colon (`colon(i,j,k)`)
     - __Description__
-        - At least 2 parameters must be passed otherwise error
-        - If j > i, then return a 1x0 array column vector
-        - If k = 0, then return a 1x0 array column vector 
-        - If j > k return i
-        - if k is not defined
-            - Increments of 1 integer from i to m inclusive, where m = fix(j-i). 
-        - If k is defined then it does starting from i to m using k increments where m = fix((k-j)/i).
+    - Argument:
+        - Should throw error if less than 2 inputs
+        - Should throw error if an argument is null
+    - Two arguments:
+        - i > j => 0x1
+        - if i or j are empty arrays => 0x1
+        - if i==j => 1x1 with value of j
+        - if i < j => As expected
+    - Three arguments:
+        - if j=0, => 0x1 regardless of i,k
+        - if i < k & j < 0 => 0x1
+        - if k > i & j > 0 => 0x1
+        - if k=i for any j => 1x1 with k as value
+        - if i < k & j > 0 => increasing order array from i to i+m*j where m=fix((k-j)/i)
+        - if k < i & j < 0 => decreasing order array
+          from i to i+m*j where m=fix((k-j)/i)
 - [ ] rand
 - [ ] randn
 - [ ] randi
