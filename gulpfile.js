@@ -22,7 +22,7 @@ gulp.task('compile-browser', () => {
 gulp.task("test",["compile"],()=>{
     if(fs.existsSync("./bin/get_mem.wasm"))
     {
-        return gulp.src('./test/node/*.test.js', {read: false})
+        return gulp.src('./test/node/**/*.test.js', {read: false})
         .pipe(mocha());
     }
  });

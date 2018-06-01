@@ -154,4 +154,4 @@ function set_colon_algo(arr,values, indeces/*:Array<Array<number>>*/)
 set_colon_algo(data, [1,2], [[1],[2],[1,2]]);
 set_colon_algo(data, [1,2], [[1],[2],[1,2]]);
 
-console.log("Size vector should be a row vector with real elements.".length);
+// console.log("Not enough input arguments.".length);

@@ -302,24 +302,6 @@ describe('Allocate Matlab Arrays', () => {
             arr[1] = 10;
             expect(wi.create_array(arr_1d,0)).to.not.equal(0);
         });
-        it('should handle zero dimensions well', () => {
-            
-        });
-        it("Should test the heap top ends in the right position for many multidimensional entries ",()=>{
-            
-        });
-        it("Should align initial array position for different dimension numbers",()=>{
-    
-        });
-        it("Should set the dimensions of array correctly",()=>{
-    
-        });
-        it("Should set the length of the array correctly for different dimensions",()=>{
-    
-        });
-        it("Should set the type of the array correctly",()=>{
-    
-        });
         it("Should create multi-dimensional arrays of many sizes correctly",()=>{
     
         });

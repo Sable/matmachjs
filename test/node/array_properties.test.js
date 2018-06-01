@@ -28,7 +28,63 @@ describe('Array Properties', () => {
         memory = wi.mem;
 
     });
-    describe('#size', function () {
+    describe("#numel", ()=> {
+	    it('should throw error when no input is passed', function () {
+		    try{
+			    console.log(wi.numel(-1));
+			    expect(1+1).to.equal(3)
+		    }catch(err)
+		    {
+			    expect(err.message).to.equal("Not enough input arguments.");
+		    }
+	    });
+	    describe('#create_mxvector', () => {
+            it('should output the right number of elements', () => {
+                let arr = wi.create_mxvector(4);
+                expect(wi.numel(arr)).to.equal(4);
+                arr = wi.create_mxvector(20);
+                expect(wi.numel(arr)).to.equal(20);
+                arr = wi.create_mxvector(0);
+                expect(wi.numel(arr)).to.equal(0);
+                arr = wi.create_mxvector(-1);
+                expect(wi.numel(arr)).to.equal(0);
+            });
+        });
+        describe('#create_mxarray', () => {
+            it('should output the right number of elements', () => {
+                let arr = wi.create_mxvector(4);
+                wi.set_array_index_f64(arr,1,10);
+                wi.set_array_index_f64(arr,2,10);
+                wi.set_array_index_f64(arr,3,10);
+                wi.set_array_index_f64(arr,4,10);
+                arr = wi.create_mxarray_ND(arr);
+                expect(wi.numel(arr)).to.equal(10000);
+                arr = wi.create_mxvector(4);
+                arr = wi.create_mxarray_ND(arr);
+                expect(wi.numel(arr)).to.equal(0);
+                arr = wi.create_mxvector(5);
+                wi.set_array_index_f64(arr,1,10);
+                wi.set_array_index_f64(arr,2,10);
+                wi.set_array_index_f64(arr,3,10);
+                wi.set_array_index_f64(arr,4,10); 
+                arr = wi.create_mxarray_ND(arr);
+                expect(wi.numel(arr)).to.equal(0);
+                
+            });
+      
+        });
+        
+    });
+    describe('#size',  ()=> {
+    	it("should throw error when input is -1",()=>{
+    		try{
+			    console.log(wi.size(-1));
+			    expect(1+1).to.equal(3)
+		    }catch(err)
+		    {
+			    expect(err.message).to.equal("Not enough input arguments.");
+		    }
+	    });
         it("should return correct output for different matrices", ()=>{
             let arr = wi.create_mxvector(4);
             let arr_f64 = new Int32Array(memory.buffer, arr, 6);
@@ -50,6 +106,45 @@ describe('Array Properties', () => {
 		    expect(wi.get_array_index_f64(size_arr, 2)).to.equal(1);
 	    });
     });
+    describe('#length', () => {
+        it('should throw error on -1 input', () => {
+	        try{
+		        wi.length(-1);
+		        expect(1+1).to.equal(3);
+	        }catch(err)
+	        {
+		        expect(err.message).to.equal("Not enough input arguments.");
+	        }
+
+        });
+        it('should return maximum dim size array for normal vectors', () => {
+            expect(wi.length(wi.create_mxvector(5))).to.equal(5);
+	        expect(wi.length(wi.create_mxvector(5,0,0,0,-1))).to.equal(5);
+	        expect(wi.length(wi.create_mxvector(-1,0,0,0,-1))).to.equal(1);
+	        expect(wi.length(wi.create_mxvector(1,0,0,0,-1))).to.equal(1);
+
+        });
+	    it('should return maximum dim size array for normal arrays', () => {
+		    let dim_arr = wi.create_mxvector(3);
+		    wi.set_array_index_f64(dim_arr, 1, 20);
+		    wi.set_array_index_f64(dim_arr, 2, 100);
+		    wi.set_array_index_f64(dim_arr, 3, 20);
+		    wi.set_array_index_f64(dim_arr, 4, -1);
+		    wi.set_array_index_f64(dim_arr, 5, -1);
+		    let arr = wi.create_mxarray_ND(dim_arr);
+		    expect(wi.length(wi.create_mxarray_ND(wi.create_mxvector(5)))).to.equal(0);
+		    expect(wi.length(arr)).to.equal(100);
+	    });
+	    it('should return maximum dim size array for structs', () => {
+ 		    expect(wi.length(wi.create_mxvector(3,3))).to.equal(3);
+
+
+	    });
+	    it('should return maximum dim size array for cell_arrays', () => {
+		    expect(wi.length(wi.create_mxvector(20,2))).to.equal(20);
+
+	    });
+    });     
     describe('#is_row_vector', function () {
         it("should return true when row vector of size 0x1", ()=>{
             let arr_pointer = wi.create_mxvector(0);

@@ -71,6 +71,8 @@
     (data $mem (i32.const 160) "Index exceeds matrix dimensions\00\00")
     (data $mem (i32.const 198) "Subscript indices must either be real positive integers or logicals\00\00\00\00\00\00")
     (data $mem (i32.const 272) "Size vector should be a row vector with real elements.")
+    (data $mem (i32.const 328) "Not enough input arguments.")
+    (data $mem (i32.const 360) "Too many input arguments.")
 
     ;; (data $mem (i32.const 136) "\f3\e0\01\00")
 
@@ -84,32 +86,40 @@
                 1: "Negative length is not allowed in this context"
                 2: "Index out-of-bounds"
         ;)
-        block  block  block block block block block
+        block  block  block block block block block block block
             get_local $error
-            br_table 0 1 2 3 4 5
+            br_table 0 1 2 3 4 5 6 7
             end
                (set_local $offset (i32.const 0))
                (set_local $length (i32.const 65))
-               br 5
+               br 7
             end
                (set_local $offset (i32.const 80))
                (set_local $length (i32.const 47))
-               br 4
+               br 6
             end 
               (set_local $offset (i32.const 136))
               (set_local $length (i32.const 10)) 
-               br 3
+               br 5
             end
                 (set_local $offset (i32.const 160))
                 (set_local $length (i32.const 31)) 
-                br 2
+                br 4
             end
                 (set_local $offset (i32.const 198))
                 (set_local $length (i32.const 67)) 
-                br 1
+                br 3
             end
                 (set_local $offset (i32.const 272))
                 (set_local $length (i32.const 54)) 
+                br 2
+            end
+                (set_local $offset (i32.const 328))
+                (set_local $length (i32.const 27)) 
+                br 1
+            end
+                (set_local $offset (i32.const 360))
+                (set_local $length (i32.const 24)) 
                 br 0
         end 
         get_local $offset
@@ -1279,13 +1289,26 @@
     (export "numel" (func $numel))
     (func $numel (param $arr_ptr i32) (result i32)
         get_local $arr_ptr
+        i32.const -1
+        i32.eq
+        if
+            i32.const 6
+            call $throwError 
+        end
+        get_local $arr_ptr
         i32.load offset=4 align=4
     )
     (export "size" (func $size))
     (func $size (param $arr_ptr i32)(param $dim i32)(result i32)
         (local $new_ptr i32)(local $i i32)(local $dim_number i32) (local $dim_ptr i32)
+        get_local $arr_ptr
+        i32.const -1
+        i32.eq
+        if
+            i32.const 6
+            call $throwError 
+        end
         (set_local $dim_number (i32.load offset=12 align=4 (get_local $arr_ptr )))
-        
         (set_local $dim_ptr (i32.load offset=16 align=4 (get_local $arr_ptr )))
          ;; Get Dimensions
         (call $create_mxvector (get_local $dim_number)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0))
@@ -1324,15 +1347,366 @@
     )
     (export "isscalar" (func $isscalar))
     (func $isscalar (param $arr_ptr i32) (result i32)
+    (;TODO(dherre3): Check for null;)
         get_local $arr_ptr
-        i32.load offset=8 align=4
+        i32.load offset=4 align=4
         i32.const 1
+        i32.eq   
+    )
+    (export "length" (func $length))
+    (func $length (param $arr_ptr i32) (result f64)
+        (local $new_ptr i32)(local $i i32)(local $dim_number i32) (local $dim_ptr i32)
+        (local $max f64)(local $temp f64)
+        get_local $arr_ptr
+        i32.const -1
         i32.eq
+        if
+            i32.const 6
+            call $throwError 
+        end
+         (set_local $dim_number (i32.load offset=12 align=4 (get_local $arr_ptr )))
+        (set_local $dim_ptr (i32.load offset=16 align=4 (get_local $arr_ptr )))
+         ;; Get Dimensions
+        (call $create_mxvector (get_local $dim_number)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0))
+        set_local $new_ptr
+        loop
+            block
+            (i32.ge_s (get_local $i)(get_local $dim_number))
+            br_if 0
+                (tee_local $temp (f64.load offset=0 align=8 (i32.add (get_local $dim_ptr)(i32.mul (get_local $i)(i32.const 8)))))
+                get_local $max
+                f64.max
+                set_local $max
+                (set_local $i (i32.add (get_local $i)(i32.const 1))) ;; Increase loop counter
+            br 1
+            end
+        end
+        get_local $max
+    )
+    (;
+        Matrix constructors
+    ;)
+    (func $is_null (param $arr_ptr i32) (result i32)
+        get_local $arr_ptr
+        i32.eqz
         if (result i32)
             i32.const 1
         else 
+            get_local $arr_ptr
+            i32.const -1
+            i32.eq
+            if (result i32)
+                i32.const 1
+            else
+                i32.const 0
+            end
+        end
+    )
+    (export "colon" (func $colon))
+    (func $colon (param $parameters i32)(result i32)
+        (local $length i32)(local $i f64)(local $j f64)(local $k f64)
+        (local $i_ptr i32)(local $j_ptr i32)(local $k_ptr i32)(local $colon_ptr i32)
+        (local $top f64)(local $i_loop f64)
+        get_local $parameters
+        call $is_null
+        if
+            i32.const 6
+            call $throwError
+        end
+        get_local $parameters
+        i32.load offset=4 align=4
+        tee_local $length
+        i32.const 2
+        i32.lt_u
+        if
+            i32.const 6
+            call $throwError
+        end
+        get_local $length
+        i32.const 3
+        i32.gt_s
+        if
+            i32.const 7
+            call $throwError
+        end
+
+        get_local $parameters
+        i32.const 1
+        call $get_array_index_i32
+        tee_local $i_ptr
+        ;; Check if length is 0 for first parameter
+        call $numel
+        i32.eqz
+        if
             i32.const 0
-        end     
+            i32.const 0
+            i32.const 0
+            i32.const 0
+            i32.const 0
+            i32.const 0
+            call $create_mxvector
+            return    
+            ;; Return 0x1
+        else
+            ;; Check if length is 0 for second parameter
+            get_local $parameters
+            i32.const 2
+            call $get_array_index_i32
+            tee_local $j_ptr
+            call $numel
+            i32.eqz
+            if
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                call $create_mxvector
+                return                ;; Return 0x1
+            else
+                ;; Set i and j
+                get_local $i_ptr
+                i32.const 1
+                call $get_array_index_f64                    
+                set_local $i
+                get_local $j_ptr
+                i32.const 1
+                call $get_array_index_f64 
+                set_local $j
+            end
+        end
+        ;; Check if there are two parameters
+        get_local $length
+        i32.const 2
+        i32.eq
+        if
+            get_local $i   
+            get_local $j
+            f64.le
+            if
+                get_local $i
+                get_local $j
+                f64.eq
+                if
+                    ;; Return  1x1
+                    i32.const 1
+                    i32.const 0
+                    i32.const 0
+                    i32.const 0
+                    i32.const 0
+                    i32.const 0
+                    call $create_mxvector
+                    tee_local $colon_ptr
+                    i32.const 1
+                    get_local $i
+                    call $set_array_index_f64
+                    get_local $colon_ptr
+                    return
+                else 
+                    ;; set fix(j-i)
+                    (f64.trunc (f64.sub (get_local $j)(get_local $i)))
+                    tee_local $top
+                    f64.const 1
+                    f64.add
+                    i32.trunc_u/f64                             
+                    i32.const 0
+                    i32.const 0
+                    i32.const 0
+                    i32.const 0
+                    i32.const 0
+                    call $create_mxvector
+                    tee_local $colon_ptr
+                    ;; Enter loop
+                    (set_local $top (f64.add (get_local $top)(get_local $i)))
+                    (set_local $i_loop (get_local $i))                            
+                    (set_local $i (f64.sub (get_local $i)(f64.const 1)))
+                    loop
+                        block
+                        (f64.gt (get_local $i_loop)(get_local $top))
+                        br_if 0
+                            (call $set_array_index_f64 
+                                (get_local $colon_ptr)(i32.trunc_s/f64 (f64.sub (get_local $i_loop)(get_local $i)))(get_local $i_loop))
+                            (set_local $i_loop (f64.add (get_local $i_loop)(f64.const 1)))
+                        br 1
+                        end
+                    end
+                    return
+                end
+            else ;;return 0x1
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                call $create_mxvector
+                return
+            end
+        else
+            get_local $parameters
+            i32.const 3                
+            call $get_array_index_i32
+            tee_local $k_ptr
+            ;; Check if length is 0 for first parameter
+            call $numel
+            i32.eqz
+            if
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                i32.const 0
+                call $create_mxvector
+                return    
+                ;; Return 0x1
+            else
+             
+                get_local $k_ptr
+                i32.const 1
+                call $get_array_index_f64                    
+                tee_local $k
+                ;; If j = 0
+                get_local $j
+                f64.const 0
+                f64.eq
+                if
+                    i32.const 0
+                    i32.const 0
+                    i32.const 0
+                    i32.const 0
+                    i32.const 0
+                    i32.const 0
+                    call $create_mxvector
+                    return    
+                end
+                ;; if k > i
+                get_local $i
+                f64.gt
+                if
+                    get_local $j
+                    f64.const 0
+                    f64.lt
+                    if
+                        i32.const 0 
+                        i32.const 0
+                        i32.const 0
+                        i32.const 0
+                        i32.const 0
+                        i32.const 0
+                        call $create_mxvector
+                        return
+                    else
+                        
+                        ;;actual increasing order
+                        ;; set fix((k-i)/j)
+                        (f64.trunc (f64.div (f64.sub (get_local $k)(get_local $i))(get_local $j)))
+                        tee_local $top
+                        f64.const 1
+                        f64.add
+                        i32.trunc_u/f64                             
+                        i32.const 0
+                        i32.const 0
+                        i32.const 0
+                        i32.const 0
+                        i32.const 0
+                        call $create_mxvector
+                        tee_local $colon_ptr
+                        ;; Enter loop
+                        (set_local $top (f64.add (get_local $i)(f64.mul (get_local $top)(get_local $j))))
+                        (set_local $i_loop (get_local $i))                            
+                        (set_local $i (f64.const 1))
+                        loop
+                            block
+                            (f64.gt (get_local $i_loop)(get_local $top))
+                            br_if 0
+                                (call $set_array_index_f64 
+                                    (get_local $colon_ptr)(i32.trunc_s/f64 (get_local $i))(get_local $i_loop))
+                                (set_local $i_loop (f64.add (get_local $i_loop)(get_local $j)))
+                                (set_local $i (f64.add (get_local $i)(f64.const 1)))
+                            br 1
+                            end
+                        end
+                        return    
+                    end
+                else
+                    get_local $i
+                    get_local $k
+                    f64.eq
+                    if
+                        ;; Return 1x1 
+                        i32.const 1
+                        i32.const 0
+                        i32.const 0
+                        i32.const 0
+                        i32.const 0
+                        i32.const 0
+                        call $create_mxvector
+                        tee_local $colon_ptr
+                        i32.const 1
+                        get_local $i
+                        call $set_array_index_f64
+                        get_local $colon_ptr
+                        return
+                    else
+                        ;; k < i
+                        ;; decreasing order 
+                        get_local $j
+                        f64.const 0
+                        f64.gt
+                        if
+                            i32.const 0 
+                            i32.const 0
+                            i32.const 0
+                            i32.const 0
+                            i32.const 0
+                            i32.const 0
+                            call $create_mxvector
+                            return
+                        else
+                            ;; actual decreasing order
+                            ;; set fix((k-i)/j)
+                            (f64.trunc (f64.div (f64.sub (get_local $k)(get_local $i))(get_local $j)))
+                            tee_local $top
+                            f64.const 1
+                            f64.add
+                            i32.trunc_u/f64                             
+                            i32.const 0
+                            i32.const 0
+                            i32.const 0
+                            i32.const 0
+                            i32.const 0
+                            call $create_mxvector
+                            tee_local $colon_ptr
+                            ;; Enter loop
+                            (set_local $top (f64.add (get_local $i)(f64.mul (get_local $top)(get_local $j))))
+                            (set_local $i_loop (get_local $i))                            
+                            (set_local $i (f64.const 1))
+                            loop
+                                block
+                                (f64.gt (get_local $top)(get_local $i_loop))
+                                br_if 0
+                                    (call $set_array_index_f64 
+                                        (get_local $colon_ptr)(i32.trunc_s/f64 (get_local $i))(get_local $i_loop))
+                                    (set_local $i_loop (f64.add (get_local $i_loop)(get_local $j)))
+                                    (set_local $i (f64.add (get_local $i)(f64.const 1)))
+                                br 1
+                                end
+                            end
+                            return     
+                        end
+                    end
+                
+                    
+                end
+
+
+            end
+        end
+        i32.const 0
+        return
+
     )
 
 )
