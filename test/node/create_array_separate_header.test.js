@@ -242,6 +242,20 @@ describe('Allocate Matlab Arrays', () => {
                 expect(err.message).to.equal("Size vector should be a row vector with real elements.");
             }
         });
+        it('should return 4 dimensions when given [2,3,5,2,1,1,1,1]', () => {
+            let arr_1d = wi.create_mxvector(8);
+		    wi.set_array_index_f64(arr_1d, 1,2);
+		    wi.set_array_index_f64(arr_1d, 2,3);
+		    wi.set_array_index_f64(arr_1d, 3,5);
+            wi.set_array_index_f64(arr_1d, 4,2);
+            wi.set_array_index_f64(arr_1d, 5,1);
+            wi.set_array_index_f64(arr_1d, 6,1);
+            wi.set_array_index_f64(arr_1d, 7,1);
+            wi.set_array_index_f64(arr_1d, 8,1);
+            // console.log(wi.is_row_vector(arr_1d));
+            let arr = wi.create_mxarray_ND(arr_1d);
+            expect(wi.ndims(arr)).to.equal(4);
+        });
         it("should create square matrix if input array has size 1", () => {
             let arr_1d = wi.create_mxvector(1);
             wi.set_array_index_f64(arr_1d, 1,2);

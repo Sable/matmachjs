@@ -79,7 +79,7 @@ function assert(condition, error_number) {
         throw new Error(errors[error_number]);
     }
 }
-console.log("Subscript indices must either be real positive integers or logicals".length);
+console.log("To RESHAPE the number of elements must not change.".length);
 
 
 ///// JAVASCRIPT API

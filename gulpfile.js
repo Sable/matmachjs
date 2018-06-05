@@ -27,7 +27,7 @@ gulp.task("test",["compile"],()=>{
     }
  });
 gulp.task("test-watch",()=>{
-  gulp.watch(['./test/**/*.test.js','./src/*.wat'],["test"])
+  gulp.watch(['./test/**/**/*.test.js','./src/*.wat'],["test"])
 });
 gulp.task('default',()=>{
     return gulp.watch(['./src/*.wat'],['compile']);

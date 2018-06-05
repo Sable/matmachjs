@@ -2,8 +2,6 @@
 
 # Allocation
 - [x] Malloc
-    - [x] Implementation
-    - [x] Unit tests
 - [ ] Realloc
 - [ ] Free
 
@@ -20,12 +18,12 @@
 ## Array get and set
 - [x] array_get (get from indices)
 - [x] array_set (get from indices)
-- [ ] array_get (columns)
+- [x] array_get (columns)
     - Colon by itself transforms array into column direction
     - A(:) reshapes the array into a column vector
     - x = j:i:k creates a regularly-spaced vector x using i as the increment between elements. The vector elements are roughly equal to [j,j       +i,j+2*i,...,j+m*i] where m = fix((k-j)/i)
     - x = j:k creates a unit-spaced vector x with elements [j,j+1,j+2,...,j+m] where m = fix(k-j)
-- [ ] array_set (columns)
+- [x] array_set (columns)
 # Array properties
 **Description**
 array_property(X), where X is a mxarray,
