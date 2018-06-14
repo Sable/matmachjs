@@ -18,19 +18,19 @@ function get_colon_transpose(total/*:Array<number>*/,target/*:Array<number>*/,sh
 }
 let total/*:Array<number>*/ = [];
 function get_colon(total/*:Array<number>*/, target/*:Array<number>*/,shape/*:Array<number>*/,
-         b/*:Array<Array<number>>*/,dim/*:number*/, mult/*:number*/, offset/*:number*/
+         indices/*:Array<Array<number>>*/,dim/*:number*/, mult/*:number*/, offset/*:number*/
          ,mult_ind/*:number*/, offset_ind/*:number*/)/*:void*/ {
     /// assumes that indeces are well behaved, that is in increasing order and within range
-   b[dim].forEach((elem,ind) => {
+    indices[dim].forEach((elem,ind) => {
        let new_offset = offset + mult*(elem-1);
        let new_mult = mult * shape[dim];
        let new_offset_ind = offset_ind + mult_ind*ind;
-       let new_mult_in = mult_ind * b[dim].length;
-       if(dim === b.length-1)
+       let new_mult_in = mult_ind * indices[dim].length;
+       if(dim === indices.length-1)
        {
            total[new_offset_ind] = target[new_offset];
        }else{
-           get_colon(total, target,shape, b, dim+1, new_mult, new_offset, new_mult_in, new_offset_ind);
+           get_colon(total, target,shape, indices, dim+1, new_mult, new_offset, new_mult_in, new_offset_ind);
        }
    });
 }
@@ -48,13 +48,14 @@ function shape_arr(arr)
 {
     return [3,7,2];
 }
+
 function verify_incedes_get(arr/*:Array<number>*/, shape/*:Array<number>*/, indeces/*:Array<Array<number>>*/)
 {
     let numel = arr.length;
     let total_elem = 1;
     indeces.forEach( (indeces_dim_arr,i) => {
         total_elem *= indeces_dim_arr.length;
-        indeces_dim_arr.forEach( ind =>{
+	    indeces_dim_arr.forEach( ind =>{
             if(ind === 0 )
             {
                 throw new Error("Subscript indices must either be real positive integers or logicals.");
@@ -95,12 +96,13 @@ try {
     console.log(err.message);
 }
 try {
-   get_colon_algo(data, [[1,2],[1,3,5,8],[1]]); // Should throw error
+   get_colon_algo(data, [[1,2],[1,3,5,6],[]]); // Should throw error
 } catch (err) {
     console.log(err.message);
 }
 /** 
     Set Colon operation
+    Need to change in case is only one argument to the shape of the argument.
 */
 function set_colon(values/*:Array<number>*/, target/*:Array<number>*/,shape/*:Array<number>*/,
          indeces/*:Array<Array<number>>*/,dim/*:number*/, mult/*:number*/, offset/*:number*/
@@ -111,6 +113,7 @@ function set_colon(values/*:Array<number>*/, target/*:Array<number>*/,shape/*:Ar
        let new_mult = mult * shape[dim];
        let new_offset_ind = offset_ind + mult_ind*ind;
        let new_mult_in = mult_ind * indeces[dim].length;
+       
        if(dim === indeces.length-1)
        {
            target[new_offset] = values[new_offset_ind];
@@ -146,7 +149,6 @@ function verify_incedes_set(arr/*:Array<number>*/,values/*:Array<number>*/, shap
 function set_colon_algo(arr,values, indeces/*:Array<Array<number>>*/)
 {
     let shape = shape_arr(arr);
-    let total = [];
     verify_incedes_set(arr,values,shape, indeces);
     set_colon(values, arr, shape, indeces, 0, 1, 0, 1, 0);
     console.log(arr);

@@ -2,23 +2,31 @@
   "name": "buildin-mc2wasm",
   "version": "1.0.0",
   "description": "Built-in functions and memory calls for the mc2wasm module",
-  "main": "index.js",
+  "main": "./bin/index.js",
+  "types": "lib/index",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-ts": "tsc",
+    "watch-ts": "tsc -w"
   },
   "author": "David Herrera",
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^10.3.2",
+    "@webassemblyjs/ast": "^1.5.12",
     "chai-as-promised": "^7.1.1",
     "colors": "^1.2.1",
     "express": "^4.16.3",
     "gulp": "^3.9.1",
     "gulp-mocha": "^5.0.0",
     "gulp-shell": "^0.6.5",
+    "gulp-typescript": "^5.0.0-alpha.1",
     "mocha": "^5.1.1",
     "shelljs": "^0.8.1",
     "sinon": "^4.5.0",
-    "sinon-chai": "^3.0.0"
+    "sinon-chai": "^3.0.0",
+    "typescript": "^2.9.1",
+    "typescript-eslint-parser": "^16.0.0"
   },
   "dependencies": {
     "chai": "^4.1.2"

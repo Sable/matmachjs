@@ -17,6 +17,8 @@ const libjs = require(path.join(__dirname,"../../")+"/bin/lib.js");
 
 
 const file = fs.readFileSync(path.join(__dirname,"../../")+"/bin/get_mem.wasm");
+const { MxArray } = require(path.join(__dirname,"../../src/ts/mxarray.js"));
+
 let wasmInstance;
 let memory;
 let malloc;
@@ -24,6 +26,49 @@ const PAGE_SIZE = 65536;
 let HEAP_OFFSET = 64;
 
 describe("GET and SET for arrays" , () => {
+	
+	describe('#get_f64', () => {
+		let wi;
+		let create_mxvector,
+			create_mxarray_ND,
+			set_array_index_f64,
+			get_array_index_f64,
+			set_array_index_i32,
+			get_f64,
+			set_f64;
+		beforeEach(async () => {
+			wi= await WebAssembly.instantiate(file,libjs);
+			wi = wi.instance.exports;
+			({create_mxvector,get_f64,set_f64,set_array_index_i32, 
+				get_array_index_f64, create_mxarray_ND, set_array_index_f64} = wi);
+			memory = wi.mem;
+		});
+		it('should return the right elements of array', () => {
+			let mxvec = create_mxvector(3);
+			set_array_index_f64(mxvec,1,3);
+			set_array_index_f64(mxvec,2,7);
+			set_array_index_f64(mxvec,3,2);
+			let mxarr = create_mxarray_ND(mxvec);
+			let indices1 = create_mxvector(1);
+			let indices2 = create_mxvector(1);
+			let indices3 = create_mxvector(1);
+			set_array_index_f64(indices1,1,3);
+			set_array_index_f64(indices2,1,7);
+			set_array_index_f64(indices3,1,2);
+			let cell_arr = create_mxvector(3,5);
+			set_array_index_i32(cell_arr,1,indices1);
+			set_array_index_i32(cell_arr,2,indices2);
+			set_array_index_i32(cell_arr,3,indices3);
+			let values_ptr = create_mxvector(1);
+			set_array_index_f64(values_ptr,1,3);
+			let res_ptr = set_f64(mxarr,cell_arr, values_ptr);
+			// console.log(wi.ndims(res_ptr));
+			console.log(get_array_index_f64(res_ptr,42));
+		});
+		it('should return the right elements of array using Matlab Runtime', () => {
+			let mxarray = new MxArray(wi,)
+		});
+	});
 	describe("#get_elem_array_index_NS", () => {
 		let memory;
 		let arr_1d;
@@ -58,7 +103,6 @@ describe("GET and SET for arrays" , () => {
 		});
 		it("Should correctly return value at index for int32",() =>{
 			head_nd = wasmInstance.create_mxarray_ND(arr_1d,0,5/*int32*/);
-			console.log("Signed", wasmInstance.is_signed(arr_1d));
 			wasmInstance.set_array_index_i32(head_nd, 1,2);
 			wasmInstance.set_array_index_i32(head_nd, 3,2147483647);
 			wasmInstance.set_array_index_i32(head_nd, 4,-2147483648);
@@ -191,7 +235,6 @@ describe("GET and SET for arrays" , () => {
 
 		it("Should correctly set value for i32",() =>{
 			let a = new Int32Array(memory.buffer, arr_1d, 6);
-			console.log(a);
 			wasmInstance.set_array_index_i32(head_nd, 1,2);
 			wasmInstance.set_array_index_i32(head_nd, 2,4);
 			wasmInstance.set_array_index_i32(head_nd, 3,123);

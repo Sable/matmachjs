@@ -15,18 +15,15 @@ chai.use(sinonChai);
 ///////////////////////////////////////////////////////////////
 const libjs = require(path.join(__dirname,"../../")+"/bin/lib.js");
 
-
 const file = fs.readFileSync(path.join(__dirname,"../../")+"/bin/get_mem.wasm");
 let wi;
 let memory;
-
 describe('Array Properties', () => {
     beforeEach(async ()=>{
         libjs.js.mem = WebAssembly.Memory({initial:1});
         wi= await WebAssembly.instantiate(file,libjs);
         wi = wi.instance.exports;
         memory = wi.mem;
-
     });
     describe("#numel", ()=> {
 	    it('should throw error when no input is passed', function () {
@@ -66,7 +63,7 @@ describe('Array Properties', () => {
                 wi.set_array_index_f64(arr,1,10);
                 wi.set_array_index_f64(arr,2,10);
                 wi.set_array_index_f64(arr,3,10);
-                wi.set_array_index_f64(arr,4,10); 
+                wi.set_array_index_f64(arr,4,10);
                 arr = wi.create_mxarray_ND(arr);
                 expect(wi.numel(arr)).to.equal(0);
                 

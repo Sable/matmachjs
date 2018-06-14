@@ -59,20 +59,19 @@ A fourth way to operate includes using cumulative operations. These include `cum
 
 A last way to operate, is to have actual matrix operations. These include but are not limited to, `mtimes`. `mrdivide`. `mldivide`, `mpower`. For these operations, we may need intelligent handling of them to get good performance out of them.
 ### WebAssembly
- In order to correctly handle this in WebAssembly, we need a way to create to have this operations without much code reproduction. Exploiting the fact that many of these operations are very similar in execution.
+ In order to correctly handle this in WebAssembly, we need a way to have this operations without much code reproduction. Exploiting the fact that many of these operations have very similar in execution.
  
  This problem is easily solved by WebAssembly's
  `table` construct, the table is basically an array of functions. The type of these functions is `anyfunctype`, or a set containing all the possible function signatures. With these we can have an operator such as 
- `element_wise_two_inputs`, which applies an element-wise operation using the first input as the first operand and the second input as the second operand. Similarly, based on the above classes, we would have, `cumulative_operator`, `element_wise_mapping`,
- `operation_along_dimension`. One of the inputs to these functions will be an index to a function we will be applying.
+ `element_wise_two_inputs`, which applies an element-wise operation using the first input as the first operand and the second input as the second operand. Similarly, based on the above classes, we would have, `cumulative_operator_sameinput`, `cumulative_operator_values`, `element_wise_mapping`. One of the inputs to these functions will be an index to a function we will be applying.
 These operations can be thought of as `MACROS`, for WebAssembly. They can also be thought about in a functional paradigm fashion, where we have functions as first class citizens.
 Perhaps this would work well as a DSL that would **in short syntax** allow to generate the right functions and values.
 
 In the ideal world, we would do so with a list.
 i.e.
 ```
-USING `cumulative_operator` CREATE
-    [`add` as `cumsum`,`prod`,`max`,'min']
+CREATE `cumulative_operator_values` USING
+    [`add`,`prod`,`max`,'min']
 ```
 This would generate four functions, 
-Where here is assumed that `cumulative_operator` takes one parameter, and the each function takes two scalars and produces another scalar.
+Where here is assumed that `cumulative_operator_values` takes one parameter, and the each function takes two scalars and produces another scalar.

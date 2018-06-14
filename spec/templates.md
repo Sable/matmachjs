@@ -80,3 +80,5 @@ This template like language will have three requirements:
 - It will all be check at compile time. The idea would be to insert a step in between JAVA and Wasm text. Where we would take our text file pass it through our template system and finish the functions by verifying the wasm code.
 - Validate the values of the parameters passed in a template.
 
+Sources:
+- Charles Console
