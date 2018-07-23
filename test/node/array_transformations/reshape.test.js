@@ -16,6 +16,7 @@ chai.use(sinonChai);
 ///////////////////////////////////////////////////////////////
 const libjs = require(path.join(__dirname,"../../../")+"/bin/lib.js");
 
+const { MxNDArray, MxVector } = require(path.join(__dirname,"../../../bin/classes/Runtime.js"));
 
 const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/get_mem.wasm");
 let wi;
@@ -100,8 +101,13 @@ describe('Array Transformations', () => {
             expect(Array.from(new Float64Array(memory.buffer, wi.get_array_start(size_ptr), wi.numel(size_ptr))))
                 .to.deep.equal([21,2]);
         });
+        it("should return a 1x4 array for a 2x2 despite giving as reshape input 1x4x1x1x1", ()=>{
+            var arr = new MxNDArray(wi, [2,2]);
+	        var vec = new MxVector(wi, 5);
+            vec.set_indices([[1,2,3,4,5]],[1,4,1,1,1]);
+	        wi.reshape(arr._arr_ptr, vec._arr_ptr);
+	        expect(Array.from(arr.size().getContents())).to.deep.equal([1,4]);
+        });
     });
-    it('should ', () => {
-        
-    }); 
+
 });

@@ -10,7 +10,14 @@ enum Class {
     function_handle,
     string
 }
-
+enum Type {
+    MxObject,
+    Colon
+}
+interface Mx {
+    type: Type
+    mx_ptr?:number
+}
 
 
 interface Attributes {

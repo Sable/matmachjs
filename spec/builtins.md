@@ -19,6 +19,7 @@
 - [x] array_get (get from indices)
 - [x] array_set (get from indices)
 - [x] array_get (columns)
+    - Should throw error when two inputs are not row arra
 - [x] array_set (columns)
 # Array properties
 **Description**
@@ -55,15 +56,32 @@ return the specified logical
         - if i < k & j > 0 => increasing order array from i to i+m*j where m=fix((k-j)/i)
         - if k < i & j < 0 => decreasing order array
           from i to i+m*j where m=fix((k-j)/i)
-- [ ] rand
-- [ ] randn
-- [ ] randi
-- [ ] zeroes
-- [ ] ones
-- [ ] eye
-- [ ] colon(start,stop,step) 
-- [ ] clone (Also an allocator)
+- [x] rand
+    This supports the following functions:
+      ```
+        X = randi(imax)
+        X = randi(imax,n)
+        X = randi(imax,sz1,...,szN)
+        X = randi(imax,sz)
+        X = randi(imax,classname)
+        X = randi(imax,n,classname)
+        X = randi(imax,sz1,...,szN,classname)
+        X = randi(imax,sz,classname)
+    ```
+- [x] randn
+    - Similar to as above
+- [x] randi
+    - Similar to as above
+- [x] zeroes
+- [x] ones
+- [x] clone (Also an allocator)
+**NOTE:** For all constructors the supported and cannonical format will be:
+```
+sz=[1,2,4], classname
 
+```
+The sparcity feature will be ignored.
+- [ ] eye
     - **requires:** compute_indeces
 - [ ] set_index
 - [ ] compute_indeces
@@ -121,3 +139,13 @@ return the specified logical
 - [ ] tic
 - [ ] toc
 - [ ] assert
+
+### To implement
+
+A few macros:
+    Element wise:
+        -  Elementwise right
+        -  Elementwise left
+        -  Map
+    Pairwise:
+       - map

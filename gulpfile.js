@@ -11,7 +11,7 @@ const tsProject = ts.createProject("tsconfig.json");
 
 const PORT = 8000;
 gulp.task('compile-wasm', () => {
-  return gulp.src('./src/**/*.wat', {read: false})
+  return gulp.src('./src/wast/*.wat', {read: false})
   .pipe(shell([
     './run_wasm.sh <%= file.path %>'
   ]))
@@ -23,7 +23,7 @@ gulp.task('compile-browser', () => {
       './run_wasm_browser.sh <%= file.path %>'
     ]))
 });
-gulp.task("test",["compile-wasm","compile-typescript"],()=>{
+gulp.task("test",["compile-wasm","compile-ts"],()=>{
     if(fs.existsSync("./bin/get_mem.wasm"))
     {
         return gulp.src('./test/node/**/*.test.js', {read: false})
@@ -31,10 +31,12 @@ gulp.task("test",["compile-wasm","compile-typescript"],()=>{
     }
  });
 gulp.task("test-watch",()=>{
-  gulp.watch(['./test/**/**/*.test.js','./src/**/*.wat'],["test"])
+  gulp.watch(['./test/**/**/*.test.js','./src/**/*.wat','./src/ts/**/**/*.ts'],["test"])
 });
-gulp.task('default',()=>{
-    return gulp.watch(['./src/wast/*/wat','src/ts/**/*.ts'],['compile-wasm','compile-typescript']);
+gulp.task('watch-compile-wasm',()=>{
+  return gulp.watch(['./src/wast/*.wat'],['compile-wasm']);
+});gulp.task('default',()=>{
+    return gulp.watch(['./src/wast/*/wat','src/ts/**/**/*.ts'],['compile-wasm','compile-ts']);
 });
 gulp.task('browser',()=>{
     startServer(PORT,()=>
@@ -43,10 +45,10 @@ gulp.task('browser',()=>{
       return gulp.watch('*.wat',['compile-browser']);
     });
 });
-gulp.task("compile-typescript", function () {
+gulp.task("compile-ts", function () {
 	return tsProject.src()
 		.pipe(tsProject())
-		.js.pipe(gulp.dest("dist"));
+		.js.pipe(gulp.dest("bin"));
 });
 
 

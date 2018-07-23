@@ -23,7 +23,7 @@ Have an interface expression,
 Expression =
 {
     List<Instructions>,
-    ReturnType:List<ValueTypes>
+    ReturnType:List<ValueType>
 }
 ```
 ```

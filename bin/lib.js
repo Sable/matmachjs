@@ -25,7 +25,7 @@ function printDouble(number)
     console.log("NUMBER:", number);
     return number;
 }
-
+console.log("Concatanating dimension larger than the input arguments dimensions.".length);
 module.exports = {
     "js":{
         "mem":memory,
@@ -34,8 +34,15 @@ module.exports = {
         "printString":printString,
         "printDouble":printDouble,
         "printDoubleNumber":printDouble,
-        "js_set_array_f64":set_array_f64,
+        "printMarker":()=>console.log("MARKER"),
         "assert_header":1
+    },
+    "math":{
+        ones:() => 1,
+        rand:() => Math.random(),
+        randn:() => randn_s(),
+        randi:(max) => Math.floor(max*Math.random()),
+        zeroes:()=> 0
     },
     "test":{
         "assert":assert
@@ -82,9 +89,12 @@ function assert(condition, error_number) {
 // console.log("Dynamic array growth currently not supported in set.".length);
 
 
-///// JAVASCRIPT API
+function randn_s() {
+	let rand = 0;
 
-function set_array_f64(arr,indeces, values)
-{
+	for (let i = 0; i < 10; i += 1) {
+		rand += Math.random();
+	}
 
+	return rand / 10;
 }
