@@ -20,19 +20,23 @@ function printWhos(size, bytes, class_type)
             name_class = "double";
     }   
 }
-function printDouble(number)
+function printInt(number)
 {
-    console.log("NUMBER:", number);
+    console.log("INT:", number);
     return number;
 }
-console.log("Concatanating dimension larger than the input arguments dimensions.".length);
+function printDouble(number)
+{
+	console.log("DOUBLE:", number);
+	return number;
+}
 module.exports = {
     "js":{
         "mem":memory,
         "printError":printError,
         "printWho":printWhos,
         "printString":printString,
-        "printDouble":printDouble,
+        "printDouble":printInt,
         "printDoubleNumber":printDouble,
         "printMarker":()=>console.log("MARKER"),
         "assert_header":1
