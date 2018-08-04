@@ -1,17 +1,20 @@
 (module $memory
     ;; (import "js" "mem" (memory $mem 1))
     ;; (import "js" "printError" (func $printError (param i32 i32)(result i32)))
+    ;; (import "js" "print_array_f64" (func $print_array_f64 (param i32 i32)))
     ;; (import "js" "printString" (func $printString (param i32 i32)(result i32)))
     ;; (import "js" "printDouble" (func $printDouble (param i32)(result i32)))
     ;; (import "js" "printMarker" (func $printMarker))    
     ;; (import "js" "printDoubleNumber" (func $printDoubleNumber (param f64) (result f64)))    
     ;; (import "test" "assert" (func $assert (param i32 i32)))
     ;; (import "math" "ones" (func $ones_s (result f64)))
-    ;; (import "math" "zeroes" (func $zeroes_s (result f64)))
+    ;; (import "math" "zeros" (func $zeros_s (result f64)))
     ;; (import "math" "rand" (func $rand_s (result f64)))
     ;; (import "math" "randn" (func $randn_s (result f64)))
     ;; (import "math" "randi" (func $randi_s (param f64) (result f64)))
-
+    ;; (import "math" "isnan" (func $isnan (param f64) (result i32)))
+    ;; (import "math" "power" (func $power_SS (param f64)(param f64) (result f64)))
+    
     ;; Dummy variables which will be commented out
     (;dummy;)(func $printString (param i32 i32)(result i32) i32.const 1)
     (;dummy;)(func $printMarker )
@@ -20,51 +23,18 @@
     (;dummy;)(func $printDoubleNumber (param f64) (result f64) f64.const 0)
     (;dummy;)(func $assert (param i32 i32))
     (;dummy;)(func $ones_s (result f64) f64.const 0)
-    (;dummy;)(func $zeroes_s (result f64) f64.const 0)
+    (;dummy;)(func $zeros_s (result f64) f64.const 0)
     (;dummy;)(func $rand_s (result f64) f64.const 0)
     (;dummy;)(func $randn_s (result f64) f64.const 0)
     (;dummy;)(func $randi_s (param f64)(result f64) f64.const 0)
-    (func $mc_plus_SS (param f64 f64)(result f64) 
-        get_local 0
-        get_local 1
-        f64.add
-    )
-    (func $mc_minus_SS (param f64 f64)(result f64) 
-        get_local 0
-        get_local 1
-        f64.sub
-    )
-    (func (export "trial") (result f64)
-        f64.const -0
-    )
-    (func $mc_mod_SS (param f64 f64)(result f64) 
-        get_local 0
-        i64.trunc_s/f64 
-        get_local 1
-        i64.trunc_s/f64 
-        i64.rem_s
-        f64.convert_s/i64
-        get_local 1
-        f64.copysign        
-    )
-    (func $mc_rem_SS (param f64 f64)(result f64) 
-        get_local 0
-        i64.trunc_s/f64 
-        get_local 1
-        i64.trunc_s/f64 
-        i64.rem_s
-        f64.convert_s/i64
-    )
-    (func $mc_times_SS (param f64 f64)(result f64) 
-        get_local 0
-        get_local 1
-        f64.mul
-    )
+    (;dummy;)(func $isnan (param f64)(result i32) i32.const 0)
+    (;dummy;)(func $power_SS (param f64 f64)(result f64) f64.const 0)
+    (;dummy;)(func $print_array_f64 (param i32 i32) )
+
     (global $ASSERT_HEADER_FLAG i32 (i32.const 1))
     (memory $mem 1 5)
     (table $tab 40 anyfunc)
-    (elem $tab (i32.const 0) $zeroes_s $ones_s $rand_s $randn_s $randi_s)
-    (elem $tab (i32.const 5) $mc_plus_SS $mc_minus_SS $mc_rem_SS $mc_mod_SS $mc_times_SS)
+
     ;; (elem $tab (i32.const 10) )
     (export "mem" (memory $mem))
     (export "tab" (table $tab))
@@ -88,6 +58,11 @@
     (data $mem (i32.const 616) "Concatanating dimension must be larger than 0")
     (data $mem (i32.const 672) "Concatanating dimension larger than the input arguments dimensions.")
     (data $mem (i32.const 744) "Matrix dimensions must agree.")
+    (data $mem (i32.const 776) "Dimension argument must be a positive integer scalar within indexing range.")
+    (data $mem (i32.const 856) "Input must have array class.")
+    (data $mem (i32.const 888) "Arguments must be 2-D, or at least one argument must be scalar.")
+    (data $mem (i32.const 952) "Inner matrix dimensions must agree.")
+    (data $mem (i32.const 992) "N-dimensional arrays are not supported.")
 
     ;; (data $mem (i32.const 136) "\f3\e0\01\00")
 
@@ -101,68 +76,88 @@
                 1: "Negative length is not allowed in this context"
                 2: "Index out-of-bounds"
         ;)
-        block  block  block block block block block block block block block block block block block block
+        block  block  block block block block block block block block block block block block block block block block block block block
             get_local $error
-            br_table 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14
+            br_table 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
             end
                (set_local $offset (i32.const 0))
                (set_local $length (i32.const 65))
-               br 14
+                br 19
             end
                (set_local $offset (i32.const 80))
                (set_local $length (i32.const 47))
-               br 13
+                br 18
             end 
               (set_local $offset (i32.const 136))
               (set_local $length (i32.const 10)) 
-               br 12
+                br 17
             end
                 (set_local $offset (i32.const 160))
                 (set_local $length (i32.const 31)) 
-                br 11
+                br 16
             end
                 (set_local $offset (i32.const 198))
                 (set_local $length (i32.const 67)) 
-                br 10
+                br 15
             end
                 (set_local $offset (i32.const 272))
                 (set_local $length (i32.const 54)) 
-                br 9
+                br 14
             end
                 (set_local $offset (i32.const 328))
                 (set_local $length (i32.const 27)) 
-                br 8
+                br 13
             end
                 (set_local $offset (i32.const 360))
                 (set_local $length (i32.const 24)) 
-                br 7
+                br 12
             end
                 (set_local $offset (i32.const 384))
                 (set_local $length (i32.const 50)) ;; 434 
-                br 6
+                br 11
             end
                 (set_local $offset (i32.const 440))
                 (set_local $length (i32.const 42)) 
-                br 5
+                br 10
             end 
                 (set_local $offset (i32.const 488))
                 (set_local $length (i32.const 64))
-                br 4
+                br 9
             end 
                 (set_local $offset (i32.const 552))
                 (set_local $length (i32.const 61))
-                br 3
+                br 8
             end 
                 (set_local $offset (i32.const 616))
                 (set_local $length (i32.const 45))
-                br 2
+                br 7
             end 
                 (set_local $offset (i32.const 672))
                 (set_local $length (i32.const 67))
-                br 1
+                br 6
             end 
                 (set_local $offset (i32.const 744))
                 (set_local $length (i32.const 29))
+                br 5
+            end 
+                (set_local $offset (i32.const 776))
+                (set_local $length (i32.const 75))
+                br 4
+            end 
+                (set_local $offset (i32.const 856))
+                (set_local $length (i32.const 28))
+                br 3
+            end 
+                (set_local $offset (i32.const 888))
+                (set_local $length (i32.const 63))
+                br 2
+            end 
+                (set_local $offset (i32.const 952))
+                (set_local $length (i32.const 35))
+                br 1
+            end 
+                (set_local $offset (i32.const 992))
+                (set_local $length (i32.const 39))
                 br 0
         end 
         get_local $offset
@@ -184,44 +179,12 @@
         set_global $FLAG_CHECK_SIZE_MEM
         get_global $FLAG_CHECK_SIZE_MEM
     )
-    (export "size_s" (func $size_s))
-    (func $size_s (param $type i32) (result i32)
-        (local $type_size i32)
-        ;; @name size_s#memory  
-        ;; @param $type Contains the type for the array, 
-        ;;    i.e double | single | int8 | int16 | int32 | int64 | uint8 | uint16 | uint32 | uint64
-        ;; @return i32, size for that type
-        ;; @description
-        ;;      Create a 1d array of $n size
-        ;;      and type
-        ;; TODO: Expand to also unsigned types
-           block block block block block
-            get_local $type
-            br_table 0 1 2 3 4
-            end
-            ;; 64
-            (set_local $type_size (i32.const 8))
-            br 3
-            end
-            ;; 32
-            (set_local $type_size (i32.const 4))
-            br 2
-            end
-            ;; 16
-            (set_local $type_size (i32.const 2))
-            br 1
-            end
-            ;; 8
-            (set_local $type_size (i32.const 1))
-        end
-        (return (get_local $type_size))
-    )
-
+ 
     (func  (param i32) (param i32)(result i32)
         i32.const 0
     )
-    (export "get_array_start" (func $get_array_start))
-    (func $get_array_start (param $arr_header i32)(result i32)
+    (export "mxarray_core_get_array_ptr" (func $mxarray_core_get_array_ptr))
+    (func $mxarray_core_get_array_ptr (param $arr_header i32)(result i32)
         get_local $arr_header
         i32.load offset=8 align=4
         return
@@ -234,7 +197,7 @@
         (set_local $one_index (i32.const 2))
         (set_local $dim_array_elem_byte_size (call $get_array_byte_size (get_local $dim_array_ptr)))
         (set_local $dim_number (i32.load offset=4 align=4 (get_local $dim_array_ptr)))
-        (set_local $input_dim_array_ptr (call $get_array_start (get_local $dim_array_ptr)))
+        (set_local $input_dim_array_ptr (call $mxarray_core_get_array_ptr (get_local $dim_array_ptr)))
         loop
             block
                 (br_if 0 (i32.eq (get_local $i)(get_local $dim_number))) ;; condition
@@ -272,7 +235,7 @@
         (local $input_dim_array_ptr i32)
         ;; Get length dimension 
         (set_local $input_dim_array_byte_size (call $get_array_byte_size (get_local $dim_array)))
-        (set_local $input_dim_array_ptr (call $get_array_start (get_local $dim_array)))
+        (set_local $input_dim_array_ptr (call $mxarray_core_get_array_ptr (get_local $dim_array)))
         get_local $loop_dim_number
         i32.const 1
         i32.eq
@@ -328,7 +291,7 @@
         ;; Get the size of bytes for type
         ;; ()
         get_local $dim_array
-        call $get_array_length
+        call $mxarray_core_get_array_length
         i32.eqz
         get_local $dim_array
         call $isrow
@@ -340,14 +303,14 @@
         end
 
         ;; Get total array size
-        (set_local $input_dim_array_ptr (call $get_array_start (get_local $dim_array)))
+        (set_local $input_dim_array_ptr (call $mxarray_core_get_array_ptr (get_local $dim_array)))
         get_local $byte_size_elem
         i32.eqz
         if
             get_local $class
             i32.eqz
             if
-                (set_local $byte_size_elem (call $get_simple_class_byte_size (get_local $simple_class)))
+                (set_local $byte_size_elem (call $mxarray_core_get_simple_class_byte_size (get_local $simple_class)))
             else
                 (set_local $byte_size_elem (i32.const 4))
             end
@@ -421,7 +384,7 @@
         get_local $class
         get_local $byte_size_elem
         get_local $simple_class
-        call $set_type_attribute
+        call $mxarray_core_set_type_attribute
         ;; Setting length
         get_local $array_header_ptr
         get_local $array_length_i32
@@ -469,7 +432,7 @@
     (func $get_array_index_i8 (param $array_ptr i32)(param $i i32)(result i32)
         (local $elem i32)
         get_local $array_ptr
-        call $get_array_length
+        call $mxarray_core_get_array_length
         get_local $i
         i32.lt_s
         if
@@ -489,7 +452,7 @@
         get_local $i
         i32.mul
         get_local $array_ptr
-        call $get_array_start
+        call $mxarray_core_get_array_ptr
         i32.add
         set_local $elem
         get_local $array_ptr
@@ -506,7 +469,7 @@
     (func $set_array_index_i8 (param $array_ptr i32)(param $i i32)(param $value i32)
         
         get_local $array_ptr
-        call $get_array_start
+        call $mxarray_core_get_array_ptr
         i32.const 8
         i32.sub
         i32.load offset=0 align=4
@@ -531,7 +494,7 @@
         get_local $i
         i32.mul
         get_local $array_ptr
-        call $get_array_start
+        call $mxarray_core_get_array_ptr
         i32.add
         get_local $array_ptr
         call $is_signed
@@ -573,7 +536,7 @@
     (export "get_array_index_i32" (func $get_array_index_i32))
     (func $get_array_index_i32 (param $array_ptr i32)(param $i i32)(result i32)
         get_local $array_ptr
-        call $get_array_length
+        call $mxarray_core_get_array_length
         get_local $i
         i32.lt_s
         if
@@ -593,7 +556,7 @@
         get_local $i
         i32.mul
         get_local $array_ptr
-        call $get_array_start
+        call $mxarray_core_get_array_ptr
         i32.add
         i32.load offset=0 align=4
         return
@@ -602,7 +565,7 @@
     (func $set_array_index_i32 (param $array_ptr i32)(param $i i32)(param $value i32)
         
         get_local $array_ptr
-        call $get_array_start
+        call $mxarray_core_get_array_ptr
         i32.const 4
         i32.sub
         i32.load offset=0 align=4
@@ -626,7 +589,7 @@
         get_local $i
         i32.mul
         get_local $array_ptr
-        call $get_array_start
+        call $mxarray_core_get_array_ptr
         i32.add
         get_local $array_ptr
         call $is_signed
@@ -678,7 +641,7 @@
         end
         get_local $dim_num
         i32.const 1
-        i32.le_s
+        i32.eq
         if
             (set_local $dim_num (i32.const 2))
         end
@@ -694,7 +657,7 @@
         get_local $class
         i32.const 8
         get_local $simple_class
-        call $set_type_attribute
+        call $mxarray_core_set_type_attribute
         
 
 
@@ -770,7 +733,7 @@
             get_local $class
             i32.eqz
             if
-                (set_local $elem_size (call $get_simple_class_byte_size (get_local $simple_class)))
+                (set_local $elem_size (call $mxarray_core_get_simple_class_byte_size (get_local $simple_class)))
             else
                 (set_local $elem_size (i32.const 4)) ;; For cell_array, string, function_handle, struct
             end
@@ -811,7 +774,7 @@
         get_local $class
         get_local $elem_size
         get_local $simple_class
-        call $set_type_attribute
+        call $mxarray_core_set_type_attribute
         
         ;; call set size of array
         get_local $header_pointer
@@ -870,120 +833,6 @@
 
 
 
-    (export "create_array_1d" (func $create_array_1d))
-    (func $create_array_1d (param $n i32) (param  $type i32) (result i32)
-        (local $sizepayload i32) (local $pointer i32) (local $meta_size i32)(local $total_length i32)(local $array_ptr i32)
-        (local $type_size i32) (local $realsize i32)
-        ;; @name create_array_1d#memory  
-        ;; @param $n i32, length of one d array
-        ;; @param $type i32,  Contains the type for the array, 
-        ;;    i.e double | single | int8 | int16 | int32 | int64 | uint8 | uint16 | uint32 | uint64
-        ;; @return i32, returns pointer to array
-        ;; @description
-        ;;      Creates a 1d array of $n size
-        ;;      and type $type.
-        ;; TODO: Change the type attribute, add support for different numbers and types
-        get_local $n
-        i32.const 0
-        i32.le_s
-        if
-            i32.const 0
-            set_local $n
-        end
-       
-        ;; Get the size of bytes for type
-        (set_local $type_size (call $size_s (get_local $type)))
-  
-        ;; Calculate size of payload and allocate memory
-        (tee_local $total_length (i32.mul (get_local $type_size) (get_local $n) )) ;; Add number of array elements
-        i32.const 24 ;; 4 for total size, 4 for num dimensions,
-                     ;; 4 for type and 8(1xn) for dimensions, 4 for alignment
-        tee_local $meta_size
-        i32.add ;; sizes
-        
-        tee_local $sizepayload ;; set size of payload
-        call $malloc ;; Allocate bytes
-        ;; Allocate metadata
-        tee_local $pointer ;; set pointer
-        ;; Set length of first dimension (row)
-        i32.const 1
-        i32.store offset=4 align=2
-        ;; Set length of second dimension (column)
-        get_local $pointer
-        get_local $n
-        i32.store  offset=8 align=2
-        ;; Store number of dimensions
-        get_local $pointer
-        i32.const 2
-        i32.store offset=12 align=2
-        ;; Store type
-        get_local $pointer
-        get_local $type
-        i32.store offset=16 align=2
-        ;; Store array length
-        get_local $pointer
-        get_local $n
-        i32.store offset=20 align=2
-        ;; return pointer to beginning of array
-        i32.const 24
-        get_local $pointer
-        i32.add
-        return
-    )
-    (export "get_array_type" (func $get_array_type))
-    (func $get_array_type (param $arr i32) (result i32)
-        (;Deprecated;)
-        (i32.load (i32.sub (get_local $arr) (i32.const 8)))
-    )
-    (func $zeroes_nxn (param $n i32) (param  $type i32) (result i32)
-        (local $sizepayload i32) (local $pointer i32) (local $meta_size i32)(local $total_length i32)(local $array_ptr i32)
-        (local $type_size i32)
-        ;; @name zeroes_nxn#memory  
-        ;; @param $n Dimension of square matrix
-        ;; @param $type Contains the type for the array, 
-        ;;    i.e double | single | int8 | int16 | int32 | int64 | uint8 | uint16 | uint32 | uint64
-        ;; @return i32, returns pointer to nxn matrix
-        ;;
-        ;; @description
-        ;;      Create an array of zeroes with the given $dimensions array
-        ;;      and type
-        ;; TODO Unit Test
-
-        ;; Get the size of bytes for type
-        (set_local $type_size (call $size_s (get_local $type)))
-        ;; Calculate size of payload and allocate memory
-        (tee_local $total_length (i32.mul (get_local $type_size) (i32.shl (get_local $n) (i32.const 1)))) ;; Add number of array elements
-        i32.const 20 ;; 4 for total size, 4 for num dimensions, 4 for type and 8 for nxn dimension
-        tee_local $meta_size
-        i32.add ;; sizes
-        tee_local $sizepayload ;; set size of payload
-        call $malloc ;; Allocate bytes
-
-        tee_local $pointer ;; set pointer
-        ;; Set dimensions
-        get_local $n
-        i32.store 
-        get_local $pointer
-        get_local $n
-        i32.store offset=4 align=2
-        ;; Store number of dimensions
-        get_local $pointer
-        i32.const 2
-        i32.store offset=8 align=2
-        ;; Store type
-        get_local $pointer
-        get_local $type
-        i32.store offset=12 align=2
-        ;; Store total length 
-        get_local $pointer
-        (i32.shl (get_local $n) (i32.const 1))
-        i32.store offset=16 align=2
-        ;; return pointer to beginning of array
-        get_local $meta_size
-        get_local $pointer
-        i32.add
-        return
-    )
     (export "get_heap_top" (func $get_heap_top))
     (func $get_heap_top (result i32)
         ;; @name get_heap_top#memory  
@@ -993,144 +842,7 @@
         get_global $HEAP_TOP
         return
     )
-    (export "array_dim_num" (func $array_dim_num))
-    (func $array_dim_num (param $array i32) (result i32)
-        ;; @name array_dim_num#memory 
-        ;; @param $array i32, Pointer to array whose dimensions will be returned 
-        ;; @return i32, Number of dimensions 
-        ;; @description
-        ;;      Used for debugging and testing, returns number of dimensions for the array
-        (i32.load (i32.sub (get_local $array) (i32.const 12)))
-        return
-    )
     
-    (export "array_length" (func $array_length))
-    (func $array_length (param $array i32) (result i32)
-        ;; @name array_length#memory 
-        ;; @param $array i32, Pointer to array whose dimensions will be returned 
-        ;; @return i32, Array length
-        ;; @description
-        ;;      Gets the array "total" number of items, or length
-        (i32.load (i32.sub (get_local $array) (i32.const 4)))
-        return
-    )
-    (func $get_array_index_offset (param $arr i32)(param $index i32) (result i32)
-        get_local $arr
-        call $get_array_type
-
-        get_local $index
-        i32.const 1
-        i32.sub
-        i32.const 4
-        i32.mul
-        i32.add
-    )
-    (export "create_array" (func $create_array))
-    (func $create_array (param $dimensions_array i32) (param  $type i32) (result i32)
-        (local $type_size i32)(local $meta_size i32)(local $size_payload i32) (local $total_length i32) (local $dim_temp i32)
-        (local $array_dim i32)(local $array_length i32) (local $i i32) (local $pointer i32) (local $padding_flag i32)
-        ;; @name create_array#memory  
-        ;; @param $dimensions Array of Dimensions for array
-        ;; @param $type Contains the type for the array, 
-        ;;    i.e double | single | int8 | int16 | int32 | int64 | uint8 | uint16 | uint32 | uint64
-        ;; @return returns pointer to start of payload
-        ;; @description
-        ;;      Create an array of zeroes with the given $dimensions array
-        ;;      and type
-        ;; TODO: Expand zeros to other types instead of just doubles
-        ;; TODO: Check dimensions
-        ;; TODO: Unit test
-        ;; TODO: Throw errors if malloc fails
-        ;; TODO: deal with pointer errors
-
-        ;; Get the size of bytes for type
-        (set_local $type_size (call $size_s (get_local $type)))
-        (set_local $array_dim (i32.load (i32.sub (get_local $dimensions_array) (i32.const 4))))
-        ;; Get total array size
-        (set_local $array_length (i32.const 1))
-        loop
-            block ;; array iteration
-            (i32.ge_s (get_local $i)(get_local $array_dim) )
-            br_if 0
-            ;; Get dimension size, if its empty or less than 0, return null
-            (tee_local $dim_temp (i32.load (i32.add (get_local $dimensions_array) (i32.mul (i32.const 4)(get_local $i)))))
-            i32.const 0
-            i32.le_s
-            if
-              i32.const 0
-              return  
-            end
-            (set_local $array_length 
-                (i32.mul (get_local $array_length) (get_local $dim_temp)))
-            (set_local $i (i32.add (get_local $i)(i32.const 1))) ;; Increase loop counter
-            br 1
-            end
-        end
-         
-
-        ;; Calculate size of payload and allocate memory
-        (tee_local $total_length (i32.mul (get_local $type_size) (get_local $array_length))) ;; Add number of bytes elements
-        (i32.add (i32.const 12)(i32.mul (get_local $array_dim) (i32.const 4))) ;; get meta size
-        (tee_local $meta_size)
-        i32.add
-        (set_local $size_payload)
-        ;; ;; Add 4 bytes to make beginning of array aligned
-        (i32.rem_s (i32.add (i32.const 12)(i32.mul (i32.const 4)(get_local $array_dim)))(i32.const 8))
-        if 
-            (set_local $padding_flag (i32.const 1))
-            (i32.add (get_local $size_payload) ( i32.const 4))
-            set_local $size_payload
-        end
-        get_local $size_payload
-        call $malloc ;; Allocate bytes
-        tee_local $pointer ;; set pointer
-        i32.eqz
-        if
-            i32.const 0
-            return  
-        end
-        ;; if padding increase pointer offset
-        get_local $padding_flag
-        if 
-            i32.const 4
-            get_local $pointer
-            i32.add 
-            set_local $pointer
-        end
-
-        ;;set dimensions
-        (set_local $i (i32.sub (get_local $i) (i32.const 1)))
-        ;;(set_local $i (i32.const 0))
-        loop
-            block
-            (i32.le_s (get_local $i)(get_local $array_dim) )
-            br_if 0
-            get_local $pointer
-            (i32.load (i32.add (get_local $dimensions_array) (i32.mul (i32.const 4)(get_local $i)))) ;; Load starting from last dimension
-            i32.store
-            (set_local $pointer (i32.add (get_local $pointer)(i32.const 4)))
-            (set_local $i (i32.add (get_local $i)(i32.const 1)))
-            br 1
-            end
-        end
-        ;; Store number of dimensions
-        get_local $pointer
-        get_local $array_dim
-        i32.store offset=0 align=2
-        ;; Store type
-        get_local $pointer
-        get_local $type
-        i32.store offset=4 align=2
-        ;; Store total length 
-        get_local $pointer
-        get_local $array_length
-        i32.store offset=8 align=2
-        ;; return pointer
-        get_local $pointer
-        i32.const 12
-        i32.add
-        return
-    )
     (export "malloc" (func $malloc))
     (func $malloc (param $size i32) (result i32) 
         (local $realsize i32) (local $end i32) (local $heap_offset i32)
@@ -1262,7 +974,7 @@
     (func $get_array_index_f64 (param $array_ptr i32)(param $i i32)(result f64)
         
         get_local $array_ptr
-        call $get_array_length
+        call $mxarray_core_get_array_length
         get_local $i
         i32.lt_s
         if
@@ -1282,7 +994,7 @@
         get_local $i
         i32.mul
         get_local $array_ptr
-        call $get_array_start
+        call $mxarray_core_get_array_ptr
         i32.add
         f64.load offset=0 align=4
         return
@@ -1292,7 +1004,7 @@
     (func $set_array_index_f64 (param $array_ptr i32)(param $i i32)(param $value f64)
         
         get_local $array_ptr
-        call $get_array_start
+        call $mxarray_core_get_array_ptr
         i32.const 8
         i32.sub
         i32.load offset=0 align=4
@@ -1316,7 +1028,7 @@
         get_local $i
         i32.mul
         get_local $array_ptr
-        call $get_array_start
+        call $mxarray_core_get_array_ptr
         i32.add
         get_local $value
         f64.store offset=0 align=4
@@ -1364,8 +1076,8 @@
     ;)
     
 
-    (export "set_type_attribute" (func $set_type_attribute))
-    (func $set_type_attribute
+    (export "mxarray_core_set_type_attribute" (func $mxarray_core_set_type_attribute))
+    (func $mxarray_core_set_type_attribute
         (param $address i32)
         (param $class i32)
         (param $elem_size i32)
@@ -1397,8 +1109,8 @@
 
     )
     ;; Helpers
-    (export "get_simple_class_byte_size" (func $get_simple_class_byte_size))
-    (func $get_simple_class_byte_size (param $simple_class i32) (result i32)
+    (export "mxarray_core_get_simple_class_byte_size" (func $mxarray_core_get_simple_class_byte_size))
+    (func $mxarray_core_get_simple_class_byte_size (param $simple_class i32) (result i32)
         block  block block block
             block
                 get_local 0
@@ -1422,14 +1134,14 @@
         return
     )
     ;; Test & Debug
-    (export "get_mclass" (func $get_mclass))
-    (func $get_mclass (param $type_attr_address i32)(result i32)
+    (export "mxarray_core_get_mclass" (func $mxarray_core_get_mclass))
+    (func $mxarray_core_get_mclass (param $type_attr_address i32)(result i32)
         get_local $type_attr_address
         i32.load8_u offset=0 align=1
     )
 
-    (export "get_simple_class" (func $get_simple_class))
-    (func $get_simple_class (param $arr_ptr i32)(result i32)
+    (export "mxarray_core_get_simple_class" (func $mxarray_core_get_simple_class))
+    (func $mxarray_core_get_simple_class (param $arr_ptr i32)(result i32)
         get_local $arr_ptr
         i32.load8_u offset=2 align=1
     )
@@ -1438,8 +1150,8 @@
         get_local $array_ptr 
         call $get_elem_byte_size
     )
-     (export "get_array_length" (func $get_array_length))
-    (func $get_array_length (param $arr_ptr i32) (result i32)
+     (export "mxarray_core_get_array_length" (func $mxarray_core_get_array_length))
+    (func $mxarray_core_get_array_length (param $arr_ptr i32) (result i32)
         ;; @name array_length#memory 
         ;; @param $array i32, Pointer to array whose dimensions will be returned 
         ;; @return i32, Array length
@@ -1482,7 +1194,7 @@
             call $throwError 
         end
         get_local $arr_ptr
-        i32.load offset=4 align=4
+        call $mxarray_core_get_array_length
     )
     (export "size" (func $size))
     (func $size (param $arr_ptr i32)(param $dim i32)(result i32)
@@ -1495,11 +1207,15 @@
             i32.const 6
             call $throwError 
         end
-        (set_local $dim_number (i32.load offset=12 align=4 (get_local $arr_ptr )))
-        (set_local $dim_ptr (i32.load offset=16 align=4 (get_local $arr_ptr )))
+        (set_local $dim_number (call $mxarray_core_get_number_of_dimensions (get_local $arr_ptr )))
+        (set_local $dim_ptr (call $mxarray_core_get_dimensions_ptr (get_local $arr_ptr )))
+
          ;; Get Dimensions
-        (call $create_mxvector (get_local $dim_number)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0))
-        set_local $new_ptr
+        (set_local $new_ptr
+            (call $create_mxvector 
+                (get_local $dim_number)
+                (i32.const 0)(i32.const 0)
+                (i32.const 0)(i32.const 0)(i32.const 0)))
         loop
             block
             (i32.ge_s (get_local $i)(get_local $dim_number))
@@ -1513,9 +1229,22 @@
         end
         get_local $new_ptr
     )
+    (func $mxarray_core_get_number_of_dimensions (param $arr_ptr i32) (result i32)
+        (i32.load offset=12 align=4 (get_local $arr_ptr))    
+    )
+    (func $mxarray_core_get_dimensions_ptr (param $arr_ptr i32) (result i32)
+        (i32.load offset=16 align=4 (get_local $arr_ptr))    
+    )
     (export "ndims" (func $ndims))
     (func $ndims (param $arr_ptr i32) (result i32)
-        (i32.load offset=12 align=4 (get_local $arr_ptr))
+        get_local $arr_ptr
+        call $is_null
+        if
+            i32.const 5
+            call $throwError
+        end
+        get_local $arr_ptr
+        call $mxarray_core_get_number_of_dimensions
     )
    
     (export "isscalar" (func $isscalar))
@@ -1526,8 +1255,12 @@
         i32.const 1
         i32.eq   
     )
-    (export "length" (func $length))
-    (func $length (param $arr_ptr i32) (result f64)
+    (export "length_S" (func $ones_S))
+    (func $ones_S (param $args i32)(result f64)
+        f64.const 1
+    )
+    (export "length_M" (func $length_M))
+    (func $length_M (param $arr_ptr i32) (result f64)
         (local $new_ptr i32)(local $i i32)(local $dim_number i32) (local $dim_ptr i32)
         (local $max f64)(local $temp f64)
         get_local $arr_ptr
@@ -1536,8 +1269,8 @@
             i32.const 6
             call $throwError 
         end
-         (set_local $dim_number (i32.load offset=12 align=4 (get_local $arr_ptr )))
-        (set_local $dim_ptr (i32.load offset=16 align=4 (get_local $arr_ptr )))
+         (set_local $dim_number (call $mxarray_core_get_number_of_dimensions (get_local $arr_ptr )))
+        (set_local $dim_ptr (call $mxarray_core_get_dimensions_ptr (get_local $arr_ptr )))
         loop
             block
             (i32.ge_s (get_local $i)(get_local $dim_number))
@@ -1578,14 +1311,9 @@
             call $throwError
         end
         get_local $arr_ptr
-        i32.load offset=12 align=4
+        call $mxarray_core_get_number_of_dimensions
         i32.const 2
         i32.eq
-        if (result i32)
-            i32.const 1
-        else
-            i32.const 0
-        end
     )
      (export "isempty" (func $isempty))
     (func $isempty (param $arr_ptr i32)(result i32)
@@ -1609,12 +1337,13 @@
             call $throwError
         end
         get_local $arr_ptr
-        i32.load offset=12 align=4
+        call $mxarray_core_get_number_of_dimensions
         i32.const 2
         i32.eq
+
         if (result i32)
             get_local $arr_ptr
-            i32.load offset=16 align=4
+            call $mxarray_core_get_dimensions_ptr
             f64.load offset=0 align=8
             f64.const 1
             f64.eq
@@ -1631,12 +1360,12 @@
             call $throwError
         end
         get_local $arr_ptr
-        i32.load offset=12 align=4
+        call $mxarray_core_get_number_of_dimensions
         i32.const 2
         i32.eq
         if (result i32)
             get_local $arr_ptr
-            i32.load offset=16 align=4
+            call $mxarray_core_get_dimensions_ptr
             f64.load offset=8 align=8
             f64.const 1
             f64.eq
@@ -1990,18 +1719,7 @@
             end
         end
     )
-;;     (export "mc_horzcat" (func $horzcat))
-;;     (func $cat (param $input_ptr i32)(param $dim i32) (result i32) i32.const 1
-;;         ;; concatanates matrices that make up the input vector along a given dimension
-;;         ;; This means every input matrix must have the same number of values for every dimension except
-;;         ;; The concatanating dimension. 
-;;         ;; Procedure:
-;;         ;; 1. Verify input matrices for consistent rows
-;;         ;; 2. Compute total_length in concatanating dimension 
-;;         ;; 3. Create new matrix with same size, except for dim
-;;         ;; 4. Populate new matrix.
-;; )
-     
+
     (export "get_f64" (func $get_f64))
     (func $get_f64 (param $array_ptr i32)(param $indices i32)(result i32)
        (local $shape_ptr i32)(local $res_ptr i32)(local $dim_ptr i32)
@@ -2027,7 +1745,7 @@
 	   call $verify_and_get_dimensions
        set_local $dim_ptr
        ;; Create 
-       (call $create_mxarray_ND (get_local $dim_ptr)(i32.const 0)(call $get_simple_class (get_local $array_ptr))(i32.const 0)(i32.const 0))
+       (call $create_mxarray_ND (get_local $dim_ptr)(i32.const 0)(call $mxarray_core_get_simple_class (get_local $array_ptr))(i32.const 0)(i32.const 0))
 
         ;; Calling get colon
         tee_local $res_ptr
@@ -2413,7 +2131,7 @@
         end
         ;; Get length dimension 
         (set_local $input_dim_array_byte_size (call $get_array_byte_size (get_local $dim_array)))
-        (set_local $input_dim_array_ptr (call $get_array_start (get_local $dim_array)))
+        (set_local $input_dim_array_ptr (call $mxarray_core_get_array_ptr (get_local $dim_array)))
         (tee_local $loop_dim_number (call $get_mxarray_dimension_number (get_local $dim_array)))
         i32.const 1
         i32.eq
@@ -2705,17 +2423,151 @@
     (func $horzcat (param $input_matrices i32) (result i32)
         (call $concat (i32.const 2)(get_local $input_matrices))
     )
+    (export "eye_S" (func $eye_S))
+    (func $eye_S (result f64)
+        f64.const 1
+    )
+    (export "eye_M" (func $eye_M))
+    (func $eye_M (param $dim_ptr i32) (result i32)
+        (local $i i32)(local $n i32)(local $m i32)
+        (local $out_ptr i32)(local $dim_len i32)
+        get_local $dim_ptr
+        call $is_null
+        if
+            ;; TODO (dherre3): Create a 1x1 vector even though that's not how we represent scalars 
+            i32.const 5
+            call $throwError
+        end
+        get_local $dim_ptr
+        call $isrow
+        i32.eqz
+        if  
+            i32.const 5
+            call $throwError
+        end
+        (tee_local $dim_len (call $mxarray_core_get_array_length (get_local $dim_ptr)))
+        i32.const 2
+        i32.gt_s
+        if
+            i32.const 19
+            call $throwError
+        end
+        get_local $dim_len
+        i32.const 1
+        i32.lt_s
+        if
+            i32.const 5
+            call $throwError
+        end
+     
+        (tee_local $n (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $dim_ptr)(i32.const 1))))
+        i32.const 0
+        i32.le_s
+        if
+            (set_local $n (i32.const 0))
+            (call $set_array_index_f64 (get_local $dim_ptr)(i32.const 1)(f64.const 0))
+        end
+        get_local $dim_len
+        i32.const 2
+        i32.eq
+        if  (result i32)
+            (tee_local $m (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $dim_ptr)(i32.const 2))))
+        else 
+            (tee_local $m (get_local $n))
+        end
+        i32.const 0
+        i32.le_s
+        if
+            (set_local $m (i32.const 0))
+            (call $set_array_index_f64 (get_local $dim_ptr)(i32.const 2)(f64.const 0))
+        end
+        (tee_local $out_ptr (call $zeros (get_local $dim_ptr)(i32.const 0)))       
+        call $numel
+        i32.const 1
+        i32.ge_s
+        if
+            loop
+                block
+                (br_if 0 (i32.ge_s (get_local $i)(get_local $n)))
+                    (call $set_array_index_f64 (get_local $out_ptr)
+                        (i32.add (i32.const 1)(i32.add (get_local $i)(i32.mul (get_local $i)(get_local $n))))
+                        (f64.const 1)
+                    )
+                (set_local $i (i32.add (get_local $i)(i32.const 1)))
+                br 1
+                end
+            end
+        end
+        get_local $out_ptr
+    )
+     (export "transpose_S" (func $transpose_S))
+    (func $transpose_S (param f64)(result f64)
+        get_local 0
+    )
+      (export "transpose_M" (func $transpose_M))
+    (func $transpose_M (param $arr_ptr i32) (result i32)
+        (local $i i32)(local $j i32)(local $n i32)(local $m i32)(local $dim_ptr i32)
+        (local $out_ptr i32)
+        get_local $arr_ptr
+        call $is_null
+        if
+            i32.const 6
+            call $throwError
+        end
+        get_local $arr_ptr
+        call $is_array
+        i32.eqz
+        if  
+            i32.const 16
+            call $throwError
+        end
+        (set_local $dim_ptr (call $size (get_local $arr_ptr)(i32.const 0)))
+        (call $mxarray_core_get_number_of_dimensions (get_local $arr_ptr))
+        i32.const 2
+        i32.ne
+        if
+            i32.const 19
+            call $throwError
+        end
+        (set_local $n (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $dim_ptr)(i32.const 1))))
+        (set_local $m (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $dim_ptr)(i32.const 2))))
+        (call $set_array_index_f64 (get_local $dim_ptr)(i32.const 1)(f64.convert_s/i32 (get_local $m)))
+        (call $set_array_index_f64 (get_local $dim_ptr)(i32.const 2)(f64.convert_s/i32 (get_local $n)))
+        (tee_local $out_ptr (call $create_mxarray_ND (get_local $dim_ptr)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)))  
+            
+        loop
+            block
+            (br_if 0 (i32.ge_s (get_local $i)(get_local $n)))
+                (set_local $j (i32.const 0))
+                loop
+                    block
+                    (br_if 0 (i32.ge_s (get_local $j)(get_local $m)))
+                        (call $set_array_index_f64 (get_local $out_ptr)
+                            (i32.add (i32.const 1)(i32.add (get_local $j)(i32.mul (get_local $i)(get_local $n))))
+                            (call $get_array_index_f64 (get_local $arr_ptr)
+                                (i32.add (i32.const 1)(i32.add (get_local $i)(i32.mul (get_local $j)(get_local $n)))))
+                        )
+                    (set_local $j (i32.add (get_local $j)(i32.const 1)))
+                    br 1
+                    end
+                end
+            (set_local $i (i32.add (get_local $i)(i32.const 1)))
+            br 1
+            end
+        end
+    
+    )
 
 
     ;; Array creation
-     (export "zeroes" (func $zeroes))
-    (func $zeroes (param $size_ptr i32)(param $classname i32)(result i32)
+     (export "zeros" (func $zeros))
+    (func $zeros (param $size_ptr i32)(param $classname i32)(result i32)
         (local $arr_ptr i32)
         get_local $size_ptr
         i32.const 0
         get_local $classname
         i32.const 1
-        i32.const 8
+        i32.const 0
         call $create_mxarray_ND
         i32.const 0
         call $elementwise_constructor
@@ -2745,7 +2597,7 @@
         call $elementwise_constructor
     )
     (export "randn" (func $randn) )
-    (func $randn (param $size_ptr i32)(result i32)
+    ( func $randn (param $size_ptr i32)(result i32)
         (local $arr_ptr i32)
         get_local $size_ptr
         i32.const 0
@@ -2765,14 +2617,14 @@
         i32.const 1
         i32.const 8
         call $create_mxarray_ND
-        i32.const 4
         get_local $max
-        call $elementwise_constructor_with_factor
+        i32.const 4
+        call $elementwise_constructor_one_input
     )
     ;; Constructors
     (type $func_constructor_type (func (result f64)))
     (type $func_constructor_type_one_onput (func (param f64)(result f64)))
-    (func $elementwise_constructor (param $arr_ptr i32)(param $funct_ptr i32)(result i32)
+    (func $elementwise_constructor (param $arr_ptr i32)(param $func_ptr i32)(result i32)
         (local $len i32)(local $i i32)
         get_local $arr_ptr
         call $is_null
@@ -2789,7 +2641,7 @@
                 ;; get arr_ptr
                 get_local $arr_ptr
                 get_local $i
-                get_local $funct_ptr
+                get_local $func_ptr
                 call_indirect (type $func_constructor_type)
                 call $set_array_index_f64
             (set_local $i (i32.add (get_local $i)(i32.const 1)))  
@@ -2798,7 +2650,7 @@
         end
         get_local $arr_ptr
     )
-      (func $elementwise_constructor_with_factor (param $arr_ptr i32)(param $funct_ptr i32)(param $factor f64)(result i32)
+    (func $elementwise_constructor_one_input (param $arr_ptr i32)(param $arg1 f64)(param $funct_ptr i32)(result i32)
         (local $len i32)(local $i i32)
         get_local $arr_ptr
         call $is_null
@@ -2815,9 +2667,9 @@
                 ;; get arr_ptr
                 get_local $arr_ptr
                 get_local $i
-                get_local $factor
+                get_local $arg1
                 get_local $funct_ptr
-                call_indirect (type $func_constructor_type_one_onput)
+                call_indirect (type $type_unary_op_f64)
                 call $set_array_index_f64
             (set_local $i (i32.add (get_local $i)(i32.const 1)))  
             br 1                
@@ -2825,30 +2677,75 @@
         end
         get_local $arr_ptr
     )
-    (type $type_binary_op_f64 (func (param f64 f64)(result f64)))
-    (func $elementwise_MS (param $out_ptr i32) (param $arr_ptr i32)(param $x f64)(param $func_ptr i32)(param $len i32)(param $i i32)
+    ( func $elementwise_mapping (param $arr_ptr i32)(param $funct_ptr i32)(result i32)
+        (local $len i32)(local $i i32)
+        get_local $arr_ptr
+        call $is_null
+        if
+            i32.const 6
+            call $throwError
+        end
         (set_local $len (call $numel (get_local $arr_ptr)))
         (set_local $i (i32.const 1))
         loop
             block
-            (i32.gt_s (get_local $i) (get_local $len))
+            (i32.gt_s (get_local $i)(get_local $len))
             br_if 0
-                get_local $out_ptr
-                get_local $i
-                get_local $arr_ptr
-                get_local $i
-                call $get_array_index_f64
-                get_local $x
-                get_local $func_ptr
-                call_indirect (type $type_binary_op_f64)
-                call $set_array_index_f64
-            (set_local $i (i32.add (get_local $i)(i32.const 1)))
-            br 1
+                (call_indirect (type $type_unary_op_f64)
+                    (call $get_array_index_f64 (get_local $arr_ptr)(get_local $i))
+                   (get_local $funct_ptr)
+                )
+            (set_local $i (i32.add (get_local $i)(i32.const 1)))  
+            br 1                
             end
         end
-    
+        get_local $arr_ptr
     )
-    (func $elementwise_SM (param $out_ptr i32) (param $x f64) (param $arr_ptr i32)(param $func_ptr i32)
+    (func $elementwise_mapping_one_input (param $arr_ptr i32)(param $arg1 f64)(param $scalar_first i32)(param $funct_ptr i32)(result i32)
+        (local $len i32)(local $i i32)
+        get_local $arr_ptr
+        call $is_null
+        if
+            i32.const 6
+            call $throwError
+        end
+        (set_local $len (call $numel (get_local $arr_ptr)))
+        (set_local $i (i32.const 1))
+        loop
+            block
+            (i32.gt_s (get_local $i)(get_local $len))
+            br_if 0
+                ;; get arr_ptr
+                get_local $arr_ptr
+                get_local $i
+                get_local $scalar_first
+                i32.eqz
+                if (result f64)
+                    (call_indirect (type $type_binary_op_f64)
+                        (get_local $arg1)
+                        (call $get_array_index_f64 (get_local $arr_ptr)(get_local $i))
+                        (get_local $funct_ptr)
+                    )
+                else
+                    (call_indirect (type $type_binary_op_f64)
+                        (call $get_array_index_f64 (get_local $arr_ptr)(get_local $i))
+                        (get_local $arg1)
+                        (get_local $funct_ptr)
+                    )
+                end
+                call $set_array_index_f64
+            (set_local $i (i32.add (get_local $i)(i32.const 1)))  
+            br 1                
+            end
+        end
+        get_local $arr_ptr
+    )
+    
+    (type $type_binary_op_f64 (func (param f64 f64)(result f64)))
+    (type $type_binary_op_i32 (func (param f64 f64)(result i32)))
+
+    (type $type_unary_op_f64 (func (param f64)(result f64)))
+    (func $unary_map (param $out_ptr i32) (param $arr_ptr i32)(param $func_ptr i32)
         (local $len i32)(local $i i32)
         (set_local $len (call $numel (get_local $arr_ptr)))
         (set_local $i (i32.const 1))
@@ -2857,23 +2754,190 @@
             (i32.gt_s (get_local $i) (get_local $len))
             br_if 0
                 (call $set_array_index_f64 
-                    (get_local $out_ptr)(get_local $i)
-                        (call_indirect (type $type_binary_op_f64)
-                            (get_local $x) 
-                            (call $get_array_index_f64 (get_local $arr_ptr)(get_local $i))
-                            (get_local $func_ptr)))
+                (get_local $out_ptr)(get_local $i)
+                    (call_indirect (type $type_unary_op_f64)
+                        (call $get_array_index_f64 (get_local $arr_ptr)(get_local $i))
+                        (get_local $func_ptr)))
             (set_local $i (i32.add (get_local $i)(i32.const 1)))
             br 1
             end
         end
     )
+
+    (export "plus_SS" (func $plus_SS))
+    (func $plus_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.add
+    )
+    (export "minus_SS" (func $minus_SS))
+
+    (func $minus_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.sub
+    )
+    (export "mod_SS" (func $mod_SS))  
+    (func $mod_SS (param f64 f64)(result f64) 
+        get_local 0
+        i64.trunc_s/f64 
+        get_local 1
+        i64.trunc_s/f64 
+        i64.rem_s
+        f64.convert_s/i64
+        get_local 1
+        f64.copysign        
+    )
+    (export "rem_SS" (func $rem_SS))
+    (func $rem_SS (param f64 f64)(result f64) 
+        get_local 0
+        i64.trunc_s/f64 
+        get_local 1
+        i64.trunc_s/f64 
+        i64.rem_s
+        f64.convert_s/i64
+    )
+    (export "times_SS" (func $times_SS))
+    (func $times_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.mul
+    )
+    (export "rdivide_SS" (func $rdivide_SS))
+    (func $rdivide_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.div
+    )
+    (export "le_SS" (func $le_SS))
+    (func $le_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.le
+        f64.convert_s/i32 
+
+    )
+    (export "lt_SS" (func $lt_SS))
+    (func $lt_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.lt
+        f64.convert_s/i32 
+
+    )
+    (export "ge_SS" (func $ge_SS))
+    (func $ge_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.ge
+        f64.convert_s/i32 
+
+    )
+    (export "gt_SS" (func $gt_SS))
+    (func $gt_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.gt
+        f64.convert_s/i32 
+
+    )
+    (export "eq_SS" (func $eq_SS))
+    (func $eq_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.eq
+        f64.convert_s/i32 
+
+    )
+
+    (export "and_SS" (func $and_SS))
+    (func $and_SS (param f64 f64)(result f64) 
+        get_local 0
+        f64.const 0
+        f64.ne
+        if (result i32)
+            get_local 1
+            f64.const 0
+            f64.ne
+            if (result i32)
+                i32.const 1                
+            else
+                i32.const 0
+            end
+        else
+            i32.const 0
+        end
+        f64.convert_s/i32 
+    )
+    (export "or_SS" (func $or_SS))
+    (func $or_SS (param f64 f64)(result f64) 
+        get_local 0
+        f64.const 0
+        f64.ne
+        if (result i32)
+            i32.const 1
+        else
+            get_local 1
+            f64.const 0
+            f64.ne
+            if (result i32)
+                i32.const 1                
+            else
+                i32.const 0
+            end
+        end
+        f64.convert_s/i32
+    )
+    (export "ne_SS" (func $ne_SS))
+    (func $ne_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.ne
+        f64.convert_s/i32
+
+    )
+    ;; TABLE DEFINITIONS
+    (elem $tab (i32.const 0) $zeros_s $ones_s $rand_s $randn_s $randi_s)
+    (elem $tab (i32.const 5) $plus_SS $minus_SS $rem_SS $mod_SS $times_SS $rdivide_SS $power_SS)
+    (elem $tab (i32.const 12) $le_SS $lt_SS $ge_SS $gt_SS $eq_SS)
+    (elem $tab (i32.const 17) $and_SS $or_SS $ne_SS)
     (export "plus_MM" (func $plus_MM))
     (func $plus_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 5)))
     )
+    (export "disp_M" (func $disp_M))
+    (func $disp_M (param $arr_ptr i32)
+        get_local $arr_ptr
+        call $is_array
+        i32.eqz
+        if
+            i32.const 16
+            call $throwError
+        end
+        (call $print_array_f64 (call $mxarray_core_get_array_ptr (get_local $arr_ptr))(call $numel (get_local $arr_ptr)))
+    )
+    (export "disp_S" (func $disp_M))
+    (func $disp_S (param $val f64)
+        get_local $val
+        call $printDoubleNumber
+        drop
+    )
+
+    (export "plus_MS" (func $plus_SM))
+    (func $plus_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_constructor_one_input (get_local $arr_ptr)(get_local $x)(i32.const 5))
+    )
     (export "minus_MM" (func $minus_MM))
     (func $minus_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 6)))
+    )
+    (export "times_SM" (func $times_SM))
+    (func $times_SM (param $scalar1 f64) (param $m1_ptr i32)(result i32)
+        (return (call $elementwise_mapping_one_input (get_local $m1_ptr)(get_local $scalar1)(i32.const 1)(i32.const 9)))
+    )
+    (export "times_MS" (func $times_MS))
+    (func $times_MS (param $m1_ptr i32)(param $scalar1 f64) (result i32)
+        (return (call $elementwise_mapping_one_input (get_local $m1_ptr)(get_local $scalar1)(i32.const 0)(i32.const 9)))
     )
     (export "times_MM" (func $times_MM))
     (func $times_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
@@ -2884,8 +2948,54 @@
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 7)))
     )
     (export "mod_MM" (func $mod_MM))
-    (func $mod_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+    (func $mod_MM (param $m1_ptr i32)(param $m2_ptr i32)(result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 8)))
+    )
+    (export "rdivide_MM" (func $rdivide_MM))
+    (func $rdivide_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 10)))
+    )
+ 
+     (export "ldivide_MM" (func $ldivide_MM))
+    (func $ldivide_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m2_ptr)(get_local $m1_ptr)(i32.const 10)))
+    )
+     (export "power_MM" (func $power_MM))
+    (func $power_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 11)))
+    )
+     (export "le_MM" (func $le_MM))
+    (func $le_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 12)))
+    )
+     (export "lt_MM" (func $lt_MM))
+    (func $lt_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 13)))
+    )
+     (export "ge_MM" (func $ge_MM))
+    (func $ge_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 14)))
+    )
+     (export "gt_MM" (func $gt_MM))
+    (func $gt_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 15)))
+    )
+     (export "eq_MM" (func $eq_MM))
+    (func $eq_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 16)))
+    )
+    (export "and_MM" (func $and_MM))
+    (func $and_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 17)))
+    )
+
+    (export "or_MM" (func $or_MM))
+    (func $or_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 18)))
+    )
+    (export "ne_MM" (func $ne_MM))
+    (func $ne_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 19)))
     )
     (func $pairwise (param $m1_ptr i32)(param $m2_ptr i32)(param $func_ptr i32)(result i32)
         (local $res_ptr i32)
@@ -3020,6 +3130,7 @@
         (param $b_ptr i32)(param $b_shape_ptr i32)(param $func_ptr i32)
         (param $curr_dim i32)(param $offset_tot i32)(param $mult_tot i32)
         (param $offset_a i32)(param $mult_a i32)(param $offset_b i32)(param $mult_b i32)
+        ;; (param $res_type i32)
         (local $len_dim i32)(local $i i32)(local $new_offset_tot i32)
         (local $new_mult_tot i32)(local $new_offset_a i32)
         (local $new_mult_a i32)(local $new_offset_b i32)
@@ -3099,6 +3210,9 @@
             get_local $total_dim_num
             i32.eq
             if
+                ;; get_local $res_type
+                ;; i32.eqz
+                ;; if
                 ( call $set_array_index_f64
                     (get_local $total_ptr)
                     (i32.add (i32.const 1)(get_local $new_offset_tot))
@@ -3108,6 +3222,17 @@
                         (call $get_array_index_f64 (get_local $b_ptr)
                             (i32.add (i32.const 1)(get_local $new_offset_b)))
                         (get_local $func_ptr)))
+                ;; else
+                ;;     ( call $set_array_index_f64
+                ;;         (get_local $total_ptr)
+                ;;         (i32.add (i32.const 1)(get_local $new_offset_tot))
+                ;;         (f64.convert_s/i32 (call_indirect (type $type_binary_op_i32) 
+                ;;             (call $get_array_index_f64 (get_local $a_ptr)
+                ;;                 (i32.add (i32.const 1)(get_local $new_offset_a)))
+                ;;             (call $get_array_index_f64 (get_local $b_ptr)
+                ;;                 (i32.add (i32.const 1)(get_local $new_offset_b)))
+                ;;             (get_local $func_ptr))))
+                ;; end
             else
                 (call $traverse_pairwise 
                     (get_local $total_ptr)(get_local $total_shape_ptr)
@@ -3125,33 +3250,327 @@
         end
     )
     
-    (func $mc_plus_SM (param $x f64)(param $arr_ptr i32) (result i32)
-        (local $out_ptr i32)
+
+    (func $is_array (param $arr_ptr i32)(result i32)
         get_local $arr_ptr
         call $is_null
+        if
+            i32.const 0
+            return
+        end
+        get_local $arr_ptr
+        call $mxarray_core_get_mclass
+        i32.const 0
+        i32.ne
+        if
+            i32.const 0
+            return
+        end
+        i32.const 1
+    )
+    (func $findNonSingletonDimension (param $size_ptr i32)(result i32)
+        (local $i i32)(local $len i32)(local $curr_dim f64)
+        (set_local $len (call $numel (get_local $size_ptr)))
+        (set_local $i (i32.const 1))
+        loop
+            block
+            (br_if 0 (i32.ge_s (get_local $i)(get_local $len)))
+                (tee_local $curr_dim (call $get_array_index_f64 (get_local $size_ptr)(get_local $i)))
+                f64.const 1
+                f64.gt
+                if      
+                    get_local $i
+                    return
+                end
+            (set_local $i (i32.add (i32.const 1)(get_local $i)))
+            br 1
+            end
+        end
+        i32.const -1
+    )
+    (func $reduction (param $arr_ptr i32)(param $dim i32)(param $nanFlag i32)(param $init_to i32)(param $func_ptr i32)(result i32)
+        (local $size_new_arr i32)(local $new_arr_ptr i32)(local $size_arr i32)
+        ;; Check for null
+        ;; Check for array input
+        get_local $arr_ptr
+        call $is_null
+        if
+            i32.const 5
+            call $throwError
+        end
+        get_local $arr_ptr
+        call $is_array
+        i32.eqz
+        if
+            i32.const 16
+            call $throwError
+        end
+        get_local $dim
+        i32.const 0
+        i32.lt_s
+        if
+            i32.const 15 
+            call $throwError
+        end
+        (set_local $size_new_arr (call $size (get_local $arr_ptr)(i32.const 0)))
+        get_local $dim
+        i32.eqz
+        if
+            (set_local $dim (call $findNonSingletonDimension (get_local $size_new_arr)))
+        end
+        ;; (i32.gt_s (get_local $dim)(call $numel (get_local $size_new_arr)))
+        ;; call $printDouble
+        ;; drop
+        (i32.or 
+            (i32.eq (i32.const -1)(get_local $dim))
+        (i32.gt_s (get_local $dim)(call $numel (get_local $size_new_arr)))
+        )
+        i32.eqz
+        if (result i32)
+            (f64.eq (call $get_array_index_f64 (get_local $size_new_arr)(get_local $dim))(f64.const 1))
+        else 
+            i32.const 0
+        end
+        ;; call $printDouble
+        if (result i32)
+            get_local $arr_ptr
+            call $clone
+        else
+            (set_local $size_arr 
+                (call $clone (get_local $size_new_arr)))
+            (call $set_array_index_f64 
+                (get_local $size_new_arr)
+                (get_local $dim)(f64.const 1))
+            get_local $init_to
+            i32.eqz
+            if (result i32)
+                ;; Initialize to zeros or ones
+                (tee_local $new_arr_ptr 
+                    (call $zeros (get_local $size_new_arr)
+                        (i32.const 0)))
+            else
+                (tee_local $new_arr_ptr 
+                (call $ones (get_local $size_new_arr)
+                    (i32.const 0)))
+            end
+            (call $traverse_reduction 
+                (get_local $new_arr_ptr)(get_local $arr_ptr)
+                (get_local $size_arr)(get_local $dim)(get_local $nanFlag)
+                (get_local $func_ptr)
+                (i32.const 1)(i32.const 0)(i32.const 1)(i32.const 0)(i32.const 1))
+        end
+    )
+    (export "sum_S" (func $identity_f64))
+    (func $identity_f64 (param $arg f64) (result f64)
+        get_local $arg
+    )
+    (export "sum" (func $sum))
+    (func $sum (param $arr_ptr i32)(param $dim i32)(param $nanFlag i32)(result i32)
+        (call $reduction 
+            (get_local $arr_ptr)(get_local $dim)
+            (get_local $nanFlag)(i32.const 0)(i32.const 5))
+    )
+    (export "any" (func $any))
+    (func $any (param $arr_ptr i32)(param $dim i32)(result i32)
+        (call $reduction 
+            (get_local $arr_ptr)(get_local $dim)
+            (i32.const 1)(i32.const 0)(i32.const 18))
+    )
+    (export "convert_scalar_to_mxarray" (func $convert_scalar_to_mxarray))
+    (func $convert_scalar_to_mxarray (param $scalar f64) (result i32)
+        (local $out_ptr i32)
+        (tee_local $out_ptr 
+            (call $create_mxvector (i32.const 1)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)))
+        i32.const 1
+        get_local $scalar
+        call $set_array_index_f64
+        get_local $out_ptr
+    )
+    (export "all" (func $all))
+    (func $all (param $arr_ptr i32)(param $dim i32)(result i32)
+        (call $reduction 
+            (get_local $arr_ptr)(get_local $dim)
+            (i32.const 1)(i32.const 1)(i32.const 17))
+    )
+
+    (export "prod" (func $prod))
+    (func $prod (param $arr_ptr i32)(param $dim i32)(param $nanFlag i32)(result i32)
+        (call $reduction 
+            (get_local $arr_ptr)(get_local $dim)
+            (get_local $nanFlag)(i32.const 1)(i32.const 9))
+    )
+    ;; Used for sum, prod, etc.
+    (func $traverse_reduction (param $total_ptr i32)(param $mat_ptr i32)
+        (; Traverses a current matrix completely and sets the right indices on the result matrix;)
+        (param $mat_shape_ptr i32)(param $dim i32)(param $nanFlag i32)(param $func_ptr i32)(param $curr_dim i32)(param $offset i32)
+        (param $mult i32)(param $offset_tot i32)(param $mult_tot i32)
+        (local $i i32)(local $shape_dim_len i32)(local $shape_len i32)(local $new_offset i32)(local $new_mult i32)
+        (local $new_offset_tot i32)(local $new_mult_tot i32)(local $i_index i32)
+        (local $value f64)
+        (set_local $shape_dim_len (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $mat_shape_ptr)(get_local $curr_dim))))
+        (set_local $shape_len (call $numel (get_local $mat_shape_ptr)))
+        (set_local $i (i32.const 1))
+        loop
+            block
+                (br_if 0 (i32.gt_s (get_local $i)(get_local $shape_dim_len)))
+                (set_local $i_index (i32.sub (get_local $i)(i32.const 1)))
+                (set_local $new_offset 
+                    (i32.add (get_local $offset)
+                        (i32.mul (get_local $mult)(get_local $i_index))))
+                (set_local $new_mult 
+                    (i32.mul (get_local $mult)(get_local $shape_dim_len)))
+                get_local $curr_dim
+                get_local $dim
+                i32.eq
+                if
+                   (set_local $new_offset_tot (get_local $offset_tot))
+                    (set_local $new_mult_tot (get_local $mult_tot))
+                else
+                    (set_local $new_offset_tot 
+                        (i32.add 
+                            (get_local $offset_tot)
+                            (i32.mul (get_local $mult_tot)(get_local $i_index))))
+                    (set_local $new_mult_tot 
+                        (i32.mul (get_local $mult_tot)(get_local $shape_dim_len)))
+                end
+                get_local $curr_dim
+                get_local $shape_len
+                i32.eq
+                if
+                    (set_local $value
+                        (call $get_array_index_f64 
+                            (get_local $mat_ptr)
+                            (i32.add (get_local $new_offset)(i32.const 1))))
+                    get_local $nanFlag
+                    i32.const 1
+                    i32.eq
+                    if
+                        get_local $value
+                        call $isnan
+                        if
+                            br 2
+                        end
+                    end
+                    (set_local $new_offset_tot (i32.add (get_local $new_offset_tot)(i32.const 1)))
+                    (call $set_array_index_f64 (get_local $total_ptr)(get_local $new_offset_tot)
+                        (call_indirect (type $type_binary_op_f64)
+                            ( call $get_array_index_f64 (get_local $total_ptr)(get_local $new_offset_tot))
+                            (get_local $value)
+                            (get_local $func_ptr)
+                           ))
+                else
+                    (call $traverse_reduction
+                        (get_local $total_ptr)
+                        (get_local $mat_ptr)
+                        (get_local $mat_shape_ptr)
+                        (get_local $dim)
+                        (get_local $nanFlag)
+                        (get_local $func_ptr)
+                        (i32.add (get_local $curr_dim)(i32.const 1))
+                        (get_local $new_offset)(get_local $new_mult)(get_local $new_offset_tot)(get_local $new_mult_tot)
+                    )
+                end
+                (set_local $i (i32.add (get_local $i)(i32.const 1)))
+                br 1
+            end
+        end    
+    )
+    (export "mtimes_SM" (func $times_SM))
+    (export "mtimes_MS" (func $times_MS))
+    (export "mtimes_MM" (func $mtimes_MM))
+    (func $mtimes_MM (param $m1_ptr i32)(param $m2_ptr i32)(result i32)
+        (local $m1_shape_ptr i32)(local $m2_shape_ptr i32)
+        (local $rows_m1 i32)(local $rows_m2 i32)
+        (local $cols_m1 i32)(local $cols_m2 i32)
+        (local $size_out_ptr i32)(local $out_ptr i32)
+        (local $i i32)(local $j i32)(local $k i32)
+        (local $acc f64)
+        get_local $m1_ptr
+        call $is_null
+        get_local $m2_ptr
+        call $is_null
+        i32.or
         if
             i32.const 6
             call $throwError
         end
-        get_local $arr_ptr
-        i32.const 0
-        call $size
-        i32.const 0
-        i32.const 0
-        i32.const 0
-        i32.const 0
-        call $create_mxarray_ND
-        tee_local $out_ptr
-        get_local $x
-        get_local $arr_ptr
-        i32.const 5
-        call $elementwise_SM
+        get_local $m1_ptr
+        call $ismatrix
+        get_local $m2_ptr
+        call $ismatrix
+        i32.and
+        i32.eqz
+        if
+            i32.const 17
+            call $throwError
+        end
+        (set_local $m1_shape_ptr (call $size (get_local $m1_ptr)(i32.const 0)))
+        (set_local $m2_shape_ptr (call $size (get_local $m2_ptr)(i32.const 0)))
+        (set_local $rows_m1 (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $m1_shape_ptr)(i32.const 1))))
+        (set_local $cols_m2 (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $m2_shape_ptr)(i32.const 2))))
+        (tee_local $rows_m2 (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $m2_shape_ptr)(i32.const 1))))
+        (tee_local $cols_m1 (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $m1_shape_ptr)(i32.const 2))))
+        i32.ne
+        if
+            i32.const 18
+            call $throwError
+        end
+        (set_local $size_out_ptr (call $create_mxvector (i32.const 2)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)))
+        (call $set_array_index_f64 (get_local $size_out_ptr)(i32.const 1)(f64.convert_s/i32 (get_local $rows_m1)))
+        (call $set_array_index_f64 (get_local $size_out_ptr)(i32.const 2)(f64.convert_s/i32 (get_local $cols_m2)))
+        (set_local $out_ptr (call $zeros (get_local $size_out_ptr)(i32.const 0)))
+        loop
+            block 
+            (br_if 0 (i32.ge_s (get_local $i)(get_local $rows_m1)))
+                (set_local $j (i32.const 0))
+                loop
+                block 
+                (br_if 0 (i32.ge_s (get_local $j)(get_local $cols_m2)))
+                (set_local $acc (f64.const 0))
+                (set_local $k (i32.const 0))                
+                loop
+                    block 
+                    (br_if 0 (i32.ge_s (get_local $k)(get_local $rows_m2)))
+                        (set_local $acc (f64.add 
+                            (get_local $acc)
+                            (f64.mul 
+                                (call $get_array_index_f64 (get_local $m1_ptr)
+                                    (i32.add (i32.const 1)
+                                        (i32.add (get_local $i)
+                                            (i32.mul (get_local $rows_m1)
+                                                    (get_local $k)))))
+                                (call $get_array_index_f64 (get_local $m2_ptr)
+                                    (i32.add (i32.const 1)
+                                        (i32.add  (get_local $k)
+                                            (i32.mul (get_local $rows_m2)
+                                            (get_local $j)))))
+                        )))
+                        (set_local $k (i32.add (i32.const 1)(get_local $k)))
+                    br 1
+                    end
+                    end 
+                    (call $set_array_index_f64 
+                        (get_local $out_ptr)
+                        (i32.add (i32.const 1)
+                            (i32.add (get_local $i)
+                                        (i32.mul (get_local $rows_m1)
+                                            (get_local $j))))
+                        (get_local $acc))
+                    (set_local $j (i32.add (i32.const 1)(get_local $j)))
+                br 1
+                end
+                end
+            (set_local $i (i32.add (i32.const 1)(get_local $i)))
+            br 1
+            end
+        end
         get_local $out_ptr
     )
-    (func $mc_plus_MS (param $arr_ptr i32)(param $x f64) (result i32)
-        get_local $x
-        get_local $arr_ptr
-        call $mc_plus_SM
+    ;; UNARY OPS
+    (export "round_S" (func $round_S))
+    (func $round_S (param f64) (result f64)
+        get_local 0
+        f64.nearest
     )
 )
 

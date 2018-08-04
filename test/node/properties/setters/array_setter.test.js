@@ -38,7 +38,7 @@ describe('Setters', () => {
 			wasmInstance.set_array_index_f64(arr_1d, 3,4);
 			wasmInstance.set_array_index_f64(arr_1d, 4,6);
 			head_nd = wasmInstance.create_mxarray_ND(arr_1d,0,5/*int32*/);
-			data_nd = wasmInstance.get_array_start(head_nd);
+			data_nd = wasmInstance.mxarray_core_get_array_ptr(head_nd);
 			arr_data_nd = new Float64Array(memory.buffer, data_nd, 4);
 		});
 		it("Should reallocate array when index is more than length",() =>{

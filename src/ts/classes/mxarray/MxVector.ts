@@ -5,7 +5,7 @@ import {MxNDArray} from "./MxNdArray";
 export class MxVector extends MxArray {
 
     constructor(wi:any, array:Array<number>|number|MxVector, simple_type:number=0, class_type:number=0,
-                 complex:number=0, column:boolean=false, byte_size:number = 8)
+                 complex:number=0, column:boolean=false, byte_size:number = 0)
     {
         super();
         this._wi = wi;
@@ -41,6 +41,9 @@ export class MxVector extends MxArray {
             this._wi.set_array_index_f64(dim_ptr, idx+1, item);
         });
         return new MxNDArray(this._wi, this._wi.reshape(this._arr_ptr, dim_ptr));
+    }
+    public size(): MxNDArray {
+        return new MxNDArray(this._wi, super.size());
     }
 }
 

@@ -19,7 +19,7 @@ var MxVector = /** @class */ (function (_super) {
         if (class_type === void 0) { class_type = 0; }
         if (complex === void 0) { complex = 0; }
         if (column === void 0) { column = false; }
-        if (byte_size === void 0) { byte_size = 8; }
+        if (byte_size === void 0) { byte_size = 0; }
         var _this = _super.call(this) || this;
         _this._wi = wi;
         if (typeof array != "undefined") {
@@ -57,6 +57,9 @@ var MxVector = /** @class */ (function (_super) {
             _this._wi.set_array_index_f64(dim_ptr, idx + 1, item);
         });
         return new MxNdArray_1.MxNDArray(this._wi, this._wi.reshape(this._arr_ptr, dim_ptr));
+    };
+    MxVector.prototype.size = function () {
+        return new MxNdArray_1.MxNDArray(this._wi, _super.prototype.size.call(this));
     };
     return MxVector;
 }(MxArray_1.MxArray));

@@ -39,14 +39,17 @@ module.exports = {
         "printDouble":printInt,
         "printDoubleNumber":printDouble,
         "printMarker":()=>console.log("MARKER"),
-        "assert_header":1
+        "assert_header":1,
+        "print_array_f64":printArrayDouble
     },
     "math":{
         ones:() => 1,
         rand:() => Math.random(),
         randn:() => randn_s(),
         randi:(max) => Math.floor(max*Math.random()),
-        zeroes:()=> 0
+        zeros:()=> 0,
+        isnan: isNaN,
+        power:Math.pow
     },
     "test":{
         "assert":assert
@@ -74,15 +77,19 @@ String.prototype.hexDecode = function(){
 
     return back;
 }
+function printArrayDouble(arr_ptr, length) {
+    let arr = new Float64Array(memory.buffer, arr_ptr, length);
+    console.log(arr);
+}
 
 /////////////// ASSERT ////////////////////
 
 function assert(condition, error_number) {
     let errors = {
-        "0":"Invalid Assertion: class number is incorrect in function $get_mclass",
-        "1":"Invalid Assertion: elem_size number is incorrect in function $set_type_attribute",
-        "2":"Invalid Assertion: simple_class number is incorrect in function $set_type_attribute",
-        "3":"Invalid Assertion: complex number is incorrect in function $set_type_attribute",
+        "0":"Invalid Assertion: class number is incorrect in function $mxarray_core_get_mclass",
+        "1":"Invalid Assertion: elem_size number is incorrect in function $mxarray_core_set_type_attribute",
+        "2":"Invalid Assertion: simple_class number is incorrect in function $mxarray_core_set_type_attribute",
+        "3":"Invalid Assertion: complex number is incorrect in function $mxarray_core_set_type_attribute",
         "4":"Invalid Assertion: operation only valid for array type"
     };
     if(!condition)
@@ -102,3 +109,4 @@ function randn_s() {
 
 	return rand / 10;
 }
+console.log("N-dimensional arrays are not supported.".length);

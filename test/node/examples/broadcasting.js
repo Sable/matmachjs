@@ -116,4 +116,3 @@ let c = mxcreate([1,0]);
 c[0] = 1;
 let d = mxcreate([0,0,0,0]);
 console.log(pairwise(c,d,(f1,f2)=>f1+f2));
-console.log(-0 === 0);

@@ -31,14 +31,22 @@ describe('Element wise constructors', () => {
 		wi = wi.instance.exports;
 		memory = wi.mem;
 	});
-	describe('#zeroes', () => {
+	describe('#zeros', () => {
 		it('should correctly set all the elements to one', () => {
 			let vec = new MxVector(wi, [2,2,2]);
-			let arr_ptr  = wi.zeroes(vec.arr_ptr);
+			let arr_ptr  = wi.zeros(vec.arr_ptr);
 			let arr = new MxNDArray(wi, arr_ptr);
 			expect(Array.from(arr.size().getContents())).to.deep.equal([2,2,2]);
 			expect(arr.numel()).to.deep.equal(8);
 			expect(Array.from(arr.getContents())).to.deep.equal([0,0,0,0,0,0,0,0]);
+		});
+		it('should correctly set all the elements to one', () => {
+			let vec = new MxVector(wi, [2]);
+			let arr_ptr  = wi.zeros(vec.arr_ptr);
+			let arr = new MxNDArray(wi, arr_ptr);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([2,2]);
+			expect(arr.numel()).to.deep.equal(4);
+			expect(Array.from(arr.getContents())).to.deep.equal([0,0,0,0]);
 		});
 
 	});
@@ -60,6 +68,14 @@ describe('Element wise constructors', () => {
 			let arr = new MxNDArray(wi, arr_ptr);
 			expect(Array.from(arr.size().getContents())).to.deep.equal([2,2,2]);
 			expect(arr.numel()).to.deep.equal(8);
+			var mc_t19 = wi.create_mxvector(2);
+			wi.set_array_index_f64(mc_t19, 1, 1);
+			wi.set_array_index_f64(mc_t19, 2, 10);
+			var A = wi.randn(mc_t19);
+			let arr_2 = new MxNDArray(wi,A);
+			console.log(Array.from(arr_2.getContents()));
+			console.log(Array.from(arr.getContents()));
+			console.log(wi.disp_M(A));
 		});
 
 	});

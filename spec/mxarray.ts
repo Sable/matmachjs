@@ -1,7 +1,7 @@
 interface TypeAttribute {
     class: Class;
     element_bytesize:ByteSize;
-    number_class: NumberClass;
+    number_class?: NumberClass;
 }
 enum Class {
     array,
@@ -10,13 +10,13 @@ enum Class {
     function_handle,
     string
 }
-enum Type {
-    MxObject,
+enum MxType {
+    Array,
     Colon
 }
 interface Mx {
-    type: Type
-    mx_ptr?:number
+    type: MxType
+    mx_ptr?:MxArray
 }
 
 
@@ -46,16 +46,16 @@ enum ByteSize {
     eight=8
 }
 
-export interface Mxarray {
+export interface MxArray {
     type: TypeAttribute;
     length: number;
+    dim_number: number;
+    dim_ptr: number;
     arr1_ptr: Array<number>; // pr if sparse
     arr2_ptr?: Array<number>; // complex part,
         // struct fields, or pi if sparse.
     ir?: Array<number>;
     jc?: Array<number>;
-    dim_number: number;
-    dim_ptr: number;
     attributes:Attributes;
 }
 

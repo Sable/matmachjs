@@ -16,7 +16,7 @@ chai.use(sinonChai);
 
 const libjs = require(path.join(__dirname,"../../../../")+"/bin/lib.js");
 const file = fs.readFileSync(path.join(__dirname,"../../../../")+"/bin/get_mem.wasm");
-const { MxNDArray, MxVector } = require(path.join(__dirname,"../../../../bin/classes/Runtime.js"));
+const { MxNDArray, MxVector, MatlabRuntime } = require(path.join(__dirname,"../../../../bin/classes/Runtime.js"));
 
 let wi;
 describe('Getters', () => {
@@ -27,6 +27,7 @@ describe('Getters', () => {
 		let arr_data_nd;
 		let head_nd;
 		let data_nd;
+		let mr;
 		beforeEach(async ()=>{
 			wi= await WebAssembly.instantiate(file,libjs);
 			wi = wi.instance.exports;
@@ -37,8 +38,9 @@ describe('Getters', () => {
 			wi.set_array_index_f64(arr_1d, 3,4);
 			wi.set_array_index_f64(arr_1d, 4,6);
 			head_nd = wi.create_mxarray_ND(arr_1d,0,5/*int32*/);
-			data_nd = wi.get_array_start(head_nd);
+			data_nd = wi.mxarray_core_get_array_ptr(head_nd);
 			arr_data_nd = new Float64Array(memory.buffer, data_nd, 8);
+			mr = new MatlabRuntime(wi);
 		});
 		it("Should correctly return value at index for uint32",() =>{
 			head_nd = wi.create_mxarray_ND(arr_1d,0,9/*int32*/);
@@ -82,7 +84,7 @@ describe('Getters', () => {
 		});
 		it("Should correctly return value at index for int8",() =>{
 			head_nd = wi.create_mxarray_ND(arr_1d,0,3);
-			let start_arr = wi.get_array_start(head_nd);
+			let start_arr = wi.mxarray_core_get_array_ptr(head_nd);
 			wi.set_array_index_i8(head_nd, 1,-127);
 			wi.set_array_index_i8(head_nd, 2,256);
 			wi.set_array_index_i8(head_nd, 3,-256);
@@ -98,7 +100,7 @@ describe('Getters', () => {
 		});
 		it("Should correctly return value at index for uint8",() =>{
 			head_nd = wi.create_mxarray_ND(arr_1d,0,7);
-			let start_arr = wi.get_array_start(head_nd);
+			let start_arr = wi.mxarray_core_get_array_ptr(head_nd);
 			wi.set_array_index_i8(head_nd, 1,-127);
 			wi.set_array_index_i8(head_nd, 2,129);
 			wi.set_array_index_i8(head_nd, 3,-256);
@@ -132,15 +134,12 @@ describe('Getters', () => {
 	});
 	describe("#get_indices", ()=>{
 		let memory;
-		let arr_1d;
-		let arr_header_nd;
-		let arr_data_nd;
-		let head_nd;
-		let data_nd;
+		let mr;
 		beforeEach(async ()=>{
 			wi= await WebAssembly.instantiate(file,libjs);
 			wi = wi.instance.exports;
 			memory = wi.mem;
+			mr = new MatlabRuntime(wi);
 		});
 		it('should throw an error when any of the inputs are null', () => {
 			// TODO: Check how McLab handles a(). In matlab this gives the entire array
@@ -257,6 +256,11 @@ describe('Getters', () => {
 			wi.set_array_index_i32(param_arr, 2, dim_2);
 			let colon_arr = wi.colon(param_arr);
 			expect(Array.from((new MxNDArray(wi, colon_arr)).getContents())).to.deep.equal( [-5,-4,-3,-2,-1,0,1,2,3,4,5] );
+		});
+		it("should correctly return a 1x4 array with values 1,2,3,4", ()=>{
+			let colon_arr = mr.colon(1,4);
+			let res_arr = colon_arr.get_indices([[1,2,3,4]]);
+			expect(Array.from(res_arr.getContents())).to.deep.equal( [1,2,3,4] );
 		});
 	});
 });

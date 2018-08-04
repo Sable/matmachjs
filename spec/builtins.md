@@ -9,18 +9,19 @@
 - [x] create_mxvector_1D
 - [x] create_mxarray_ND
 ## Helpers
-- [x] set_type_attribute
+- [x] mxarray_core_set_type_attribute
 ## Testing & Debugging functions
 - [x] get_class
-- [x] get_simple_class
+- [x] mxarray_core_get_simple_class
 - [x] get_elem_size
 - [x] is_real
 ## Array get and set
 - [x] array_get (get from indices)
 - [x] array_set (get from indices)
 - [x] array_get (columns)
-    - Should throw error when two inputs are not row arra
+    - Inputs can actually be any shape in some circumstances
 - [x] array_set (columns)
+    - Inputs can actually be any shape in some circumstances
 # Array properties
 **Description**
 array_property(X), where X is a mxarray,
@@ -38,7 +39,7 @@ return the specified logical
 - [x] isempty
 - [ ] ischar (later)
 # Matrix Constructors
-- [x] colon (`colon(i,j,k)`)
+- [x] colon (`colon(i,j,k)`) -> Input to this is weird. it would take ([2,2],2,2) this is not an error, even though it should be
     - __Description__
     - Argument:
         - Should throw error if less than 2 inputs
@@ -56,8 +57,21 @@ return the specified logical
         - if i < k & j > 0 => increasing order array from i to i+m*j where m=fix((k-j)/i)
         - if k < i & j < 0 => decreasing order array
           from i to i+m*j where m=fix((k-j)/i)
+
 - [x] rand
-    This supports the following functions:
+    ```
+        X = rand()
+        X = rand(n)
+        X = rand(sz1,...,szN)
+        X = rand([sz1,...,szN])
+        X = rand(classname)
+        X = rand(n,classname)
+        X = rand(sz1,...,szN,classname)
+        X = rand([sz1,...,szN],classname)
+        X = rand(sz,classname)
+    ```
+- [x] randn (similar to rand)
+- [x] randi
       ```
         X = randi(imax)
         X = randi(imax,n)
@@ -68,84 +82,109 @@ return the specified logical
         X = randi(imax,sz1,...,szN,classname)
         X = randi(imax,sz,classname)
     ```
-- [x] randn
-    - Similar to as above
-- [x] randi
-    - Similar to as above
 - [x] zeroes
 - [x] ones
 - [x] clone (Also an allocator)
+- [x] eye
 **NOTE:** For all constructors the supported and cannonical format will be:
 ```
 sz=[1,2,4], classname
 
 ```
-The sparcity feature will be ignored.
-- [ ] eye
-    - **requires:** compute_indeces
-- [ ] set_index
-- [ ] compute_indeces
 
-# Matrix-vs-Matrix, Matrix-vs-Scalar
-- [ ] add
-- [ ] subs
-- [ ] rem
-- [ ] mod
-- [ ] times (elem-by-elem mult)
-- [ ] mtimes (matrix times)
-- [ ] mrdivide (system of linear equations divide) x = B/A
-- [ ] rdivide (right divide, elem-by-elem)
-- [ ] lt
-- [ ] le
-- [ ] gt
-- [ ] ge
-- [ ] eq
-- [ ] ne
-- [ ] isequal
-- [ ] mpower (Base A is a scalar and exponent B is a square matrix)
-- [ ] power (Base A is a square matrix and exponent B is a scalar)
-# Operations on a matrix
-- [ ] floor
-- [ ] ceil
+# Numerica Binary operations (Matrix-vs-Matrix, Matrix-vs-Scalar)
+- [x] add
+- [x] sub
+- [x] ldivide
+- [x] rdivide
+- [x] times
+- [x] rem
+- [x] mod
+- [x] ldivide
+- [x] rdivide (right divide, elem-by-elem)
+- [x] power (Base A is a square matrix and exponent B is a scalar)
+# Logical Binary Operations
+- [x] lt
+- [x] le
+- [x] gt
+- [x] ge
+- [x] eq
+- [x] ne
+- [x] eq
+# Unary operations (M)->(M)
+- [ ] floor(x)
+- [ ] ceil(x)
 - [ ] sin(x)
 - [ ] cos(x)
 - [ ] tan(x)
 - [ ] sqrt(x)
 - [ ] uminus(x)
+- [ ] uplus(x)
 - [ ] round(x)
-- [ ] exp
-- [ ] log
-- [ ] abs
-- [ ] transpose
+- [ ] exp(x)
+- [ ] log(x)
+- [ ] abs(X)
+- [ ] not(x)
+- [ ] fix(x)
+- [ ] max(x)
+- [ ] min(X)
+# Cum operations and reductions (M)->(M|S) reduce by one dimension to numeric
+- [x] sum
+- [x] prod
+## Combination of operations
+- [ ] std (built using sum, and divide)
 - [ ] mean
-- [ ] max
-- [ ] min
-- [ ] size
-- [ ] any (determine if any elements are non-zero)
-- [ ] fix
-- [ ] sum
-- [ ] not
-# Matrix concatanate 
-- [ ] horzcat (Concatenate matrices horizontally)
-- [ ] vertcat
+
+# Cum operations and reductions (M)->(M|S) reduce by one dimension to logical
+- [x] any (determine if any elements are non-zero)
+- [x] all
+# Cumulative operations (M)->(M)
+- [ ] cummin
+- [ ] cummax
+- [ ] movsum 
+- [ ] cumsum (movsum, and cumsum the same with but cumsum(X) = movsum(X,0))
+- [ ] cumprod
+# Matrix comparison to logical (M,M)=> {1,0}
+- [ ] isequal
+# Other matrix operations  (Matrix-vs-Matrix, Matrix-vs-Scalar)
+- [x] mtimes
+- [ ] mrdivide (system of linear equations divide) x = B/A
+- [ ] mldivide
+- [ ] mpower
+- [x] transpose
+## Matrix concatanate 
+- [x] horzcat (Concatenate matrices horizontally)
+- [x] vertcat
+- [x] concat about any other dimension
 # Constants
 - [ ] e
 - [ ] PI
-# Utility for matrix
-- [ ] compute_shape_length (Computes length based on argument dimensions, e.g. for zeroes(n), length is n*n)
 # Utility
 - [ ] who
 - [ ] disp
 - [ ] tic
 - [ ] toc
 - [ ] assert
+# Implementation
 
-### To implement
+A few templates:
 
-A few macros:
     Element wise:
-        -  Elementwise right
-        -  Elementwise left
-        -  Map
+        - Element-by-element constructor (ones, zeroes), no matrix values as inputs
+            - Takes one scalar input
+            - Takes no inputs
+        -  Elementwise right scalar vs. matrix ( binary operations )
+        -  Elementwise left matrix vs. scalar
     Pairwise:
-       - map
+       -  Numeric
+       -  Logical
+    Cumreduce: (M, func_ptr, init_val)
+        - Reducing a matrix by certain dimension using a cumulative result
+        e.g. sum, prod, mean, std
+        - Reducing to logical
+            - any, all
+    Cumulative: 
+        - Cumulative product of matrices, returns same sized matrix
+        e.g. cumsum, cumprod
+    
+    

@@ -106,7 +106,7 @@ describe('Array Properties', () => {
     describe('#length', () => {
         it('should throw error on -1 input', () => {
 	        try{
-		        wi.length(-1);
+		        wi.length_M(-1);
 		        expect(1+1).to.equal(3);
 	        }catch(err)
 	        {
@@ -115,10 +115,10 @@ describe('Array Properties', () => {
 
         });
         it('should return maximum dim size array for normal vectors', () => {
-            expect(wi.length(wi.create_mxvector(5))).to.equal(5);
-	        expect(wi.length(wi.create_mxvector(5,0,0,0,-1))).to.equal(5);
-	        expect(wi.length(wi.create_mxvector(-1,0,0,0,-1))).to.equal(1);
-	        expect(wi.length(wi.create_mxvector(1,0,0,0,-1))).to.equal(1);
+            expect(wi.length_M(wi.create_mxvector(5))).to.equal(5);
+	        expect(wi.length_M(wi.create_mxvector(5,0,0,0,-1))).to.equal(5);
+	        expect(wi.length_M(wi.create_mxvector(-1,0,0,0,-1))).to.equal(1);
+	        expect(wi.length_M(wi.create_mxvector(1,0,0,0,-1))).to.equal(1);
 
         });
 	    it('should return maximum dim size array for normal arrays', () => {
@@ -129,16 +129,16 @@ describe('Array Properties', () => {
 		    wi.set_array_index_f64(dim_arr, 4, -1);
 		    wi.set_array_index_f64(dim_arr, 5, -1);
 		    let arr = wi.create_mxarray_ND(dim_arr);
-		    expect(wi.length(wi.create_mxarray_ND(wi.create_mxvector(5)))).to.equal(0);
-		    expect(wi.length(arr)).to.equal(100);
+		    expect(wi.length_M(wi.create_mxarray_ND(wi.create_mxvector(5)))).to.equal(0);
+		    expect(wi.length_M(arr)).to.equal(100);
 	    });
 	    it('should return maximum dim size array for structs', () => {
- 		    expect(wi.length(wi.create_mxvector(3,3))).to.equal(3);
+ 		    expect(wi.length_M(wi.create_mxvector(3,3))).to.equal(3);
 
 
 	    });
 	    it('should return maximum dim size array for cell_arrays', () => {
-		    expect(wi.length(wi.create_mxvector(20,2))).to.equal(20);
+		    expect(wi.length_M(wi.create_mxvector(20,2))).to.equal(20);
 
 	    });
     });     

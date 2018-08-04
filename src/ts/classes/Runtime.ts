@@ -25,6 +25,44 @@ class MatlabRuntime {
             throw new Error("Please initialize Matlab Runtime");
         }
     }
+
+    public transpose(arr: MxArray| number){
+        if(typeof arr === 'number'){
+            return arr;
+        }else{
+            return new MxNDArray(this.wi, this.wi.transpose_M(arr.arr_ptr));
+        }
+    }
+    public lit(arr: Array<number> | Array<Array<number>>):MxArray{
+        if(typeof arr === 'undefined') throw new Error("Must pass a value array to construct literal");
+        if(arr.length == 0) {
+            // create an empty array
+            return new MxNDArray(this.wi, this.wi.create_mxarray_empty(2));
+        }else if(arr.length> 0 && typeof arr[0] === 'number'){
+            let val = [];
+            let arr_ = (arr as Array<number>);
+            let dimArr = new MxVector(this.wi,arr_);
+            // create an mxvector
+            return dimArr;
+        }else {
+            let arr_ = (arr as Array<Array<number>>);
+            let rows = arr_.length;
+            let cols = arr_[0].length;
+            let dimArr = new MxVector(this.wi,[rows,cols]);
+            let resArr = new MxNDArray(this.wi, dimArr);
+            // create ndarray
+            arr_.forEach((dimArr, idxRow)=>{
+                if(!(dimArr instanceof Array) || dimArr.length !== cols){
+                    throw new Error("Dimensions of matrices being concatenated are not consistent.");
+                }
+                dimArr.forEach((elem,idxCol)=>{
+                    resArr.set_index((idxRow+rows*idxCol)+1, elem);
+                });
+            });
+            return resArr;
+
+        }
+    }
     public isRuntimeStarted():boolean {
         return this.started;
     }

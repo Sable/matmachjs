@@ -36,7 +36,7 @@ var MxNDArray = /** @class */ (function (_super) {
         }
         else {
             var vector = new MxVector_1.MxVector(_this._wi, mxarray);
-            _this._arr_ptr = _this._wi.create_mxarray_ND(vector.arr_ptr, class_type, simple_type, complex, byte_size);
+            _this._arr_ptr = _this._wi.create_mxarray_ND(vector.arr_ptr, class_type, simple_type, (complex) ? 0 : 1, byte_size);
         }
         return _this;
     }

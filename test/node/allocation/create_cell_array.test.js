@@ -43,9 +43,9 @@ describe('Cell Array Creation', () => {
 			expect(wi.get_array_index_i32(dim_1, 1)).to.equal(5);
 			expect(wi.get_array_index_i32(dim_2, 1)).to.equal(10);
 			expect(wi.get_array_index_i32(param_arr, 1)).to.equal(dim_1);
-			expect(wi.get_array_length(param_arr)).to.equal(2);
+			expect(wi.mxarray_core_get_array_length(param_arr)).to.equal(2);
 			expect(wi.ndims(param_arr)).to.equal(2);
-			expect(wi.length(param_arr)).to.equal(2);
+			expect(wi.length_M(param_arr)).to.equal(2);
 			expect(wi.get_array_index_i32(param_arr, 2)).to.equal(dim_2);
 		});
 	});

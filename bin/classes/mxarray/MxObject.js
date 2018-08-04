@@ -10,9 +10,15 @@ var MxObject = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    MxObject.prototype.getContents = function () {
+    MxObject.prototype.getContents = function (start, length) {
+        if (start === void 0) { start = 0; }
+        if (length === void 0) { length = this.numel(); }
+        if (length < 0 || start < 0)
+            throw new Error("View indices must be positive");
+        if (length > this.numel() - start)
+            throw new Error("Invalid length, index out-of-bounds");
         if (this.numel() > 0)
-            return new Float64Array(this._wi.mem.buffer, this._wi.get_array_start(this.arr_ptr), this.numel());
+            return new Float64Array(this._wi.mem.buffer, this._wi.mxarray_core_get_array_ptr(this.arr_ptr) + start, length);
         else {
             return new Float64Array(0);
         }
@@ -27,7 +33,7 @@ var MxObject = /** @class */ (function () {
         return this._wi.ndims(this.arr_ptr);
     };
     MxObject.prototype.length = function () {
-        return this._wi.length(this.arr_ptr);
+        return this._wi.length_M(this.arr_ptr);
     };
     MxObject.prototype.isrow = function () {
         return this._wi.isrow(this.arr_ptr) === 1;

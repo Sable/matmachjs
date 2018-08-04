@@ -7,9 +7,11 @@ export abstract class MxObject implements IMXObject {
         public get arr_ptr(): number {
             return this._arr_ptr;
         }
-        public getContents(): Float64Array {
+        public getContents(start=0, length=this.numel()): Float64Array {
+            if(length < 0 || start < 0) throw new Error("View indices must be positive");
+            if(length > this.numel() - start ) throw new Error("Invalid length, index out-of-bounds");
             if(this.numel() > 0)
-                return new Float64Array(this._wi.mem.buffer,this._wi.get_array_start(this.arr_ptr), this.numel());
+                return new Float64Array(this._wi.mem.buffer,this._wi.mxarray_core_get_array_ptr(this.arr_ptr)+start, length);
             else{
                 return new Float64Array(0);
             }
@@ -27,7 +29,7 @@ export abstract class MxObject implements IMXObject {
         }
 
         public length(): number {
-            return this._wi.length(this.arr_ptr);
+            return this._wi.length_M(this.arr_ptr);
         }
 
         public isrow(): boolean {

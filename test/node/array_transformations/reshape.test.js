@@ -98,7 +98,7 @@ describe('Array Transformations', () => {
             expect(wi.numel(new_arr)).to.equal(42);
             expect(wi.ndims(new_arr)).to.equal(2);
             let size_ptr = wi.size(new_arr);
-            expect(Array.from(new Float64Array(memory.buffer, wi.get_array_start(size_ptr), wi.numel(size_ptr))))
+            expect(Array.from(new Float64Array(memory.buffer, wi.mxarray_core_get_array_ptr(size_ptr), wi.numel(size_ptr))))
                 .to.deep.equal([21,2]);
         });
         it("should return a 1x4 array for a 2x2 despite giving as reshape input 1x4x1x1x1", ()=>{

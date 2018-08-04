@@ -20,7 +20,7 @@ export abstract class MxArray extends MxObject {
                 });
                 this._wi.set_array_index_i32(indices_arr_ptr, indDim+1, index_arr_ptr);
             });
-            return  this._wi.get_f64(this._arr_ptr,indices_arr_ptr);
+            return this._wi.get_f64(this._arr_ptr,indices_arr_ptr);
         }
         public get(indices:Array<Array<number>>|number ) {
             if( typeof indices === 'number'){

@@ -1,5 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+///<reference path="mxarray/MxNdArray.ts"/>
+var MxArray_1 = require("./mxarray/MxArray");
 var MxVector_1 = require("./mxarray/MxVector");
 exports.MxVector = MxVector_1.MxVector;
 var MxNdArray_1 = require("./mxarray/MxNdArray");
@@ -18,6 +20,59 @@ var MatlabRuntime = /** @class */ (function () {
     MatlabRuntime.prototype.checkForStartedRuntime = function () {
         if (!this.started) {
             throw new Error("Please initialize Matlab Runtime");
+        }
+    };
+    MatlabRuntime.prototype.ones = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        if (args.length > 0) {
+            if (args.length === 1 && (args[0].constructor === MxArray_1.MxArray || args[0].constructor === Array)) {
+            }
+        }
+        else {
+            return 1;
+        }
+    };
+    MatlabRuntime.prototype.transpose = function (arr) {
+        if (typeof arr === 'number') {
+            return arr;
+        }
+        else {
+            return new MxNdArray_1.MxNDArray(this.wi, this.wi.transpose_M(arr.arr_ptr));
+        }
+    };
+    MatlabRuntime.prototype.lit = function (arr) {
+        if (typeof arr === 'undefined')
+            throw new Error("Must pass a value array to construct literal");
+        if (arr.length == 0) {
+            // create an empty array
+            return new MxNdArray_1.MxNDArray(this.wi, this.wi.create_mxarray_empty(2));
+        }
+        else if (arr.length > 0 && typeof arr[0] === 'number') {
+            var val = [];
+            var arr_ = arr;
+            var dimArr = new MxVector_1.MxVector(this.wi, arr_);
+            // create an mxvector
+            return dimArr;
+        }
+        else {
+            var arr_ = arr;
+            var rows_1 = arr_.length;
+            var cols_1 = arr_[0].length;
+            var dimArr = new MxVector_1.MxVector(this.wi, [rows_1, cols_1]);
+            var resArr_1 = new MxNdArray_1.MxNDArray(this.wi, dimArr);
+            // create ndarray
+            arr_.forEach(function (dimArr, idxRow) {
+                if (!(dimArr instanceof Array) || dimArr.length !== cols_1) {
+                    throw new Error("Dimensions of matrices being concatenated are not consistent.");
+                }
+                dimArr.forEach(function (elem, idxCol) {
+                    resArr_1.set_index((idxRow + rows_1 * idxCol) + 1, elem);
+                });
+            });
+            return resArr_1;
         }
     };
     MatlabRuntime.prototype.isRuntimeStarted = function () {

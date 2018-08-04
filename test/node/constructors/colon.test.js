@@ -110,7 +110,7 @@ describe('Array Constructors', () => {
 				wi.set_array_index_i32(param_arr, 1, dim_1);
 				wi.set_array_index_i32(param_arr, 2, dim_2);
 				let colon_arr = wi.colon(param_arr);
-				let data_colon_arr = wi.get_array_start(colon_arr);
+				let data_colon_arr = wi.mxarray_core_get_array_ptr(colon_arr);
 				expect(Array.from(new Float64Array(memory.buffer, data_colon_arr, wi.numel(colon_arr)))).to.deep.equal([2,3,4,5,6,7,8,9,10]);
 
 			});
@@ -123,7 +123,7 @@ describe('Array Constructors', () => {
 				wi.set_array_index_i32(param_arr, 1, dim_1);
 				wi.set_array_index_i32(param_arr, 2, dim_2);
 				let colon_arr = wi.colon(param_arr);
-				let data_colon_arr = wi.get_array_start(colon_arr);
+				let data_colon_arr = wi.mxarray_core_get_array_ptr(colon_arr);
 				expect(Array.from(new Float64Array(memory.buffer, data_colon_arr, wi.numel(colon_arr)))).to.deep.equal([-1,0,1]);
 			});
 
@@ -225,7 +225,7 @@ describe('Array Constructors', () => {
 				wi.set_array_index_i32(param_arr, 3, dim_3);
 
 				let colon_arr = wi.colon(param_arr);
-				let data_colon_arr = wi.get_array_start(colon_arr);
+				let data_colon_arr = wi.mxarray_core_get_array_ptr(colon_arr);
 				expect(Array.from(new Float64Array(memory.buffer, data_colon_arr, wi.numel(colon_arr)))).to.deep.equal([4,2,0,-2,-4]);
 			});
 			it('should return 11x1 correct value for i=-4, j=2, k=4, total length should be 5', () => {
@@ -243,7 +243,7 @@ describe('Array Constructors', () => {
 				wi.set_array_index_i32(param_arr, 3, dim_3);
 
 				let colon_arr = wi.colon(param_arr);
-				let data_colon_arr = wi.get_array_start(colon_arr);
+				let data_colon_arr = wi.mxarray_core_get_array_ptr(colon_arr);
 				expect(Array.from(new Float64Array(memory.buffer, data_colon_arr, wi.numel(colon_arr)))).to.deep.equal([-4,-2,0,2,4]);
 			});
 		});

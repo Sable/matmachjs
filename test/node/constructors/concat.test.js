@@ -47,7 +47,6 @@ describe('Concatanation Module', () => {
            }
         });
         it('should throw error when concatanating dimension is larger than the shape of inputs', () => {
-
             let arr1 = new MxNDArray(wi,[3,7,2,2]);
 		    let arr2 = new MxNDArray(wi,[3,7,2,2,4]);
 		    let input_args = wi.create_mxvector(2,5);
@@ -146,6 +145,7 @@ describe('Concatanation Module', () => {
 	});
 	describe("#horzcat", ()=>{
 		it('should return correct result for ', () => {
+			console.log(wi);
 			let arr = mr.colon(11,20);
 			arr = mr.reshape(arr, [2,5]);
 			let arr2 = new MxNDArray(wi, [2,3]);
@@ -158,6 +158,7 @@ describe('Concatanation Module', () => {
 				.to.deep.equal([ 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20 ]);
 
 		});
+		// it('should ')
 
 	});
 	describe("#vertcat",()=>{

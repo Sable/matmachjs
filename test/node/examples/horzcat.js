@@ -113,15 +113,12 @@ function traverse_concat(concat_dim, total,total_new_dim, mat, shape, size_prev,
         let new_mult_tot;
         if( idx === concat_dim){
 	        new_offset_tot =  offset_tot + (size_prev + i)*mult_tot;
-	        console.log("LINE", idx, new_offset_tot, offset_tot , size_prev, mult_tot);
 	        new_mult_tot = mult_tot*total_new_dim;
         }else{
 	        new_offset_tot = offset_tot + i*mult_tot;
 	        new_mult_tot = mult_tot*shape[idx];
         }
-	    // console.log("TOTO1",mat,"DIM:",idx, ",i:", i, ",size_prev:", size_prev,"mult", mult_tot, "off", new_offset_tot,offset_tot);
 	    if (idx === shape.length -1) {
-	        console.log("TOTO2",mat,"DIM:",idx, ",i:", i, ",size_prev:", size_prev,"mult", mult_tot, "off", new_offset_tot,offset_tot);
             total[new_offset_tot] = mat[new_offset];
         }else{
             traverse_concat(concat_dim, total,total_new_dim, mat,shape,size_prev, idx+1,new_offset, new_mult, new_offset_tot, new_mult_tot);
