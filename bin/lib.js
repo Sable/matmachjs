@@ -49,7 +49,14 @@ module.exports = {
         randi:(max) => Math.floor(max*Math.random()),
         zeros:()=> 0,
         isnan: isNaN,
-        power:Math.pow
+        power:Math.pow,
+        sin: Math.sin,
+        cos: Math.cos,
+        tan: Math.tan,
+        exp: Math.exp,
+        log: Math.log,
+        log2: Math.log2,
+        log10: Math.log10
     },
     "test":{
         "assert":assert

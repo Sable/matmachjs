@@ -14,6 +14,15 @@
     ;; (import "math" "randi" (func $randi_s (param f64) (result f64)))
     ;; (import "math" "isnan" (func $isnan (param f64) (result i32)))
     ;; (import "math" "power" (func $power_SS (param f64)(param f64) (result f64)))
+    ;; (import "math" "sin" (func $sin_S (param f64)(result f64)))
+    ;; (import "math" "cos" (func $cos_S (param f64) (result f64)))
+    ;; (import "math" "tan" (func $tan_S (param f64) (result f64)))
+    ;; (import "math" "exp" (func $exp_S (param f64) (result f64)))
+    ;; (import "math" "log" (func $log_S (param f64) (result f64)))
+    ;; (import "math" "log10" (func $log10_S (param f64)(result f64)))
+    ;; (import "math" "log2" (func $log2_S (param f64)(result f64)))
+    ;; (import "math" "pi" (global $PI f64))
+    ;; (import "math" "e" (global $E f64))
     
     ;; Dummy variables which will be commented out
     (;dummy;)(func $printString (param i32 i32)(result i32) i32.const 1)
@@ -30,10 +39,18 @@
     (;dummy;)(func $isnan (param f64)(result i32) i32.const 0)
     (;dummy;)(func $power_SS (param f64 f64)(result f64) f64.const 0)
     (;dummy;)(func $print_array_f64 (param i32 i32) )
+    (;dummy;)(func $sin_S (param f64)(result f64)f64.const 0)
+    (;dummy;)(func $cos_S (param f64) (result f64)f64.const 0)
+    (;dummy;)(func $tan_S (param f64) (result f64)f64.const 0)
+    (;dummy;)(func $exp_S (param f64) (result f64)f64.const 0)
+    (;dummy;)(func $log_S (param f64) (result f64)f64.const 0)
+    (;dummy;)(func $log10_S (param f64)(result f64)f64.const 0)
+    (;dummy;)(func $log2_S (param f64)(result f64)f64.const 0)
+
 
     (global $ASSERT_HEADER_FLAG i32 (i32.const 1))
     (memory $mem 1 5)
-    (table $tab 40 anyfunc)
+    (table $tab 100 anyfunc)
 
     ;; (elem $tab (i32.const 10) )
     (export "mem" (memory $mem))
@@ -2681,6 +2698,10 @@
         (local $len i32)(local $i i32)
         get_local $arr_ptr
         call $is_null
+        i32.eqz
+        get_local $arr_ptr
+        call $is_array
+        i32.or
         if
             i32.const 6
             call $throwError
@@ -2764,19 +2785,7 @@
         end
     )
 
-    (export "plus_SS" (func $plus_SS))
-    (func $plus_SS (param f64 f64)(result f64) 
-        get_local 0
-        get_local 1
-        f64.add
-    )
-    (export "minus_SS" (func $minus_SS))
-
-    (func $minus_SS (param f64 f64)(result f64) 
-        get_local 0
-        get_local 1
-        f64.sub
-    )
+  
     (export "mod_SS" (func $mod_SS))  
     (func $mod_SS (param f64 f64)(result f64) 
         get_local 0
@@ -2901,10 +2910,9 @@
     (elem $tab (i32.const 5) $plus_SS $minus_SS $rem_SS $mod_SS $times_SS $rdivide_SS $power_SS)
     (elem $tab (i32.const 12) $le_SS $lt_SS $ge_SS $gt_SS $eq_SS)
     (elem $tab (i32.const 17) $and_SS $or_SS $ne_SS)
-    (export "plus_MM" (func $plus_MM))
-    (func $plus_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
-        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 5)))
-    )
+
+
+     
     (export "disp_M" (func $disp_M))
     (func $disp_M (param $arr_ptr i32)
         get_local $arr_ptr
@@ -2922,76 +2930,216 @@
         call $printDoubleNumber
         drop
     )
-
-    (export "plus_MS" (func $plus_SM))
+    (export "plus_SS" (func $plus_SS))
+    (func $plus_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.add
+    )
+    (export "plus_MM" (func $plus_MM))
+    (func $plus_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
+        (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 5)))
+    )
+    (export "plus_SM" (func $plus_SM))
     (func $plus_SM (param $x f64)(param $arr_ptr i32) (result i32)
-        (call $elementwise_constructor_one_input (get_local $arr_ptr)(get_local $x)(i32.const 5))
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 5))
+    )
+     (export "plus_MS" (func $plus_MS))
+    (func $plus_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 5))
+    )
+
+
+    (export "minus_SS" (func $minus_SS))
+    (func $minus_SS (param f64 f64)(result f64) 
+        get_local 0
+        get_local 1
+        f64.sub
     )
     (export "minus_MM" (func $minus_MM))
     (func $minus_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 6)))
     )
-    (export "times_SM" (func $times_SM))
-    (func $times_SM (param $scalar1 f64) (param $m1_ptr i32)(result i32)
-        (return (call $elementwise_mapping_one_input (get_local $m1_ptr)(get_local $scalar1)(i32.const 1)(i32.const 9)))
+ 
+    (export "minus_SM" (func $minus_SM))
+    (func $minus_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 6))
+    )
+    (export "minus_MS" (func $minus_MS))
+    (func $minus_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 6))
     )
     (export "times_MS" (func $times_MS))
     (func $times_MS (param $m1_ptr i32)(param $scalar1 f64) (result i32)
         (return (call $elementwise_mapping_one_input (get_local $m1_ptr)(get_local $scalar1)(i32.const 0)(i32.const 9)))
     )
+    (export "times_SM" (func $times_SM))
+    (func $times_SM (param $scalar1 f64) (param $m1_ptr i32)(result i32)
+        (return (call $elementwise_mapping_one_input (get_local $m1_ptr)(get_local $scalar1)(i32.const 1)(i32.const 9)))
+    )
     (export "times_MM" (func $times_MM))
     (func $times_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 9)))
+    )
+    (export "rem_SM" (func $rem_SM))
+    (func $rem_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 7))
+    )
+    (export "rem_MS" (func $rem_MS))
+    (func $rem_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 7))
     )
     (export "rem_MM" (func $rem_MM))
     (func $rem_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 7)))
     )
+    (export "mod_SM" (func $mod_SM))
+    (func $mod_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 8))
+    )
+    (export "mod_MS" (func $mod_MS))
+    (func $mod_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 8))
+    )
     (export "mod_MM" (func $mod_MM))
     (func $mod_MM (param $m1_ptr i32)(param $m2_ptr i32)(result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 8)))
+    )
+    
+    (export "rdivide_SM" (func $rdivide_SM))
+    (func $rdivide_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 10))
+    )
+    (export "rdivide_MS" (func $rdivide_MS))
+    (func $rdivide_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 10))
     )
     (export "rdivide_MM" (func $rdivide_MM))
     (func $rdivide_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 10)))
     )
  
+   (export "ldivide_SM" (func $ldivide_SM))
+    (func $ldivide_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 10))
+    )
+    (export "ldivide_MS" (func $ldivide_MS))
+    (func $ldivide_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 10))
+    )
      (export "ldivide_MM" (func $ldivide_MM))
     (func $ldivide_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m2_ptr)(get_local $m1_ptr)(i32.const 10)))
+    )
+    
+     
+   (export "power_SM" (func $power_SM))
+    (func $power_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 11))
+    )
+    (export "power_MS" (func $power_MS))
+    (func $power_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 11))
     )
      (export "power_MM" (func $power_MM))
     (func $power_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 11)))
     )
+
+       (export "le_SM" (func $le_SM))
+    (func $le_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 12))
+    )
+    (export "le_MS" (func $le_MS))
+    (func $le_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 12))
+    )
      (export "le_MM" (func $le_MM))
     (func $le_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 12)))
+    )
+
+       (export "lt_SM" (func $lt_SM))
+    (func $lt_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 13))
+    )
+    (export "lt_MS" (func $lt_MS))
+    (func $lt_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 13))
     )
      (export "lt_MM" (func $lt_MM))
     (func $lt_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 13)))
     )
+
+    (export "ge_SM" (func $ge_SM))
+    (func $ge_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 14))
+    )
+    (export "ge_MS" (func $ge_MS))
+    (func $ge_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 14))
+    )
      (export "ge_MM" (func $ge_MM))
     (func $ge_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 14)))
+    )
+    (export "gt_SM" (func $gt_SM))
+    (func $gt_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 15))
+    )
+    (export "gt_MS" (func $gt_MS))
+    (func $gt_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 15))
     )
      (export "gt_MM" (func $gt_MM))
     (func $gt_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 15)))
     )
+    (export "eq_SM" (func $eq_SM))
+    (func $eq_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 16))
+    )
+    (export "eq_MS" (func $eq_MS))
+    (func $eq_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 16))
+    )
      (export "eq_MM" (func $eq_MM))
     (func $eq_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 16)))
+    )
+    (export "and_SM" (func $and_SM))
+    (func $and_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 17))
+    )
+    (export "and_MS" (func $and_MS))
+    (func $and_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 17))
     )
     (export "and_MM" (func $and_MM))
     (func $and_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 17)))
     )
-
+    (export "or_SM" (func $or_SM))
+    (func $or_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 18))
+    )
+    (export "or_MS" (func $or_MS))
+    (func $or_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 18))
+    )
     (export "or_MM" (func $or_MM))
     (func $or_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
         (return (call $pairwise (get_local $m1_ptr)(get_local $m2_ptr)(i32.const 18)))
+    )
+
+    (export "ne_SM" (func $ne_SM))
+    (func $ne_SM (param $x f64)(param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 1)(i32.const 19))
+    )
+    (export "ne_MS" (func $ne_MS))
+    (func $ne_MS (param $arr_ptr i32)(param $x f64) (result i32)
+        (call $elementwise_mapping_one_input (get_local $arr_ptr)(get_local $x)(i32.const 0)(i32.const 19))
     )
     (export "ne_MM" (func $ne_MM))
     (func $ne_MM (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
@@ -3376,16 +3524,7 @@
             (get_local $arr_ptr)(get_local $dim)
             (i32.const 1)(i32.const 0)(i32.const 18))
     )
-    (export "convert_scalar_to_mxarray" (func $convert_scalar_to_mxarray))
-    (func $convert_scalar_to_mxarray (param $scalar f64) (result i32)
-        (local $out_ptr i32)
-        (tee_local $out_ptr 
-            (call $create_mxvector (i32.const 1)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)))
-        i32.const 1
-        get_local $scalar
-        call $set_array_index_f64
-        get_local $out_ptr
-    )
+ 
     (export "all" (func $all))
     (func $all (param $arr_ptr i32)(param $dim i32)(result i32)
         (call $reduction 
@@ -3398,6 +3537,17 @@
         (call $reduction 
             (get_local $arr_ptr)(get_local $dim)
             (get_local $nanFlag)(i32.const 1)(i32.const 9))
+    )
+    ;; MATJUICE
+    (export "convert_scalar_to_mxarray" (func $convert_scalar_to_mxarray))
+    (func $convert_scalar_to_mxarray (param $scalar f64) (result i32)
+        (local $out_ptr i32)
+        (tee_local $out_ptr 
+            (call $create_mxvector (i32.const 1)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)))
+        i32.const 1
+        get_local $scalar
+        call $set_array_index_f64
+        get_local $out_ptr
     )
     ;; Used for sum, prod, etc.
     (func $traverse_reduction (param $total_ptr i32)(param $mat_ptr i32)
@@ -3567,10 +3717,111 @@
         get_local $out_ptr
     )
     ;; UNARY OPS
+    (elem $tab (i32.const 20) $round_S $ceil_S $sqrt_S $uminus_S $uplus_S $abs_S $not_S $fix_S $sin_S $cos_S $tan_S $exp_S $log_S $log10_S $log2_S)
     (export "round_S" (func $round_S))
     (func $round_S (param f64) (result f64)
         get_local 0
         f64.nearest
+    )
+    (export "round_M" (func $round_M))
+    (func $round_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 20))
+    )
+    (export "ceil_S" (func $ceil_S))
+    (func $ceil_S (param f64) (result f64)
+        get_local 0
+        f64.ceil
+    )
+    (export "ceil_M" (func $ceil_M))
+    (func $ceil_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 21))
+    )
+    (export "sqrt_S" (func $sqrt_S))
+    (func $sqrt_S (param f64) (result f64)
+        get_local 0
+        f64.sqrt
+    )
+    (export "sqrt_M" (func $sqrt_M))
+    (func $sqrt_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 22))
+    )
+    (export "uminus_S" (func $uminus_S))
+    (func $uminus_S (param f64) (result f64)
+        get_local 0
+        f64.const -1
+        f64.mul
+    )
+    (export "uminus_M" (func $uminus_M))
+    (func $uminus_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 23))
+    )
+      (export "uplus_S" (func $uplus_S))
+    (func $uplus_S (param f64) (result f64)
+        get_local 0
+        f64.const -1
+        f64.mul
+    )
+    (export "uplus_M" (func $uplus_M))
+    (func $uplus_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 24))
+    )
+    (export "abs_S" (func $abs_S))
+    (func $abs_S (param f64) (result f64)
+        get_local 0
+        f64.abs
+    )
+    (export "abs_M" (func $abs_M))
+    (func $abs_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 25))
+    )
+
+    (export "not_S" (func $not_S))
+    (func $not_S (param f64) (result f64)
+        get_local 0
+        f64.const 0
+        f64.eq
+        f64.convert_s/i32
+    )
+    (export "not_M" (func $not_M))
+    (func $not_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 26))
+    )
+    (export "fix_S" (func $fix_S))
+    (func $fix_S (param f64) (result f64)
+        get_local 0
+        f64.trunc
+    )
+    (export "fix_M" (func $fix_M))
+    (func $fix_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 27))
+    )
+    (export "sin_M" (func $sin_M))
+    (func $sin_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 28))
+    )
+    (export "cos_M" (func $cos_M))
+    (func $cos_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 29))
+    )
+    (export "tan_M" (func $tan_M))
+    (func $tan_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 30))
+    )
+    (export "exp_M" (func $exp_M))
+    (func $exp_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 31))
+    )
+    (export "log_M" (func $log_M))
+    (func $log_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 32))
+    )
+    (export "log10_M" (func $log10_M))
+    (func $log10_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 33))
+    )
+    (export "log2_M" (func $log2_M))
+    (func $log2_M (param $arr_ptr i32) (result i32)
+        (call $elementwise_mapping (get_local $arr_ptr)(i32.const 34))
     )
 )
 

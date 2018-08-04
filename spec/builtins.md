@@ -112,25 +112,26 @@ sz=[1,2,4], classname
 - [x] ne
 - [x] eq
 # Unary operations (M)->(M)
-- [ ] floor(x)
-- [ ] ceil(x)
-- [ ] sin(x)
-- [ ] cos(x)
-- [ ] tan(x)
-- [ ] sqrt(x)
-- [ ] uminus(x)
-- [ ] uplus(x)
-- [ ] round(x)
-- [ ] exp(x)
-- [ ] log(x)
-- [ ] abs(X)
-- [ ] not(x)
-- [ ] fix(x)
-- [ ] max(x)
-- [ ] min(X)
+- [x] floor(x)
+- [x] ceil(x)
+- [x] sin(x)
+- [x] cos(x)
+- [x] tan(x)
+- [x] sqrt(x)
+- [x] uminus(x)
+- [x] uplus(x)
+- [x] round(x)
+- [x] exp(x)
+- [x] log(x)
+- [x] abs(X)
+- [x] not(x)
+- [x] fix(x)
+
 # Cum operations and reductions (M)->(M|S) reduce by one dimension to numeric
 - [x] sum
 - [x] prod
+- [ ] max
+- [ ] min
 ## Combination of operations
 - [ ] std (built using sum, and divide)
 - [ ] mean
@@ -157,8 +158,8 @@ sz=[1,2,4], classname
 - [x] vertcat
 - [x] concat about any other dimension
 # Constants
-- [ ] e
-- [ ] PI
+- [x] e
+- [x] PI
 # Utility
 - [ ] who
 - [ ] disp
