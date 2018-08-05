@@ -130,6 +130,7 @@ sz=[1,2,4], classname
 # Cum operations and reductions (M)->(M|S) reduce by one dimension to numeric
 - [x] sum
 - [x] prod
+# Cum operations and reductions with either two or one matrix as input
 - [ ] max
 - [ ] min
 ## Combination of operations

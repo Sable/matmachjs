@@ -16,8 +16,11 @@ export class MxNDArray extends MxArray {
         }else if(mxarray instanceof MxVector){
             this._arr_ptr = this._wi.create_mxarray_ND(mxarray.arr_ptr,class_type,simple_type, complex,byte_size);
         }else{
-            let vector = new MxVector(this._wi, mxarray);
-            this._arr_ptr = this._wi.create_mxarray_ND(vector.arr_ptr,class_type,simple_type, (complex)?0:1,byte_size);
+            let input_ptr = this._wi.create_mxvector(mxarray.length,simple_type,class_type,complex,column,byte_size);
+            mxarray.forEach((val, idx)=>{
+                this._wi.set_array_index_f64(input_ptr, idx+1, val);
+            });
+            this._arr_ptr = this._wi.create_mxarray_ND(input_ptr, class_type,simple_type, (complex)?0:1,byte_size);
         }
     }
     public reshape(new_dimensions: number[]) {

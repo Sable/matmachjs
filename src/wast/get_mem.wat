@@ -3518,6 +3518,8 @@
             (get_local $arr_ptr)(get_local $dim)
             (get_local $nanFlag)(i32.const 0)(i32.const 5))
     )
+
+  
     (export "any" (func $any))
     (func $any (param $arr_ptr i32)(param $dim i32)(result i32)
         (call $reduction 
