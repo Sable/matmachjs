@@ -1,4 +1,5 @@
 import {IMXObject} from "../../interfaces/IMXObject";
+import { MatWably } from "../../interfaces/MatlabWasmBuiltins";
 
 export abstract class MxObject implements IMXObject {
         protected _wi: any;

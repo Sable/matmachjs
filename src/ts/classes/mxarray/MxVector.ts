@@ -1,10 +1,10 @@
 import {MxObject} from "./MxObject";
 import {MxArray} from "./MxArray";
 import {MxNDArray} from "./MxNdArray";
-
+import { MatWablyBuiltin } from "../../interfaces/MatlabWasmBuiltins";
 export class MxVector extends MxArray {
 
-    constructor(wi:any, array:Array<number>|number|MxVector, simple_type:number=0, class_type:number=0,
+    constructor( array:Array<number>|number|MxVector, simple_type:number=0, class_type:number=0,
                  complex:number=0, column:boolean=false, byte_size:number = 0)
     {
         super();

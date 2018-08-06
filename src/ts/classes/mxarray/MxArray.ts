@@ -1,6 +1,7 @@
 
 import {MxObject} from "./MxObject";
 import {MxNDArray} from "./MxNdArray";
+import { MatWably } from "../../interfaces/MatlabWasmBuiltins";
 
 export abstract class MxArray extends MxObject {
 
