@@ -1,5 +1,4 @@
 import {IMXObject} from "../../interfaces/IMXObject";
-import { MatWably } from "../../interfaces/MatlabWasmBuiltins";
 
 export abstract class MxObject implements IMXObject {
         protected _wi: any;
@@ -29,7 +28,7 @@ export abstract class MxObject implements IMXObject {
             return this._wi.ndims(this.arr_ptr);
         }
 
-        public length(): number {
+        public length_M(): number {
             return this._wi.length_M(this.arr_ptr);
         }
 

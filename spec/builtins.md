@@ -62,7 +62,7 @@ return the specified logical
     ```
         X = rand()
         X = rand(n)
-        X = rand(sz1,...,szN)
+        X = rand(sz1,...,szN)****
         X = rand([sz1,...,szN])
         X = rand(classname)
         X = rand(n,classname)
@@ -134,7 +134,7 @@ sz=[1,2,4], classname
 - [ ] max
 - [ ] min
 ## Combination of operations
-- [ ] std (built using sum, and divide)
+<!-- - [ ] std (built using sum, and divide) -->
 - [ ] mean
 
 # Cum operations and reductions (M)->(M|S) reduce by one dimension to logical
@@ -190,3 +190,8 @@ A few templates:
         e.g. cumsum, cumprod
     
     
+
+```
+    colon([1],[1,2],[10])  =>  colon(1,2,10)
+    reshape(arr, sz1,sz2,...,szn)=> reshape(arr, [sz1,sz2...])
+``

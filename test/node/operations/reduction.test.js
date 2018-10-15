@@ -93,7 +93,9 @@ describe('Operations coming from reductions', () => {
 		it('should return [4], dim = 1, when passing [4]', () => {
 			let arr = new MxNDArray(wi, [1,1]);
 			arr.set_indices([[1]],[4]);
-			let res = new MxNDArray(wi, wi.prod(arr._arr_ptr));
+			console.log(arr.getContents(), arr.size().getContents());
+			let res = new MxNDArray(wi, wi.prod(arr._arr_ptr,0,0));
+
 			expect(Array.from(res.size().getContents())).to.deep.equal([1,1]);
 			expect(Array.from(res.getContents())).to.deep.equal([4]);
 		});
@@ -113,6 +115,15 @@ describe('Operations coming from reductions', () => {
 			expect(Array.from(res.size().getContents())).to.deep.equal([2,1]);
 			expect(Array.from(res.getContents())).to.deep.equal([1,1]);
 		});
+		it('should return [4], dim = 1, when passing [4]', () => {
+			let arr = new MxNDArray(wi, [1,1]);
+			arr.set_indices([[1]],[4]);
+			console.log(arr.getContents(), arr.size().getContents());
+			let res = new MxNDArray(wi, wi.prod(arr._arr_ptr,0,0));
+
+			expect(Array.from(res.size().getContents())).to.deep.equal([1,1]);
+			expect(Array.from(res.getContents())).to.deep.equal([1]);
+		});
 	});
 	describe("#all",()=>{
 		it('should return [0,6,20], dim = 1, when passing [0,2,4;1,3,5]', () => {
@@ -130,6 +141,17 @@ describe('Operations coming from reductions', () => {
 			expect(Array.from(res.getContents())).to.deep.equal([0,1]);
 		});
 	});
-
+    describe('$mean', function () {
+        it('should return NaN when [] is passed', function () {
+			let arr  = new MxNDArray(wi, wi.create_mxvector(0));
+            let res = new MxNDArray(wi, wi.mean(arr.arr_ptr));
+            expect(Array.from(res.getContents())).to.deep.equal([]);
+        });
+        it('should return 2 when [1,2,3] is passed', function () {
+            let arr  = mr.colon(1,3);
+            let res = new MxNDArray(wi, wi.mean(arr.arr_ptr));
+            expect(Array.from(res.getContents())).to.deep.equal([2]);
+        });
+    });
 
 });

@@ -16,6 +16,7 @@ chai.use(sinonChai);
 ///////////////////////////////////////////////////////////////
 const libjs = require(path.join(__dirname,"../../../")+"/bin/lib.js");
 
+const { MxNDArray, MatlabRuntime} = require(path.join(__dirname,"../../../bin/classes/Runtime.js"));
 
 const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/get_mem.wasm");
 let wi;
@@ -23,7 +24,7 @@ let memory;
 
 describe('Array Constructors', () => {
 	beforeEach(async () => {
-		libjs.js.mem = WebAssembly.Memory({initial: 1});
+		libjs.js.mem = new WebAssembly.Memory({initial: 1});
 		wi = await WebAssembly.instantiate(file, libjs);
 		wi = wi.instance.exports;
 		memory = wi.mem;
@@ -247,6 +248,74 @@ describe('Array Constructors', () => {
 				expect(Array.from(new Float64Array(memory.buffer, data_colon_arr, wi.numel(colon_arr)))).to.deep.equal([-4,-2,0,2,4]);
 			});
 		});
+	});
+	describe('#colon_two', () => {
+		beforeEach(async ()=>{
+			wi= await WebAssembly.instantiate(file,libjs);
+			wi = wi.instance.exports;
+			memory = wi.mem;
+			mr = new MatlabRuntime(wi);
+		});
+		it('should return a 10 length array from 1 to 10 when passed 1,10', () => {
+			let arr = new MxNDArray(wi, wi.colon_two(1,10));
+			expect(Array.from(arr.getContents())).to.deep.equal([1,2,3,4,5,6,7,8,9,10]);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([1,10]);
+		});
+		it('should return a 3 element row array of -1,0,1, when passed -1,1', () => {
+			let arr = new MxNDArray(wi, wi.colon_two(-1,1));
+			expect(Array.from(arr.getContents())).to.deep.equal([-1,0,1]);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([1,3]);
+		});
+		it('should return a scalar when j==i', () => {
+			let arr = new MxNDArray(wi, wi.colon_two(100,100));
+			expect(Array.from(arr.getContents())).to.deep.equal([100]);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([1,1]);
+		});
+		it('should return 0x1 if j< i', () => {
+			let arr = new MxNDArray(wi, wi.colon_two(10,1));
+			expect(Array.from(arr.getContents())).to.deep.equal([]);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([0,1]);
+		});
+	});
+	describe('#colon_three', () => {
+		beforeEach(async ()=>{
+			wi= await WebAssembly.instantiate(file,libjs);
+			wi = wi.instance.exports;
+			memory = wi.mem;
+			mr = new MatlabRuntime(wi);
+		});
+		it('should return 1x0 if j=0, regardless of i and k', () => {
+			let arr = new MxNDArray(wi, wi.colon_three(1,0,10));
+			expect(Array.from(arr.getContents())).to.deep.equal([]);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([1,0]);
+		});
+		it('should return 1x0 if i < k & j < 0', () => {
+			let arr = new MxNDArray(wi, wi.colon_three(1,-1,10));
+			expect(Array.from(arr.getContents())).to.deep.equal([]);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([1,0]);
+		});
+
+		it('should return 1x0 if k < i & j > 0', () => {
+			let arr = new MxNDArray(wi, wi.colon_three(10,1,1));
+			expect(Array.from(arr.getContents())).to.deep.equal([]);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([1,0]);
+		});
+		it('should return 1x1 if i == k & j != 0', () => {
+			let arr = new MxNDArray(wi, wi.colon_three(1,-100,1));
+			expect(Array.from(arr.getContents())).to.deep.equal([1]);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([1,1]);
+		});
+		it('should return 11x1 correct value for i=4, j=-2, k=-4, total length should be 5', () => {
+			let arr = new MxNDArray(wi, wi.colon_three(4,-2,-4));
+			expect(Array.from(arr.getContents())).to.deep.equal([4,2,0,-2,-4]);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([1,5]);
+		});
+		it('should return 11x1 correct value for i=-4, j=2, k=4, total length should be 5', () => {
+			let arr = new MxNDArray(wi, wi.colon_three(-4,2,4));
+			expect(Array.from(arr.getContents())).to.deep.equal([-4,-2,0,2,4]);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([1,5]);
+		});
+
 	});
 });
 

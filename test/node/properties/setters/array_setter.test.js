@@ -18,7 +18,7 @@ const libjs = require(path.join(__dirname,"../../../../")+"/bin/lib.js");
 
 
 const file = fs.readFileSync(path.join(__dirname,"../../../../")+"/bin/get_mem.wasm");
-const { MxNDArray, MxVector } = require(path.join(__dirname,"../../../../bin/classes/Runtime.js"));
+const { MxNDArray, MxVector, MatlabRuntime } = require(path.join(__dirname,"../../../../bin/classes/Runtime.js"));
 let wasmInstance;
 let memory;
 describe('Setters', () => {
@@ -262,6 +262,22 @@ describe('Setters', () => {
 			expect(get_array_index_f64(arr.arr_ptr,39)).to.equal(2);
 			expect(get_array_index_f64(arr.arr_ptr,41)).to.equal(3);
 			expect(get_array_index_f64(arr.arr_ptr,42)).to.equal(4);
+		});
+	});
+	describe('#set_array_value_multiple_indeces_f64', () => {
+		let wi, mr;
+		beforeEach(async ()=> {
+			wi = await WebAssembly.instantiate(file, libjs);
+			wi = wi.instance.exports;
+			memory = wi.mem;
+			mr = new MatlabRuntime(wi);
+		});
+		it('should get correct value of array', () => {
+			let values = new MxVector(wi, [2,2,2]);
+			let arr = mr.colon(1,42);
+			arr.reshape([3,7,2]);
+			wi.set_array_value_multiple_indeces_f64(arr._arr_ptr,values.arr_ptr, 100);
+			expect(wi.get_array_index_f64(arr._arr_ptr, 26)).to.equal(100);
 		});
 	});
 });

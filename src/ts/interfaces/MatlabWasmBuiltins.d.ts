@@ -1,10 +1,47 @@
 
+
+
 export interface MatWablyBuiltin{
+	memory_get_heap_top():number;
+
+	memory_malloc(i32_0:number):number;
+
+	memory_free(i32_0: number): number;
+
+	memory_realloc(i32_0: number, i32_1: number): number;
+
+	memory_get_mem_free_bit(i32_0:number):number;
+
+	memory_get_mem_payload_size(i32_0:number):number;
+
+	memory_get_free_bit_from_array(i32_0:number):number;
+
+	memory_get_mem_free_bit_footer(i32_0:number):number;
+
 	mxarray_core_get_array_ptr(i32_0:number):number;
 
-	get_mxarray_dimension_number(i32_0:number):number;
+	mxarray_core_set_type_attribute(i32_0:number, i32_1:number, 
+			i32_2:number, i32_3:number):number;
 
-	create_mxarray_ND(i32_0:number, i32_1:number, i32_2:number, i32_3:number, i32_4:number):number;
+	mxarray_core_element_byte_size(i32_0:number):number;
+
+
+
+	mxarray_core_get_simple_class_byte_size(i32_0:number):number;
+
+	mxarray_core_get_mclass(i32_0:number):number;
+
+	mxarray_core_get_simple_class(i32_0:number):number;
+
+	mxarray_core_get_array_length(i32_0:number):number;
+
+	mxarray_core_dimension_number(i32_0:number):number;
+
+	mxarray_core_create_mxarray_ND(i32_0:number, i32_1?:number, i32_2?:number, i32_3?:number, i32_4?:number):number;
+
+	mxarray_core_create_mxarray_empty(i32_0:number, i32_1?:number, i32_2?:number, i32_3?:number):number;
+
+	mxarray_core_create_mxvector(i32_0:number, i32_1?:number, i32_2?:number, i32_3?:number, i32_4?:number, i32_5?:number):number;
 
 	get_array_index_i8(i32_0:number, i32_1:number):number;
 
@@ -14,39 +51,13 @@ export interface MatWablyBuiltin{
 
 	set_array_index_i32(i32_0:number, i32_1:number, i32_2:number):number;
 
-	create_mxarray_empty(i32_0:number, i32_1:number, i32_2:number, i32_3:number):number;
-
-	create_mxvector(i32_0:number, i32_1:number, i32_2:number, i32_3:number, i32_4:number, i32_5:number):number;
-
-	get_heap_top():number;
-
-	malloc(i32_0:number):number;
-
-	get_mem_free_bit(i32_0:number):number;
-
-	get_mem_payload_size(i32_0:number):number;
-
-	load_mem(i32_0:number):number;
-
 	get_array_index_f64(i32_0:number, i32_1:number):number;
 
 	set_array_index_f64(i32_0:number, i32_1:number, f64_2:number):number;
 
-	get_free_bit_from_array(i32_0:number):number;
-
-	get_mem_free_bit_footer(i32_0:number):number;
-
-	mxarray_core_set_type_attribute(i32_0:number, i32_1:number, i32_2:number, i32_3:number):number;
-
-	mxarray_core_get_simple_class_byte_size(i32_0:number):number;
-
-	mxarray_core_get_mclass(i32_0:number):number;
-
-	mxarray_core_get_simple_class(i32_0:number):number;
 
 	get_array_byte_size(i32_0:number):number;
 
-	mxarray_core_get_array_length(i32_0:number):number;
 
 	get_elem_byte_size(i32_0:number):number;
 
@@ -56,7 +67,7 @@ export interface MatWablyBuiltin{
 
 	numel(i32_0:number):number;
 
-	size(i32_0:number, i32_1:number):number;
+	size(i32_0:number, i32_1?:number):number;
 
 	ndims(i32_0:number):number;
 
@@ -246,13 +257,13 @@ export interface MatWablyBuiltin{
 
 	sum_S(f64_0:number):number;
 
-	sum(i32_0:number, i32_1:number, i32_2:number):number;
+	sum(i32_0:number, i32_1:number, i32_2?:number):number;
 
 	any(i32_0:number, i32_1:number):number;
 
 	all(i32_0:number, i32_1:number):number;
 
-	prod(i32_0:number, i32_1:number, i32_2:number):number;
+	prod(i32_0:number, i32_1:number, i32_2?:number):number;
 
 	convert_scalar_to_mxarray(f64_0:number):number;
 

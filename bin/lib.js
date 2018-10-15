@@ -1,4 +1,4 @@
-let memory = WebAssembly.Memory({initial:10});
+let memory =  new WebAssembly.Memory({initial:32767});
 const { TextDecoder,TextEncoder } = require('util');
 function printError(offset, length) {
     var bytes = new Uint8Array(module.exports.js.mem.buffer, offset, length);
@@ -22,17 +22,18 @@ function printWhos(size, bytes, class_type)
 }
 function printInt(number)
 {
-    console.log("INT:", number);
+    console.log(number);
     return number;
 }
 function printDouble(number)
 {
-	console.log("DOUBLE:", number);
+	console.log(number);
 	return number;
 }
 module.exports = {
     "js":{
         "mem":memory,
+        "printTime":printTime,
         "printError":printError,
         "printWho":printWhos,
         "printString":printString,
@@ -40,13 +41,14 @@ module.exports = {
         "printDoubleNumber":printDouble,
         "printMarker":()=>console.log("MARKER"),
         "assert_header":1,
-        "print_array_f64":printArrayDouble
+        "print_array_f64":printArrayDouble,
+        "time":()=>Date.now()
     },
     "math":{
         ones:() => 1,
         rand:() => Math.random(),
         randn:() => randn_s(),
-        randi:(max) => Math.floor(max*Math.random()),
+        randi:(max) => Math.ceil(max*Math.random()),
         zeros:()=> 0,
         isnan: isNaN,
         power:Math.pow,
@@ -56,7 +58,9 @@ module.exports = {
         exp: Math.exp,
         log: Math.log,
         log2: Math.log2,
-        log10: Math.log10
+        log10: Math.log10,
+        pi:()=>Math.PI,
+        e:()=>Math.E
     },
     "test":{
         "assert":assert
@@ -116,4 +120,9 @@ function randn_s() {
 
 	return rand / 10;
 }
-console.log("N-dimensional arrays are not supported.".length);
+
+
+function printTime(time){
+    console.log(`Elapsed time is ${time/1000} seconds.`);
+    return time;
+}

@@ -102,7 +102,7 @@ describe('Element wise constructors', () => {
 			let flooredArray = arrCont.map((elem)=>Math.floor(elem));
 			expect(Array.from(arr.size().getContents())).to.deep.equal([2,2,2]);
 			expect(arr.numel()).to.deep.equal(8);
-			expect(max).to.be.lessThan(5);
+			expect(max).to.be.lessThan(6);
 			expect(min).to.be.at.most(5);
 			expect(arrCont).to.deep.equal(flooredArray);
 		});

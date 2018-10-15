@@ -148,7 +148,7 @@ describe('Getters', () => {
 		it('should return an empty array of size 0x0x0 when given as input ([],[],[])', () => {
 			let arr = new MxNDArray(wi, [3,7,2]);
 			arr.set_indices([[38,39,41,42]],[3,3,3,3]);
-			let arr2 = arr.get_indices([[2,3],[6,7],[2]]);
+			let arr2 = arr.get([[2,3],[6,7],[2]]);
 			expect(Array.from(arr2.getContents())).to.deep.equal(Array.from(new Float64Array([3,3,3,3])));
 		});
 		it('should throw error if one dimension is not a vector when input argument is larger than 1', () => {
@@ -184,7 +184,7 @@ describe('Getters', () => {
 		});
 		it('should return an empty array of size 0x0 when given as input ([1,2,3],[],[1])', () => {
 			let arr = new MxNDArray(wi, [3,7,2]);
-			let arr2 = arr.get_indices([[1,2,3],[],[]]);
+			let arr2 = arr.get([[1,2,3],[],[]]);
 			expect(arr2.getContents().length).to.equal(0);
 			expect(arr2.size().get(1)).to.equal(3);
 			expect(arr2.size().get(2)).to.equal(0);
@@ -201,7 +201,7 @@ describe('Getters', () => {
 		it('should correctly return the last value from array', () => {
 			let arr = new MxNDArray( wi, [ 3, 7, 2]);
 			arr.set_index(42, 1723);
-			let val = arr.get_indices([ [42] ]);
+			let val = arr.get([ [42] ]);
 			expect(val.getContents()[0]).to.equal(1723);
 		});
 		it('should throw an error when the dimensions of the accessing cell of array is one the accessing index' +
@@ -246,6 +246,13 @@ describe('Getters', () => {
 			expect(arr_2.size().get(1)).to.equal(100);
 			expect(arr_2.size().get(2)).to.equal(1);
 		});
+		it("should return 5x1 when initial array is 10x1 and indice is colon 1x5",()=>{
+			let arr = mr.colon(1,10);
+			let arr_t = mr.transpose(arr);
+			let res = arr_t.get([[1,2,3,4,5]]);
+			expect(Array.from(res.size().getContents())).to.deep.equal([5,1]);
+			expect(Array.from(res.getContents())).to.deep.equal([1,2,3,4,5]);
+		});
 		it("should correctly return a 2x2 array with values 1,2,3,4", ()=>{
 			let param_arr = wi.create_mxvector(2,5);
 			let dim_1 = wi.create_mxvector(1);
@@ -259,8 +266,38 @@ describe('Getters', () => {
 		});
 		it("should correctly return a 1x4 array with values 1,2,3,4", ()=>{
 			let colon_arr = mr.colon(1,4);
-			let res_arr = colon_arr.get_indices([[1,2,3,4]]);
+			let res_arr = colon_arr.get([[1,2,3,4]]);
 			expect(Array.from(res_arr.getContents())).to.deep.equal( [1,2,3,4] );
 		});
+	});
+	describe('#set_array_value_multiple_indeces_f64', () => {
+		let wi, mr;
+		beforeEach(async ()=> {
+			wi = await WebAssembly.instantiate(file, libjs);
+			wi = wi.instance.exports;
+			memory = wi.mem;
+			mr = new MatlabRuntime(wi);
+		});
+		it('should get correct value of array', () => {
+			let values = new MxVector(wi, [2,2,2]);
+			let arr = mr.colon(1,42);
+			arr.reshape([3,7,2]);
+			expect(wi.get_array_index_f64(arr._arr_ptr,26)).to.equal(26);
+			expect(wi.get_array_value_multiple_indeces_f64(arr._arr_ptr,values.arr_ptr)).to.equal(26);
+		});
+		it('should set the correct result for a 5x6 array using :', () => {
+
+			let arr = mr.ones(2,3);
+			let arr2 = mr.ones(3,2);
+			arr.set([arr2],arr2);
+			console.log(arr.getContents());
+		});
+		it('should set correctly when using a scalar', () => {
+
+			let arr = new MxNDArray(wi, [5,6]);
+			arr.set( [[1,2,3,4,5],[1]],[1]);
+			console.log(arr.getContents());
+		});
+
 	});
 });

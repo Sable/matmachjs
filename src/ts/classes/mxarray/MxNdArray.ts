@@ -1,10 +1,10 @@
 import { MxArray } from "./MxArray";
 import {MxVector} from "./MxVector";
-import { MatWablyBuiltin } from "../../interfaces/MatlabWasmBuiltins";
-declare const wi: MatWablyBuiltin;
+
+
 export class MxNDArray extends MxArray {
 
-    public constructor(mxarray: MxNDArray| number[] | MxVector| number, class_type:number=0,simple_type:number=0,
+    public constructor(wi:any, mxarray: MxNDArray| number[] | MxVector| number, class_type:number=0,simple_type:number=0,
                        complex:boolean=false, column:number=0, byte_size:number = 8) {
         super();
         this._wi = wi;
@@ -36,11 +36,16 @@ export class MxNDArray extends MxArray {
     {
         let indices_arr_ptr = this._wi.create_mxvector(indices.length, 5);// Create mxvector with int type
         indices.forEach((dimArr,indDim)=>{
-            let index_arr_ptr = this._wi.create_mxvector(dimArr.length);
-            this._wi.set_array_index_i32(indices_arr_ptr,indDim+1, index_arr_ptr);
-            dimArr.forEach((val, indVal)=>{
-                this._wi.set_array_index_f64(index_arr_ptr, indVal+1, val);
-            });
+            if(dimArr instanceof MxNDArray){
+                this._wi.set_array_index_i32(indices_arr_ptr,indDim+1, dimArr.arr_ptr);
+            }else{
+                let index_arr_ptr = this._wi.create_mxvector(dimArr.length);
+                this._wi.set_array_index_i32(indices_arr_ptr,indDim+1, index_arr_ptr);
+                dimArr.forEach((val, indVal)=>{
+                    this._wi.set_array_index_f64(index_arr_ptr, indVal+1, val);
+                });
+            }
+
         });
         let indices_val_arr_ptr;
         if( values instanceof MxNDArray) {
@@ -56,19 +61,32 @@ export class MxNDArray extends MxArray {
     public size(): MxNDArray {
         return new MxNDArray(this._wi, super.size());
     }
-
+    public set_index(ind=-1, val:number=NaN):number {
+        return this._wi.set_array_index_f64(this._arr_ptr, ind, val);
+    }
+    public get_index(ind=-1):number {
+        return this._wi.get_array_index_f64(this._arr_ptr, ind);
+    }
     public get_indices(indices:Array<Array<number>>): MxNDArray
     {
-        return new MxNDArray(this._wi, super.get_indices(indices));
+        let indices_arr_ptr = this._wi.create_mxvector(indices.length, 5);// Create mxvector with int type
+        indices.forEach((dimArr,indDim)=>{
+            let index_arr_ptr = this._wi.create_mxvector(dimArr.length);
+            dimArr.forEach((val, indVal)=>{
+                this._wi.set_array_index_f64(index_arr_ptr, indVal+1, val);
+            });
+            this._wi.set_array_index_i32(indices_arr_ptr, indDim+1, index_arr_ptr);
+        });
+        return this._wi.get_f64(this._arr_ptr,indices_arr_ptr);
     }
-    public get(indices:Array<Array<number>>| number): MxNDArray {
+    public get(indices:Array<Array<number>>| number): MxNDArray|number {
         if( typeof indices == 'number'){
-           return  super.get(indices);
+           return  this.get_index(indices);
         }
-        return new MxNDArray(this._wi, super.get(indices));
+        return new MxNDArray(this._wi, super.get_indices(indices));
     }
 
     clone(): MxNDArray {
-        return new MxNDArray(this._wi, this);
+        return new MxNDArray(this._wi,this);
     }
 }

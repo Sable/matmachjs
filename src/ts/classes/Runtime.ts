@@ -11,7 +11,7 @@ export {
 };
 class MatlabRuntime {
     private started = false;
-    public wi:MatWablyBuiltin;
+    public wi:any;
     public startRuntime(wis:any){
         this.wi = wis;
         this.started = true;
@@ -30,26 +30,27 @@ class MatlabRuntime {
         if(typeof arr === 'number'){
             return arr;
         }else{
-            return new MxNDArray(this.wi.transpose_M(arr.arr_ptr));
+            return new MxNDArray(this.wi, this.wi.transpose_M(arr.arr_ptr));
         }
     }
     public lit(arr: Array<number> | Array<Array<number>>):MxArray{
-        if(typeof arr === 'undefined') throw new Error("Must pass a value array to construct literal");
+        if(typeof arr === 'undefined'||arr === null) this.wi.create_mxarray_empty(0,0,0,0);
         if(arr.length == 0) {
             // create an empty array
-            return new MxNDArray(this.wi.create_mxarray_empty(2,0,0,0));
+            return new MxNDArray(this.wi, this.wi.create_mxarray_empty(2,0,0,0));
         }else if(arr.length> 0 && typeof arr[0] === 'number'){
-            let val = [];
             let arr_ = (arr as Array<number>);
-            let dimArr = new MxVector(this.wi,arr_);
-            // create an mxvector
-            return dimArr;
+            let vals = this.wi.create_mxvector(arr.length);
+            arr_.forEach((val, idx)=>{
+                this.wi.set_array_index_f64(vals, idx+1, val);
+            });
+            return new MxNDArray(this.wi,vals);
         }else {
             let arr_ = (arr as Array<Array<number>>);
             let rows = arr_.length;
             let cols = arr_[0].length;
-            let dimArr = new MxVector([rows,cols]);
-            let resArr = new MxNDArray( dimArr);
+            let dimArr = new MxVector(this.wi, [rows,cols]);
+            let resArr = new MxNDArray(this.wi, dimArr);
             // create ndarray
             arr_.forEach((dimArr, idxRow)=>{
                 if(!(dimArr instanceof Array) || dimArr.length !== cols){
@@ -61,6 +62,40 @@ class MatlabRuntime {
             });
             return resArr;
 
+        }
+    }
+    public ones(...arg: (number | number[])[]){
+        if(arg.length == 0)return 1;
+        else{
+            if(typeof arg[0] == 'number'){
+                let input = <number[]> arg;
+                let vec = new MxVector(this.wi, input);
+                return new MxNDArray(this.wi, this.wi.ones(vec.arr_ptr));
+            }else{
+                let input = <number[][]> arg;
+                if(input.length>1){
+                    throw new Error("Only arrays of array of one dimension accepted in this context");
+                }
+                let vec = new MxVector(this.wi, input[0]);
+                return new MxNDArray(this.wi, this.wi.ones(vec.arr_ptr));
+            }
+        }
+    }
+    public randn(...arg: (number | number[])[]){
+        if(arg.length == 0)return 1;
+        else{
+            if(typeof arg[0] == 'number'){
+                let input = <number[]> arg;
+                let vec = new MxVector(this.wi, input);
+                return new MxNDArray(this.wi, this.wi.randn(vec.arr_ptr));
+            }else{
+                let input = <number[][]> arg;
+                if(input.length>1){
+                    throw new Error("Only arrays of array of one dimension accepted in this context");
+                }
+                let vec = new MxVector(this.wi, input[0]);
+                return new MxNDArray(this.wi, this.wi.randn(vec.arr_ptr));
+            }
         }
     }
     public isRuntimeStarted():boolean {
@@ -78,7 +113,7 @@ class MatlabRuntime {
         args.forEach((arr, idx)=>{
             this.wi.set_array_index_i32(input_vec, idx+1, arr.arr_ptr);
         });
-        return new MxNDArray( this.wi.concat(dim, input_vec));
+        return new MxNDArray( this.wi, this.wi.concat(dim, input_vec));
     }
     public reshape(arr:MxArray, dims:Array<number>){
         return arr.reshape(dims);
@@ -108,7 +143,7 @@ class MatlabRuntime {
             this.wi.set_array_index_i32(input_vec, 2, dim_2);
             this.wi.set_array_index_i32(input_vec, 3, dim_3);
         }
-        return new MxNDArray(this.wi.colon(input_vec));
+        return new MxNDArray(this.wi, this.wi.colon(input_vec));
     }
     public size(arr: MxObject){
         this.checkForStartedRuntime();
@@ -120,7 +155,7 @@ class MatlabRuntime {
     }
     public length(arr:MxObject) {
         this.checkForStartedRuntime();
-        return arr.length();
+        return arr.length_M();
     }
     public isrow(arr: MxObject){
         this.checkForStartedRuntime();

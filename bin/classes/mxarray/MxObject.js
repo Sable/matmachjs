@@ -1,18 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var MxObject = /** @class */ (function () {
-    function MxObject() {
+class MxObject {
+    get arr_ptr() {
+        return this._arr_ptr;
     }
-    Object.defineProperty(MxObject.prototype, "arr_ptr", {
-        get: function () {
-            return this._arr_ptr;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    MxObject.prototype.getContents = function (start, length) {
-        if (start === void 0) { start = 0; }
-        if (length === void 0) { length = this.numel(); }
+    getContents(start = 0, length = this.numel()) {
         if (length < 0 || start < 0)
             throw new Error("View indices must be positive");
         if (length > this.numel() - start)
@@ -22,34 +14,33 @@ var MxObject = /** @class */ (function () {
         else {
             return new Float64Array(0);
         }
-    };
-    MxObject.prototype.size = function () {
+    }
+    size() {
         return this._wi.size(this.arr_ptr);
-    };
-    MxObject.prototype.numel = function () {
+    }
+    numel() {
         return this._wi.numel(this.arr_ptr);
-    };
-    MxObject.prototype.ndims = function () {
+    }
+    ndims() {
         return this._wi.ndims(this.arr_ptr);
-    };
-    MxObject.prototype.length = function () {
+    }
+    length_M() {
         return this._wi.length_M(this.arr_ptr);
-    };
-    MxObject.prototype.isrow = function () {
+    }
+    isrow() {
         return this._wi.isrow(this.arr_ptr) === 1;
-    };
-    MxObject.prototype.iscolumn = function () {
+    }
+    iscolumn() {
         return this._wi.isvector(this.arr_ptr) === 1;
-    };
-    MxObject.prototype.ismatrix = function () {
+    }
+    ismatrix() {
         return this._wi.ismatrix(this.arr_ptr) === 1;
-    };
-    MxObject.prototype.isvector = function () {
+    }
+    isvector() {
         return this._wi.isvector(this.arr_ptr) === 1;
-    };
-    MxObject.prototype.isempty = function () {
+    }
+    isempty() {
         return this._wi.isempty(this.arr_ptr) === 1;
-    };
-    return MxObject;
-}());
+    }
+}
 exports.MxObject = MxObject;

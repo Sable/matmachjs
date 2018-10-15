@@ -33,6 +33,7 @@ describe('#mtimes', () => {
 		memory = wi.mem;
 		mr = new MatlabRuntime(wi);
 	});
+
 	it('should throw error if not enough arguments passed', () => {
 		try{
 			wi.mtimes_MM();
@@ -80,6 +81,14 @@ describe('#mtimes', () => {
 		expect(Array.from(res.size().getContents())).to.deep.equal([1,1]);
 		expect(Array.from(res.getContents())).to.deep.equal([140]);
 	});
+	it("should return correct 2x2 array when passing [2,1],[1,2]",()=>{
+		let arr = mr.lit([1,2]);
+		let arr2 = mr.lit([[2],[1]]);
+		let res = new MxNDArray(wi, wi.mtimes_MM( arr2._arr_ptr,arr._arr_ptr));
+		res = new MxNDArray(wi, wi.plus_MS( res._arr_ptr,5));
+		console.log(res.getContents());
+	});
+
 	it('should return correct result for matrix multiplication of two 2D arrays', () => {
 		let arr = mr.colon(1,7);
 		arr = arr.reshape([7,1]);
