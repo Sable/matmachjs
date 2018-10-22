@@ -285,18 +285,10 @@ describe('Getters', () => {
 			expect(wi.get_array_index_f64(arr._arr_ptr,26)).to.equal(26);
 			expect(wi.get_array_value_multiple_indeces_f64(arr._arr_ptr,values.arr_ptr)).to.equal(26);
 		});
-		it('should set the correct result for a 5x6 array using :', () => {
-
-			let arr = mr.ones(2,3);
-			let arr2 = mr.ones(3,2);
-			arr.set([arr2],arr2);
-			console.log(arr.getContents());
-		});
 		it('should set correctly when using a scalar', () => {
-
 			let arr = new MxNDArray(wi, [5,6]);
 			arr.set( [[1,2,3,4,5],[1]],[1]);
-			console.log(arr.getContents());
+			expect(Array.from(arr.get([[1,2,3,4,5],[1]]).getContents())).to.deep.equal([1,1,1,1,1]);
 		});
 
 	});
