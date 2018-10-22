@@ -145,7 +145,6 @@ describe('Concatanation Module', () => {
 	});
 	describe("#horzcat", ()=>{
 		it('should return correct result for ', () => {
-			console.log(wi);
 			let arr = mr.colon(11,20);
 			arr = mr.reshape(arr, [2,5]);
 			let arr2 = new MxNDArray(wi, [2,3]);

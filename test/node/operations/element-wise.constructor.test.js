@@ -68,14 +68,11 @@ describe('Element wise constructors', () => {
 			let arr = new MxNDArray(wi, arr_ptr);
 			expect(Array.from(arr.size().getContents())).to.deep.equal([2,2,2]);
 			expect(arr.numel()).to.deep.equal(8);
-			var mc_t19 = wi.create_mxvector(2);
+			let mc_t19 = wi.create_mxvector(2);
 			wi.set_array_index_f64(mc_t19, 1, 1);
 			wi.set_array_index_f64(mc_t19, 2, 10);
-			var A = wi.randn(mc_t19);
-			let arr_2 = new MxNDArray(wi,A);
-			console.log(Array.from(arr_2.getContents()));
-			console.log(Array.from(arr.getContents()));
-			console.log(wi.disp_M(A));
+			let A = wi.randn(mc_t19);
+
 		});
 
 	});

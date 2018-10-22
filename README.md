@@ -1,4 +1,8 @@
-# Matlab library for WebAssembly
+# MatRay
+
+[![Build Status](https://travis-ci.org/Sable/mc2wasm-lib.svg?branch=master)](https://travis-ci.org/Sable/mc2wasm-lib)
+
+
 - [Matlab library for WebAssembly](#matlab-library-for-webassembly)
   * [Memory Allocation](#memory-allocation)
   * [Memory representation](#memory-representation)
