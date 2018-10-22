@@ -75,15 +75,18 @@ describe('Setters', () => {
 			get_array_index_f64,
 			set_array_index_i32,
 			get_f64,
-			set_f64;
+			set_f64,
+			mr;
 		beforeEach(async () => {
 			wi= await WebAssembly.instantiate(file,libjs);
 			wi = wi.instance.exports;
 			({create_mxvector,get_f64,set_f64,set_array_index_i32,
 				get_array_index_f64, create_mxarray_ND, set_array_index_f64} = wi);
 			memory = wi.mem;
+			mr = new MatlabRuntime(wi);
 		});
 		it("should throw error when the values and indeces do not have the same dimensions ",()=>{
+
 			let mxvec = create_mxvector(3);
 			set_array_index_f64(mxvec,1,3);
 			set_array_index_f64(mxvec,2,7);
@@ -115,42 +118,9 @@ describe('Setters', () => {
 
 		});
 		it('should get the elements of array correctly', () => {
-			let mxvec = create_mxvector(3);
-			set_array_index_f64(mxvec,1,3);
-			set_array_index_f64(mxvec,2,7);
-			set_array_index_f64(mxvec,3,2);
-			let mxarr = create_mxarray_ND(mxvec);
-			let indices1 = create_mxvector(3);
-			let indices2 = create_mxvector(2);
-			let indices3 = create_mxvector(1);
-			set_array_index_f64(indices1,1,2);
-			set_array_index_f64(indices1,2,3);
-			set_array_index_f64(indices1,3,1);
-			set_array_index_f64(indices2,1,7);
-			set_array_index_f64(indices2,2,6);
-			set_array_index_f64(indices3,1,2);
-			let cell_arr = create_mxvector(3,5);
-			set_array_index_i32(cell_arr,1,indices1);
-			set_array_index_i32(cell_arr,2,indices2);
-			set_array_index_i32(cell_arr,3,indices3);
-			let values_dim_ptr = create_mxvector(2);
-			set_array_index_f64(values_dim_ptr, 1, 3);
-			set_array_index_f64(values_dim_ptr, 2, 2);
-			let values_ptr = create_mxarray_ND(values_dim_ptr);
-			set_array_index_f64(values_ptr,1,3);
-			set_array_index_f64(values_ptr,2,3);
-			set_array_index_f64(values_ptr,3,3);
-			set_array_index_f64(values_ptr,4,3);
-			set_array_index_f64(values_ptr,5,3);
-			set_array_index_f64(values_ptr,6,3);
-
-			let res_ptr = set_f64(mxarr,cell_arr, values_ptr);
-			expect(get_array_index_f64(res_ptr,37)).to.equal(3);
-			expect(get_array_index_f64(res_ptr,38)).to.equal(3);
-			expect(get_array_index_f64(res_ptr,39)).to.equal(3);
-			expect(get_array_index_f64(res_ptr,40)).to.equal(3);
-			expect(get_array_index_f64(res_ptr,41)).to.equal(3);
-			expect(get_array_index_f64(res_ptr,42)).to.equal(3);
+			let arr = mr.ones([3,7,2]);
+			let arr_lit = mr.lit([[3,3],[3,3],[3,3]]);
+			arr.set([[3,2,1],[7,6],[2]],arr_lit);
 		});
 		it('should throw error when input is larger than 1 element array and values do not match with input size', () => {
 			let mxvec = create_mxvector(3);

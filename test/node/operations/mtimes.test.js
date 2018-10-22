@@ -27,7 +27,7 @@ let memory;
 let mr;
 describe('#mtimes', () => {
 	beforeEach(async () => {
-		libjs.js.mem = WebAssembly.Memory({initial: 1});
+		libjs.js.mem = new WebAssembly.Memory({initial: 1});
 		wi = await WebAssembly.instantiate(file, libjs);
 		wi = wi.instance.exports;
 		memory = wi.mem;
@@ -78,7 +78,8 @@ describe('#mtimes', () => {
 		let arr2 = mr.colon(1,7);
 		arr2 = arr2.reshape([7,1]);
 		let res = new MxNDArray(wi, wi.mtimes_MM(arr._arr_ptr, arr2._arr_ptr));
-		expect(Array.from(res.size().getContents())).to.deep.equal([1,1]);
+		expect(Array.from(res.size().getContents()))
+			.to.deep.equal([1,1]);
 		expect(Array.from(res.getContents())).to.deep.equal([140]);
 	});
 	it("should return correct 2x2 array when passing [2,1],[1,2]",()=>{

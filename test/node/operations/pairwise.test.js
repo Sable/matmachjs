@@ -26,7 +26,7 @@ let memory;
 
 describe('Pairwise and broadcasting', () => {
 	beforeEach(async () => {
-		libjs.js.mem = WebAssembly.Memory({initial: 1});
+		libjs.js.mem = new WebAssembly.Memory({initial: 1});
 		wi = await WebAssembly.instantiate(file, libjs);
 		wi = wi.instance.exports;
 		memory = wi.mem;
@@ -142,7 +142,7 @@ describe('Pairwise and broadcasting', () => {
 				let res = new MxNDArray(wi, wi.mod_MM(a.arr_ptr,b.arr_ptr));
 				expect(Array.from(res.size().getContents())).to.deep.equal([2,2]);
 				// NOTE: BUG IN CHAI LIBRARY RETURNS [-0,-0,-1,-1]
-				expect(Array.from(res.getContents())).to.deep.equal([-0,-0,-1,-1]);
+				expect(Array.from(res.getContents())).to.deep.equal([0,0,-1,-1]);
 			});
 			it('should correctly broadcast and output [0,0,-1,-1], when passing [-1,-3], [1;2] as inputs', () => {
 				let a = new MxNDArray(wi, [2,1]);
@@ -407,7 +407,6 @@ describe('Pairwise and broadcasting', () => {
 				let b = new MxNDArray(wi, [1,2]);
 				a.set_indices([[1,2]],[1,2]);
 				b.set_indices([[1,2]],[1,3]);
-				console.log(wi.or_SS(1,0));
 				let res = new MxNDArray(wi, wi.or_MM(a.arr_ptr,b.arr_ptr));
 				expect(Array.from(res.size().getContents())).to.deep.equal([1,2]);
 				expect(Array.from(res.getContents())).to.deep.equal([1,1]);
@@ -449,7 +448,6 @@ describe('Pairwise and broadcasting', () => {
 				let res = new MxNDArray(wi, wi.ne_MM(a.arr_ptr,b.arr_ptr));
 				expect(Array.from(res.size().getContents())).to.deep.equal([2,2]);
 				expect(Array.from(res.getContents())).to.deep.equal([0,1,1,1]);
-				console.log(wi);
 			});
 		});
 	});

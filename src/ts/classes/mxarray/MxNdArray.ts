@@ -45,7 +45,6 @@ export class MxNDArray extends MxArray {
                     this._wi.set_array_index_f64(index_arr_ptr, indVal+1, val);
                 });
             }
-
         });
         let indices_val_arr_ptr;
         if( values instanceof MxNDArray) {

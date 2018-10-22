@@ -585,7 +585,7 @@
     (export "get_array_index_i32" (func $get_array_index_i32))
     (func $get_array_index_i32 (param $array_ptr i32)(param $i i32)(result i32)
         get_local $array_ptr
-        call $mxarray_core_get_array_length
+        i32.load offset=4 align=4 
         get_local $i
         i32.lt_s
         if
@@ -1062,9 +1062,8 @@
     )
     (export "get_array_index_f64" (func $get_array_index_f64))
     (func $get_array_index_f64 (param $array_ptr i32)(param $i i32)(result f64)
-        
         get_local $array_ptr
-        call $mxarray_core_get_array_length
+        i32.load offset=4 align=4
         get_local $i
         i32.lt_s
         if
@@ -1079,12 +1078,11 @@
             i32.const 4
             call $throwError
         end
-        get_local $array_ptr
-        call $get_array_byte_size
+        i32.const 8
         get_local $i
         i32.mul
         get_local $array_ptr
-        call $mxarray_core_get_array_ptr
+        i32.load offset=8 align=4
         i32.add
         f64.load offset=0 align=4
         return
@@ -1114,8 +1112,7 @@
             i32.const 4
             call $throwError
         end
-        get_local $array_ptr
-        call $get_array_byte_size
+        i32.const 8
         get_local $i
         i32.mul
         get_local $content_ptr
@@ -3992,8 +3989,24 @@
         end
         ;; call $printDouble
         if (result i32)
+          ;; TODO(dherre3): Remove hardcoded function pointer for any 
+          get_local $func_ptr
+          i32.const 17
+          i32.eq
+          get_local $func_ptr
+          i32.const 18
+          i32.eq
+          i32.or
+          if (result i32)
+            f64.const 0
             get_local $arr_ptr
-            call $clone
+            call $ne_SM
+          else 
+
+              get_local $arr_ptr
+              call $clone
+          end
+            
         else
             (set_local $size_arr 
                 (call $clone (get_local $size_new_arr)))
@@ -4350,15 +4363,13 @@
                             (get_local $acc)
                             (f64.mul 
                                 (call $get_array_index_f64_no_check (get_local $m1_ptr)
-                                    (i32.add (i32.const 1)
                                         (i32.add (get_local $i)
                                             (i32.mul (get_local $rows_m1)
-                                                    (get_local $k)))))
+                                                    (get_local $k))))
                                 (call $get_array_index_f64_no_check (get_local $m2_ptr)
-                                    (i32.add (i32.const 1)
                                         (i32.add  (get_local $k)
                                             (i32.mul (get_local $rows_m2)
-                                            (get_local $j)))))
+                                            (get_local $j))))
                         )))
                         (set_local $k (i32.add (i32.const 1)(get_local $k)))
                     br 1
@@ -4366,10 +4377,9 @@
                     end 
                     (call $set_array_index_f64_no_check 
                         (get_local $out_ptr)
-                        (i32.add (i32.const 1)
                             (i32.add (get_local $i)
                                         (i32.mul (get_local $rows_m1)
-                                            (get_local $j))))
+                                            (get_local $j)))
                         (get_local $acc))
                     (set_local $j (i32.add (i32.const 1)(get_local $j)))
                 br 1
