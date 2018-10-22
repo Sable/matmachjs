@@ -23,7 +23,7 @@ let memory;
 
 describe('Cell Array Creation', () => {
 	beforeEach(async () => {
-		libjs.js.mem = WebAssembly.Memory({initial: 1});
+		libjs.js.mem = new WebAssembly.Memory({initial: 1});
 		wi = await WebAssembly.instantiate(file, libjs);
 		wi = wi.instance.exports;
 		memory = wi.mem;

@@ -24,7 +24,7 @@ let malloc;
 describe('Allocate Matlab Arrays', () => {
     describe("#create_mxvector",()=>{
         beforeEach(async ()=>{
-            libjs.js.mem = WebAssembly.Memory({initial:1});
+            libjs.js.mem = new WebAssembly.Memory({initial:1});
             wi= await WebAssembly.instantiate(file,libjs);
             wi = wi.instance.exports;
             memory = wi.mem;
@@ -98,7 +98,7 @@ describe('Allocate Matlab Arrays', () => {
     });
     describe("#get_mxarray_dimension_number", ()=>{
         beforeEach(async ()=>{
-            libjs.js.mem = WebAssembly.Memory({initial:1});
+            libjs.js.mem = new WebAssembly.Memory({initial:1});
             wi= await WebAssembly.instantiate(file,libjs);
             wi = wi.instance.exports;
             memory = wi.mem;
@@ -163,7 +163,7 @@ describe('Allocate Matlab Arrays', () => {
     describe("#mxarray_core_get_simple_class_byte_size",()=>{
         let mxarray_core_get_simple_class_byte_size;
         beforeEach(async ()=>{
-            libjs.js.mem = WebAssembly.Memory({initial:1});
+            libjs.js.mem = new WebAssembly.Memory({initial:1});
             wi= await WebAssembly.instantiate(file,libjs );
             wi = wi.instance.exports;
             memory = wi.mem;
@@ -197,7 +197,7 @@ describe('Allocate Matlab Arrays', () => {
         let create_array;
         let create_mxarray_ND;
         beforeEach(async ()=>{
-	        libjs.js.mem = WebAssembly.Memory({initial:10});
+	        libjs.js.mem = new WebAssembly.Memory({initial:10});
 	        wi= await WebAssembly.instantiate(file,libjs);
             wi = wi.instance.exports;
 	        memory = wi.mem;

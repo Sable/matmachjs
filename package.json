@@ -5,7 +5,7 @@
   "main": "./bin/index.js",
   "types": "lib/index",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "./node_modules/mocha/bin/_mocha --ui bdd ./test/node/**/*.test.js",
     "build-ts": "tsc",
     "watch-ts": "tsc -w"
   },

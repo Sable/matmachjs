@@ -27,7 +27,7 @@ let memory;
 let mr;
 describe('Logical ops', () => {
     beforeEach(async () => {
-        libjs.js.mem = WebAssembly.Memory({initial: 1});
+        libjs.js.mem = new WebAssembly.Memory({initial: 1});
         wi = await WebAssembly.instantiate(file, libjs);
         wi = wi.instance.exports;
         mr = new MatlabRuntime(wi);

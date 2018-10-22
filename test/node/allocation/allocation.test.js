@@ -87,7 +87,7 @@ describe("Memory",()=>{
 
         it("Should correctly grow memory if there is no more memory for page",async ()=>{
 			// Max Page Size: 5,
-			libjs.js.mem = WebAssembly.Memory({initial:1, maximum:5});
+			libjs.js.mem = new WebAssembly.Memory({initial:1, maximum:5});
 			wasmInstance= await WebAssembly.instantiate(file,libjs);
 	        wasmInstance = wasmInstance.instance.exports;
 			HEAP_OFFSET =  wasmInstance.get_heap_top();			
@@ -97,7 +97,7 @@ describe("Memory",()=>{
         });
         it("Should throw correct unreachable error if it cannot grow memory anymore",async ()=>{
 			// Max Page Size: 5,
-			libjs.js.mem = WebAssembly.Memory({initial:1, maximum:5});
+			libjs.js.mem = new WebAssembly.Memory({initial:1, maximum:5});
 	        wasmInstance= await WebAssembly.instantiate(file, libjs);
 			wasmInstance = wasmInstance.instance.exports;
 			HEAP_OFFSET = wasmInstance.get_heap_top();
