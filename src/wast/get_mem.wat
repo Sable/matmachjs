@@ -25,7 +25,7 @@
     ;; (import "math" "e" (func $e (result f64)))
     ;; (import "js" "time" (func $time (result f64)))
     ;; (import "js" "printTime" (func $printTime (param f64)(result f64)))
-    
+    (data (offset (i32.add (i32.const 3)(i32.const 3))) "asdas")
     ;; Dummy variables which will be commented out
     (;dummy;)(func $printString (param i32 i32)(result i32) i32.const 1)
     (;dummy;)(func $printMarker )

@@ -136,6 +136,10 @@
         ;; return pointer to start of payload        
         return
     )
+    (func $free (param $ptr i32)(result i32)
+        
+
+    )
 
 
 
