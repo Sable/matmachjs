@@ -306,6 +306,15 @@ function printString(offset, length) {
     console.log(string);
 }
 /**
+ * Generates a random normally distributed number, in the future, compile from C and extract wat function
+ */
+function randn() {
+    var u = 0, v = 0;
+    while(u === 0) u = Math.random(); //Converting [0,1) to (0,1)
+    while(v === 0) v = Math.random();
+    return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+}
+/**
  * Prints a double number and returns.
  * @param {number} number 
  */
@@ -344,7 +353,7 @@ Module.debug = {
 Module.math = {
         ones:() => 1,
         rand:() => Math.random(),
-        randn:() => randn_s(),
+        randn:() => randn(),
         randi:(max) => Math.ceil(max*Math.random()),
         zeros:()=> 0,
         isnan: isNaN,
