@@ -2,7 +2,7 @@
 
 - For calls where the size in memory is known, the stack memory is used,
   otherwise if its not known ahead of time, the heap is used.
-- The size of the Emscripten stack is of 80 bytes 
+- The size of the Emscripten for each function is generated statically. There is no fixed size.
 
 ## `_malloc` - Function 22
 **Lines**: (Lines: 194 - 6234)
@@ -18,12 +18,14 @@
 In terms of handling the stack, this function asks for 80 bytes from the stack.
 Before this it checks the global 13 for stack max to see whether there is space.
 If there is, it sets the STACKTOP to STACKTOP+80, and when the function returns it returns the stack to its original value. Moreover, it handles the stack address from then
-on via a local, which it sets at the beginning from the global.
+on via a local, which it sets at the beginning from the global. This saves loading of globals which is 
+more expensive. In -03, the whole stack handling calls dissappears as is not necessary.
 ### `_sbrk` - Function 71
 **Lines**: (Lines: 18198 - 18249)
+
 Grows memory when necessary, checks if there is enough memory, and if the
 parameter passed is appropriate if not, it throws an error. Returns the value of
-the dynamic\_ptr in memory
+the `DYNAMIC_PTR` in memory
 **External Dependencies**:
 - Global 9 - DYNAMICTOP\_PTR
 - Call 2 - `abortOnCannotGrowMemory` - Imported
@@ -31,31 +33,32 @@ the dynamic\_ptr in memory
   CODE:12)
 - Call 1 - `getTotalMemory` - Imported
 - Call 0 - `enlargeMemory` - Imported
-**Return**: Returns value where dynamic memory is stored. 
+**Return**: Returns ptr to start of payload
 ## `__errono_location`
-- Does not do anything, simply returns the address where the errors are saved. i.e. 132, it seems like all the errors are thrown by the outside environment.
+- Does not do anything, simply returns the address where the errors are saved, it seems like all the errors are thrown by the outside JavaScript environment, it is not clear at the time how this is used,
+as I see no calls being made to it. In zero opt flag is 1648, in -O1 ~1560, in -O2 is 1520
 ```javascript
   (func (;29;) (type 2) (result i32)
     (local i32 i32)
     get_global 12
     set_local 1
-    i32.const 1648
+    i32.const 1520 // Address of errors
     return)
 ```
 **dependencies**
-- Global 12 -> Stack top
+- Global 12 -> `STACK_TOP`
 
 ## Free
 Frees chunks
-- Global 12 -> Stack Top
+- Global 12 ->`STACK_TOP`
 
 # Entry.js
-All starts with a constant GLOBAL\_BASE ptr at line 378. 
+All starts with a constant `GLOBAL_BASE` ptr.
 The memory is organized as follows:
-- Above 0 is static memory, starting with globals. (Example location of stack
+- Above 1024 is static memory, starting with globals ptrs. (Example location of stack
   top, stack base, and start of dynamic memory).
 - Then the stack.
-- Then 'dynamic' memory for sbrk
+- Then 'dynamic' memory for `sbrk`
 ```javascript
 GLOBALBASE = 1024;
 ```
@@ -68,15 +71,16 @@ STATICTOP = STATICBASE + 5456;// Setting the top
 STATICBUMP = 5456; //size of static memory 
 ```
 They weirdly then statically allocate for some other poiters. This functions are
-never called for this program. We may get rid of them for our purposes.
+never called for this program. I got rid of them for my puposes
 ```
 var tempDoublePtr = STATICTOP; STATICTOP += 16;
 ```
-DYNAMICTOP\_PTR = staticAlloc(4) // Sets the ptr where the location of dynamic
+
+`DYNAMICTOP_PTR = staticAlloc(4)` // Sets the ptr where the location of dynamic
 memory starts.
 
-After it sets the location where the dynamic ptr constant will be stored, it
-sets `STACK_BASE`, `STACKTOP`,`DYNAMIC_BASE`, finally it sets the dynamic ptr.
+After it sets the location where the `DYNAMICTOP_PTR` constant will be stored, it
+sets `STACK_BASE`, `STACKTOP`,`DYNAMIC_BASE`, finally it sets the dynamic ptr in the `DYNAMICTOP_PTR` location.
  
 
 ```javascript
@@ -87,7 +91,7 @@ DYNAMIC_BASE = alignMemory(STACK_MAX);
 HEAP32[DYNAMICTOP_PTR>>2] = DYNAMIC_BASE;
 ```
 
-### `staticAlloc()`
+### `staticAlloc(size)`
 - Uses STATICTOP allocate statically a given size, makes sure the result is
   16 byte aligned.
 ```javascript

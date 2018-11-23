@@ -3,7 +3,7 @@ const { TextDecoder } = require('util');
 let Module = {};
 
 /**
- * MEMORY MANAGEMENT
+ * MEMORY CONSTANTS
  */
 const WASM_PAGE_SIZE = 65536;
 const MIN_TOTAL_MEMORY = 16777216;
@@ -30,7 +30,7 @@ let HEAP,
 /** @type {Float64Array} */
   HEAPF64;
 
-
+// Memory management values
 let STATIC_BASE, STATICTOP, staticSealed; // static area
 let STACK_BASE, STACKTOP, STACK_MAX; // stack area
 let DYNAMIC_BASE, DYNAMICTOP_PTR; // dynamic area handled by sbrk
@@ -40,10 +40,9 @@ staticSealed = false;
 
 
 
+// Set the reallocBuffer function used by `growMemory` which is called my _sbrk
 
 Module['reallocBuffer'] = wasmReallocBuffer;
-
-
 if (TOTAL_MEMORY < TOTAL_STACK) 
     console.warn('TOTAL_MEMORY should be larger than TOTAL_STACK, was ' 
         + TOTAL_MEMORY + '! (TOTAL_STACK=' + TOTAL_STACK + ')');
@@ -63,14 +62,23 @@ updateGlobalBufferViews();
  */
 staticSealed = false;
 const GLOBAL_BASE = 1024;
-const ERROR_LOCATION_WASM = 1520;
-const STATICBUMP = 1536; // Static size, changes depending on the wasm module error messages
-const STACK_ALIGN = 16; // 8 Byte Alignment
-STATIC_BASE = GLOBAL_BASE;
-STATICTOP = STATIC_BASE + STATICBUMP; // Global base
-const MATMACH_ERROS_ADDRESS = staticAlloc(1032); // Wasm Memory Constant allocation
+const ERROR_LOCATION_WASM = 1520; // This location was generated dynamically by the Emscripten compiler
+                                // (Check the `__errno_location()` function in Wasm)
+                                // Inside the Wasm code, it contains certain globals and static information
+                                // to run malloc/free, stackAlloc, stackRestore. What is saved there exactly,
+                                // Since we are only really interested in using the stack and heap, we just have
+                                // to make sure we write using malloc/free/stackAlloc/stackRestore.
 
-DYNAMICTOP_PTR = staticAlloc(4);
+const STATICBUMP = 1536; // Static size coming from the wasm module memory set-up from Emscripten
+const STACK_ALIGN = 16; // Stack is 16 byte aligned as the meaning allocation is normally 16 bytes for mallocs.
+STATIC_BASE = GLOBAL_BASE; // Global_base is at 1024, I think in wasm there is some pointers "hardcoded"
+                           // in those addresses.
+STATICTOP = STATIC_BASE + STATICBUMP; // STATIC END
+
+staticAlloc(1032); // This manually adds the static offset occupied by my WebAssembly module string errors.
+                    // Check the data segments in my `get_mem.wat` module. 
+
+DYNAMICTOP_PTR = staticAlloc(4); // Allocate address to store DYNAMIC_PTR 
 STACK_BASE = STACKTOP = alignMemory(STATICTOP);
 STACK_MAX = STACK_BASE + TOTAL_STACK;
 DYNAMIC_BASE = alignMemory(STACK_MAX);
@@ -93,7 +101,7 @@ function alignMemory(size, factor) {
   return ret;
 }
 /**
- * Allocates a given size on the global static 
+ * Allocates a given size on the global static, makes sure it is 16 byte aligned
  * @param {number} size 
  */
 function staticAlloc(size) {
@@ -132,7 +140,7 @@ function abort(what) {
   throw output;
 }
 /**
- * Checks for condition if false it aborts the program 
+ * Assert function used throughout the module
  * @param {boolean} condition 
  * @param {string} text 
  */
@@ -142,17 +150,21 @@ function assert(condition, text) {
   }
 }
 /**
- *  Error thrown by Wasm's 
+ *  Error thrown by Wasm's `_sbrk()`
  */
 function abortOnCannotGrowMemory() {
   abort('Out-of-memory: Cannot enlarge memory arrays.');
 }
+
+// __errno_location imported from the wasm module. I used `ERROR_LOCATION_WASM` since it is already
+// to this value in my wasm module 
+Module["___errno_location"] = ERROR_LOCATION_WASM;
+
 /**
- * Sets the error
+ * Sets the error, this is call in 
  * TODO (dherre3): Still need to understand how this works
  * @param {number} value 
  */
-Module["___errno_location"] = ERROR_LOCATION_WASM;
 function ___setErrNo(value) {
     if (Module['___errno_location']) HEAP32[((Module['___errno_location']())>>2)]=value;
     else console.warn('failed to set errno from JS');
@@ -160,7 +172,7 @@ function ___setErrNo(value) {
 } 
 
 /**
- * Updating the big module buffer. 
+ * Updating the big module buffer. Call by `enlargeMemory()`
  * @param {Array<byte>} buf 
  */
 function updateGlobalBuffer(buf) {
@@ -168,7 +180,7 @@ function updateGlobalBuffer(buf) {
 }
 
 /**
- * Gets total memory for the sytem.
+ * Gets total memory for the sytem. Called by wasm module
  */
 function getTotalMemory() {
   return TOTAL_MEMORY;
@@ -209,7 +221,7 @@ function wasmReallocBuffer(size) {
     }
 }
 /**
- * Used to align memory
+ * Aligns memory given a factor and a size. 
  * @param {number} x 
  * @param {number} multiple 
  */
@@ -220,7 +232,7 @@ function alignUp(x, multiple) {
     return x;
   }
 /**
- * Enlarges memory, used by the _sbrk() call in WebAssembly
+ * Enlarges memory, used by the `_sbrk()` call in WebAssembly
  */
 function enlargeMemory() {
     // TOTAL_MEMORY is the current size of the actual array, and DYNAMICTOP is the new top.
@@ -266,54 +278,28 @@ function enlargeMemory() {
     console.warn('enlarged memory arrays from ' + OLD_TOTAL_MEMORY + ' to ' + TOTAL_MEMORY + ', took ' + (Date.now() - start) + ' ms (has ArrayBuffer.transfer? ' + (!!ArrayBuffer.transfer) + ')');
     return true;
 }
-String.prototype.hexEncode = function(){
-    var hex, i;
 
-    var result = "";
-    for (i=0; i<this.length; i++) {
-        hex = this.charCodeAt(i).toString(16);
-        result += ("000"+hex).slice(-4);
-    }
-
-    return result
-}
-String.prototype.hexDecode = function(){
-    var j;
-    var hexes = this.match(/.{1,4}/g) || [];
-    var back = "";
-    for(j = 0; j<hexes.length; j++) {
-        back += String.fromCharCode(parseInt(hexes[j], 16));
-    }
-
-    return back;
-}
+/////////////// RUN-TIME MATWABLY SUPPORT////////////////////
+/**
+ * Prints array of doubles, used by the `disp_M()` function 
+ * @param {number} arr_ptr 
+ * @param {number} length 
+ */
 function printArrayDouble(arr_ptr, length) {
     let arr = new Float64Array(memory.buffer, arr_ptr, length);
     console.log(arr);
 }
-
-/////////////// ASSERT ////////////////////
-
-function assert(condition, error_number) {
-    let errors = {
-        "0":"Invalid Assertion: class number is incorrect in function $mxarray_core_get_mclass",
-        "1":"Invalid Assertion: elem_size number is incorrect in function $mxarray_core_set_type_attribute",
-        "2":"Invalid Assertion: simple_class number is incorrect in function $mxarray_core_set_type_attribute",
-        "3":"Invalid Assertion: complex number is incorrect in function $mxarray_core_set_type_attribute",
-        "4":"Invalid Assertion: operation only valid for array type"
-    };
-    if(!condition)
-    {
-        throw new Error(errors[error_number]);
-    }
-}
-
+/**
+ * Prints  WebAssembly error, used by the `MatmachJS` library
+ * @param {number} offset 
+ * @param {number} length 
+ */
 function printError(offset, length) {
     var bytes = new Uint8Array(Module.wasmMemory.buffer, offset, length);
     var string = new TextDecoder('utf8').decode(bytes);
     throw new Error(string);
 }
-
+// Prints a string in memory.
 function printString(offset, length) {
     var bytes = new Uint8Array(Module.wasmMemory.buffer, offset, length);
     var string = new TextDecoder('utf8').decode(bytes);
@@ -328,22 +314,18 @@ function printDouble(number)
 	console.log(number);
 	return number;
 }
-function randn_s() {
-	let rand = 0;
-
-	for (let i = 0; i < 10; i += 1) {
-		rand += Math.random();
-	}
-
-	return rand / 10;
-}
-
-
+/**
+ * Helper function ressambling TIC()/TOC() in Matlab
+ * @param {number} time 
+ */
 function printTime(time){
     console.log(`Elapsed time is ${time/1000} seconds.`);
     return time;
 }
-
+/**
+ * DEFINITION OF MODULE IMPORTS
+ */
+// Helper functions for wasm code
 Module.js = {
     "printTime":printTime,
     "printError":printError,
@@ -354,9 +336,11 @@ Module.js = {
     "print_array_f64":printArrayDouble,
     "time":()=>Date.now()
 };
+// Debugging calls.
 Module.debug = {
     printMarker:()=>console.log("MARKER")
 };
+// Helper math functions
 Module.math = {
         ones:() => 1,
         rand:() => Math.random(),
@@ -375,6 +359,7 @@ Module.math = {
         pi:()=>Math.PI,
         e:()=>Math.E
 };
+// Used by memory management in the wasm module
 Module.env = { 
         "DYNAMICTOP_PTR": DYNAMICTOP_PTR,
         "STACKTOP": STACKTOP,
@@ -389,4 +374,5 @@ Module.env = {
         "abortStackOverflow": abortStackOverflow,
         "___setErrNo": ___setErrNo
 };
+
 module.exports = Module;
