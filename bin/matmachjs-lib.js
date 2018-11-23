@@ -76,7 +76,7 @@ STATIC_BASE = GLOBAL_BASE; // Global_base is at 1024, I think in wasm there is s
 STATICTOP = STATIC_BASE + STATICBUMP; // STATIC END
 
 staticAlloc(1032); // This manually adds the static offset occupied by my WebAssembly module string errors.
-                    // Check the data segments in my `get_mem.wat` module. 
+                    // Check the data segments in my `matmachjs.wat` module. 
 
 DYNAMICTOP_PTR = staticAlloc(4); // Allocate address to store DYNAMIC_PTR 
 STACK_BASE = STACKTOP = alignMemory(STATICTOP);

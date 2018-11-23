@@ -24,7 +24,7 @@ gulp.task('compile-browser', () => {
     ]))
 });
 gulp.task("test",["compile-wasm","compile-ts"],()=>{
-    if(fs.existsSync("./bin/get_mem.wasm"))
+    if(fs.existsSync('./bin/matmachjs.wasm')
     {
         return gulp.src('./test/node/**/*.test.js', {read: false})
         .pipe(mocha());

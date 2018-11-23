@@ -14,10 +14,10 @@ chai.use(sinonChai);
 
 
 ///////////////////////////////////////////////////////////////
-const libjs = require(path.join(__dirname,"../../../../")+"/bin/lib.js");
+const libjs = require(path.join(__dirname,"../../../../")+"/bin/matmachjs-lib.js");
 
 
-const file = fs.readFileSync(path.join(__dirname,"../../../../")+"/bin/get_mem.wasm");
+const file = fs.readFileSync(path.join(__dirname,"../../../../")+"/bin/matmachjs.wasm");
 const { MxNDArray, MxVector, MatlabRuntime } = require(path.join(__dirname,"../../../../bin/classes/Runtime.js"));
 let wasmInstance;
 let memory;

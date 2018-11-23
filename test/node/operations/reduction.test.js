@@ -11,8 +11,8 @@ chai.use(sinonChai);
 
 
 
-const libjs = require(path.join(__dirname,"../../../")+"/bin/lib.js");
-const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/get_mem.wasm");
+const libjs = require(path.join(__dirname,"../../../")+"/bin/matmachjs-lib.js");
+const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/matmachjs.wasm");
 const { MxNDArray, MatlabRuntime} = require(path.join(__dirname,"../../../bin/classes/Runtime.js"));
 
 let wi;
