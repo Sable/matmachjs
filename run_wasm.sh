@@ -8,13 +8,5 @@ echo $filebase
 echo -e -n '\033[0m'
 if [ -f "bin/$filename.wasm" ]; then
     rm bin/$filename.wasm
-    rm bin/$filename-standalone.wasm
 fi
-sed -e 's/\(^[ ]*(;dummy;)(.* $.*\)/\    \ /g' -e 's/\(^[ ]*;; (import\)/\    \(import/g' -e 's/\(^[ ]*;; (import\)/\    \(import/g' -e 's/\(^[ ]*(mem\)/\    \;; (mem/g' $file > $filepath-temp.wat
-wat2wasm $filepath-temp.wat -o bin/$filename.wasm
-wat2wasm $file -o bin/$filename-standalone.wasm
-rm $filepath-temp.wat
-
-if [ -f "bin/$filename.wasm" ]; then
-    wasm-interp bin/$filename-standalone.wasm --trace
-fi
+wat2wasm $file -o bin/$filename.wasm

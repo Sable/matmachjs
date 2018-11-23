@@ -20,7 +20,6 @@ let wi;
 let memory;
 describe('Array Properties', () => {
     beforeEach(async ()=>{
-        libjs.js.mem = new WebAssembly.Memory({initial:1});
         wi= await WebAssembly.instantiate(file,libjs);
         wi = wi.instance.exports;
         memory = wi.mem;

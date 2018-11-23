@@ -26,7 +26,6 @@ let memory;
 
 describe('Pairwise and broadcasting', () => {
 	beforeEach(async () => {
-		libjs.js.mem = new WebAssembly.Memory({initial: 1});
 		wi = await WebAssembly.instantiate(file, libjs);
 		wi = wi.instance.exports;
 		memory = wi.mem;

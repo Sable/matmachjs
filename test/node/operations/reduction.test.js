@@ -66,7 +66,6 @@ describe('Operations coming from reductions', () => {
 			let res = new MxNDArray(wi, wi.sum(arr._arr_ptr,1,0));
 			expect(Array.from(res.size().getContents())).to.deep.equal([1,3]);
 			expect(Array.from(res.getContents())).to.deep.equal([1,5,9]);
-			console.log(res.getContents());
 		});
 		it('should return [6,8], dim = 2, when passing [0,2,4;1,3,5]', () => {
 			let arr = mr.colon(0,5);
@@ -94,7 +93,6 @@ describe('Operations coming from reductions', () => {
 		it('should return [4], dim = 1, when passing [4]', () => {
 			let arr = new MxNDArray(wi, [1,1]);
 			arr.set_indices([[1]],[4]);
-			console.log(arr.getContents(), arr.size().getContents());
 			let res = new MxNDArray(wi, wi.prod(arr._arr_ptr,0,0));
 
 			expect(Array.from(res.size().getContents())).to.deep.equal([1,1]);
@@ -119,7 +117,6 @@ describe('Operations coming from reductions', () => {
 		it('should return [4], dim = 1, when passing [4]', () => {
 			let arr = new MxNDArray(wi, [1,1]);
 			arr.set_indices([[1]],[4]);
-			console.log(arr.getContents(), arr.size().getContents());
 			let res = new MxNDArray(wi, wi.any(arr._arr_ptr,0,0));
 
 			expect(Array.from(res.size().getContents())).to.deep.equal([1,1]);
@@ -144,7 +141,6 @@ describe('Operations coming from reductions', () => {
 		it('should return [4], dim = 1, when passing [4]', () => {
 			let arr = new MxNDArray(wi, [1,1]);
 			arr.set_indices([[1]],[4]);
-			console.log(arr.getContents(), arr.size().getContents());
 			let res = new MxNDArray(wi, wi.all(arr._arr_ptr,0,0));
 
 			expect(Array.from(res.size().getContents())).to.deep.equal([1,1]);
