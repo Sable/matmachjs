@@ -4,6 +4,12 @@ class MxObject {
     get arr_ptr() {
         return this._arr_ptr;
     }
+    /**
+     * Gets the contents in Float64Array
+     * @deprecated
+     * @param start
+     * @param length
+     */
     getContents(start = 0, length = this.numel()) {
         if (length < 0 || start < 0)
             throw new Error("View indices must be positive");
@@ -24,7 +30,7 @@ class MxObject {
     ndims() {
         return this._wi.ndims(this.arr_ptr);
     }
-    length_M() {
+    length() {
         return this._wi.length_M(this.arr_ptr);
     }
     isrow() {

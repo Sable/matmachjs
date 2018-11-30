@@ -7,6 +7,12 @@ export abstract class MxObject implements IMXObject {
         public get arr_ptr(): number {
             return this._arr_ptr;
         }
+        /**
+         * Gets the contents in Float64Array
+         * @deprecated
+         * @param start 
+         * @param length 
+         */
         public getContents(start=0, length=this.numel()): Float64Array {
             if(length < 0 || start < 0) throw new Error("View indices must be positive");
             if(length > this.numel() - start ) throw new Error("Invalid length, index out-of-bounds");
@@ -28,7 +34,7 @@ export abstract class MxObject implements IMXObject {
             return this._wi.ndims(this.arr_ptr);
         }
 
-        public length_M(): number {
+        public length(): number {
             return this._wi.length_M(this.arr_ptr);
         }
 

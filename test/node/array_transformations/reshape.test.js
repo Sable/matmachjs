@@ -59,7 +59,7 @@ describe('Array Transformations', () => {
             wi.set_array_index_f64(dim_ptr, 2, 7);
             wi.set_array_index_f64(dim_ptr, 3, 2);
             let arr_ptr = wi.create_mxarray_ND(dim_ptr);
-            let new_dim_ptr = wi.create_mxvector(2,0,0,0,1);
+            let new_dim_ptr = wi.create_mxvector(2,0,0,1,0);
             wi.set_array_index_f64(dim_ptr, 1, 21);
             wi.set_array_index_f64(dim_ptr, 2, 2);
             try{

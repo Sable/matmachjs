@@ -4,14 +4,12 @@ const MxVector_1 = require("./mxarray/MxVector");
 exports.MxVector = MxVector_1.MxVector;
 const MxNdArray_1 = require("./mxarray/MxNdArray");
 exports.MxNDArray = MxNdArray_1.MxNDArray;
+const error_1 = require("./error");
+const value_type_1 = require("./value-type");
 class MatlabRuntime {
     constructor(wis) {
         this.started = false;
-        this.wi = wis;
-        this.started = true;
-    }
-    startRuntime(wis) {
-        this.wi = wis;
+        this.wasm_exports = wis;
         this.started = true;
     }
     checkForStartedRuntime() {
@@ -24,30 +22,32 @@ class MatlabRuntime {
             return arr;
         }
         else {
-            return new MxNdArray_1.MxNDArray(this.wi, this.wi.transpose_M(arr.arr_ptr));
+            return new MxNdArray_1.MxNDArray(this.wasm_exports, this.wasm_exports.transpose_M(arr.arr_ptr));
         }
     }
-    lit(arr) {
+    lit(arr, mclass = value_type_1.ValueType.float64) {
+        if (mclass !== value_type_1.ValueType.float64)
+            throw new error_1.ValueTypeError(mclass, value_type_1.ValueType.float64);
         if (typeof arr === 'undefined' || arr === null)
-            this.wi.create_mxarray_empty(0, 0, 0, 0);
+            this.wasm_exports.create_mxarray_empty(0, 0, 0, 0);
         if (arr.length == 0) {
             // create an empty array
-            return new MxNdArray_1.MxNDArray(this.wi, this.wi.create_mxarray_empty(2, 0, 0, 0));
+            return new MxNdArray_1.MxNDArray(this.wasm_exports, this.wasm_exports.create_mxarray_empty(2, 0, 0, 0));
         }
         else if (arr.length > 0 && typeof arr[0] === 'number') {
             let arr_ = arr;
-            let vals = this.wi.create_mxvector(arr.length);
+            let vals = this.wasm_exports.create_mxvector(arr.length);
             arr_.forEach((val, idx) => {
-                this.wi.set_array_index_f64(vals, idx + 1, val);
+                this.wasm_exports.set_array_index_f64(vals, idx + 1, val);
             });
-            return new MxNdArray_1.MxNDArray(this.wi, vals);
+            return new MxNdArray_1.MxNDArray(this.wasm_exports, vals);
         }
         else {
             let arr_ = arr;
             let rows = arr_.length;
             let cols = arr_[0].length;
-            let dimArr = new MxVector_1.MxVector(this.wi, [rows, cols]);
-            let resArr = new MxNdArray_1.MxNDArray(this.wi, dimArr);
+            let dimArr = new MxVector_1.MxVector(this.wasm_exports, [rows, cols]);
+            let resArr = new MxNdArray_1.MxNDArray(this.wasm_exports, dimArr);
             // create ndarray
             arr_.forEach((dimArr, idxRow) => {
                 if (!(dimArr instanceof Array) || dimArr.length !== cols) {
@@ -60,23 +60,19 @@ class MatlabRuntime {
             return resArr;
         }
     }
-    ones(...arg) {
-        if (arg.length == 0)
-            return 1;
+    ones(shape, mclass = value_type_1.ValueType.float64) {
+        if (mclass !== value_type_1.ValueType.float64)
+            throw new error_1.ValueTypeError(mclass, value_type_1.ValueType.float64);
+        if (shape == undefined)
+            return new MxNdArray_1.MxNDArray(this.wasm_exports, this.wasm_exports.ones((new MxVector_1.MxVector(this.wasm_exports, 1).arr_ptr)));
+        if (typeof shape === "number") {
+            let vec = new MxVector_1.MxVector(this.wasm_exports, [shape]);
+            return new MxNdArray_1.MxNDArray(this.wasm_exports, this.wasm_exports.ones(vec.arr_ptr));
+        }
         else {
-            if (typeof arg[0] == 'number') {
-                let input = arg;
-                let vec = new MxVector_1.MxVector(this.wi, input);
-                return new MxNdArray_1.MxNDArray(this.wi, this.wi.ones(vec.arr_ptr));
-            }
-            else {
-                let input = arg;
-                if (input.length > 1) {
-                    throw new Error("Only arrays of array of one dimension accepted in this context");
-                }
-                let vec = new MxVector_1.MxVector(this.wi, input[0]);
-                return new MxNdArray_1.MxNDArray(this.wi, this.wi.ones(vec.arr_ptr));
-            }
+            let input = shape;
+            let vec = new MxVector_1.MxVector(this.wasm_exports, input);
+            return new MxNdArray_1.MxNDArray(this.wasm_exports, this.wasm_exports.ones(vec.arr_ptr));
         }
     }
     randn(...arg) {
@@ -85,16 +81,16 @@ class MatlabRuntime {
         else {
             if (typeof arg[0] == 'number') {
                 let input = arg;
-                let vec = new MxVector_1.MxVector(this.wi, input);
-                return new MxNdArray_1.MxNDArray(this.wi, this.wi.randn(vec.arr_ptr));
+                let vec = new MxVector_1.MxVector(this.wasm_exports, input);
+                return new MxNdArray_1.MxNDArray(this.wasm_exports, this.wasm_exports.randn(vec.arr_ptr));
             }
             else {
                 let input = arg;
                 if (input.length > 1) {
                     throw new Error("Only arrays of array of one dimension accepted in this context");
                 }
-                let vec = new MxVector_1.MxVector(this.wi, input[0]);
-                return new MxNdArray_1.MxNDArray(this.wi, this.wi.randn(vec.arr_ptr));
+                let vec = new MxVector_1.MxVector(this.wasm_exports, input[0]);
+                return new MxNdArray_1.MxNDArray(this.wasm_exports, this.wasm_exports.randn(vec.arr_ptr));
             }
         }
     }
@@ -109,11 +105,11 @@ class MatlabRuntime {
     }
     concat(dim, args) {
         this.checkForStartedRuntime();
-        let input_vec = this.wi.create_mxvector(args.length, 5, 0, 0, 0, 0);
+        let input_vec = this.wasm_exports.create_mxvector(args.length, 5);
         args.forEach((arr, idx) => {
-            this.wi.set_array_index_i32(input_vec, idx + 1, arr.arr_ptr);
+            this.wasm_exports.set_array_index_i32(input_vec, idx + 1, arr.arr_ptr);
         });
-        return new MxNdArray_1.MxNDArray(this.wi, this.wi.concat(dim, input_vec));
+        return new MxNdArray_1.MxNDArray(this.wasm_exports, this.wasm_exports.concat(dim, input_vec));
     }
     reshape(arr, dims) {
         return arr.reshape(dims);
@@ -122,28 +118,28 @@ class MatlabRuntime {
         this.checkForStartedRuntime();
         let input_vec;
         if (typeof end == "undefined") {
-            let dim_1 = this.wi.create_mxvector(1, 0, 0, 0, 0, 0);
-            let dim_2 = this.wi.create_mxvector(1, 0, 0, 0, 0, 0);
-            input_vec = this.wi.create_mxvector(2, 5, 0, 0, 0, 0);
-            this.wi.set_array_index_f64(dim_1, 1, start);
-            this.wi.set_array_index_f64(dim_2, 1, stepEnd);
-            this.wi.set_array_index_i32(input_vec, 1, dim_1);
-            this.wi.set_array_index_i32(input_vec, 2, dim_2);
+            let dim_1 = this.wasm_exports.create_mxvector(1);
+            let dim_2 = this.wasm_exports.create_mxvector(1);
+            input_vec = this.wasm_exports.create_mxvector(2, 5);
+            this.wasm_exports.set_array_index_f64(dim_1, 1, start);
+            this.wasm_exports.set_array_index_f64(dim_2, 1, stepEnd);
+            this.wasm_exports.set_array_index_i32(input_vec, 1, dim_1);
+            this.wasm_exports.set_array_index_i32(input_vec, 2, dim_2);
         }
         else {
-            let dim_1 = this.wi.create_mxvector(1, 0, 0, 0, 0, 0);
-            let dim_2 = this.wi.create_mxvector(1, 0, 0, 0, 0, 0);
-            let dim_3 = this.wi.create_mxvector(1, 0, 0, 0, 0, 0);
-            input_vec = this.wi.create_mxvector(3, 5, 0, 0, 0, 0);
-            let param_arr = this.wi.create_mxvector(3, 5, 0, 0, 0, 0);
-            this.wi.set_array_index_f64(dim_1, 1, start);
-            this.wi.set_array_index_f64(dim_2, 1, stepEnd);
-            this.wi.set_array_index_f64(dim_3, 1, end);
-            this.wi.set_array_index_i32(input_vec, 1, dim_1);
-            this.wi.set_array_index_i32(input_vec, 2, dim_2);
-            this.wi.set_array_index_i32(input_vec, 3, dim_3);
+            let dim_1 = this.wasm_exports.create_mxvector(1);
+            let dim_2 = this.wasm_exports.create_mxvector(1);
+            let dim_3 = this.wasm_exports.create_mxvector(1);
+            input_vec = this.wasm_exports.create_mxvector(3, 5);
+            ;
+            this.wasm_exports.set_array_index_f64(dim_1, 1, start);
+            this.wasm_exports.set_array_index_f64(dim_2, 1, stepEnd);
+            this.wasm_exports.set_array_index_f64(dim_3, 1, end);
+            this.wasm_exports.set_array_index_i32(input_vec, 1, dim_1);
+            this.wasm_exports.set_array_index_i32(input_vec, 2, dim_2);
+            this.wasm_exports.set_array_index_i32(input_vec, 3, dim_3);
         }
-        return new MxNdArray_1.MxNDArray(this.wi, this.wi.colon(input_vec));
+        return new MxNdArray_1.MxNDArray(this.wasm_exports, this.wasm_exports.colon(input_vec));
     }
     size(arr) {
         this.checkForStartedRuntime();
@@ -155,7 +151,7 @@ class MatlabRuntime {
     }
     length(arr) {
         this.checkForStartedRuntime();
-        return arr.length_M();
+        return arr.length();
     }
     isrow(arr) {
         this.checkForStartedRuntime();

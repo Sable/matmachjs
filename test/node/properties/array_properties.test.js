@@ -81,7 +81,7 @@ describe('Array Properties', () => {
 			    expect(err.message).to.equal("Not enough input arguments.");
 		    }
 	    });
-        it("should return correct output for different matrices", ()=>{
+        it("should return correct size for different matrices", ()=>{
             let arr = wi.create_mxvector(4);
             let arr_f64 = new Int32Array(memory.buffer, arr, 6);
             let size_arr = wi.size(arr);
@@ -95,7 +95,7 @@ describe('Array Properties', () => {
 		    expect(wi.numel(size_arr)).to.equal(2);
 		    expect(wi.get_array_index_f64(size_arr, 1)).to.equal(1);
 		    expect(wi.get_array_index_f64(size_arr, 2)).to.equal(0);
-		    arr = wi.create_mxvector(-1,0,0,0,1);
+		    arr = wi.create_mxvector(-1,0,0,1,0);
 		    size_arr = wi.size(arr);
 		    expect(wi.numel(size_arr)).to.equal(2);
 		    expect(wi.get_array_index_f64(size_arr, 1)).to.equal(0);
@@ -152,7 +152,7 @@ describe('Array Properties', () => {
                expect(wi.isrow(arr_pointer)).to.equal(1);
         });
         it("should return false if is not row vector", ()=>{
-            let arr_pointer = wi.create_mxvector(5,0,0,0,1);
+            let arr_pointer = wi.create_mxvector(5,0,0,1,0);
             expect(wi.isrow(arr_pointer)).to.equal(0);
         });
     });
@@ -170,7 +170,7 @@ describe('Array Properties', () => {
 	        expect(wi.iscolumn(arr_pointer)).to.equal(0);
         });
 	    it('should return 1 if input is nx1', () => {
-		    let arr_pointer = wi.create_mxvector(5,0,0,0,1);
+		    let arr_pointer = wi.create_mxvector(5,0,0,1,0);
 		    expect(wi.iscolumn(arr_pointer)).to.equal(1);
 	    });
 	    it('should return 1 if input is 1xn for an mxarray', () => {
