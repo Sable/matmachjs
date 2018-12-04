@@ -1,50 +1,64 @@
 import { IMachObject } from "./interface/IMachObject";
-export class MachArray implements IMachObject {
+import { MatClass, MClass } from "./types";
+
+export class MachArray extends Float64Array implements IMachObject {
     private _wi:any;
     // Array properties
-    _data: Float64Array;
-    readonly _shape: Float64Array;
+    // public _data: Float64Array;
+    public _shape: Float64Array;
+    readonly _type_attribute: Uint8Array; 
+    readonly _attributes: Uint8Array;
     readonly _ndim: number;
     readonly _numel: number;
-    readonly _offset: number;
+    readonly _byteOffset: number;
     readonly _strides: Float64Array;
-    readonly _order:string;
 
+    get _mat_class(){
+        return MatClass[this._type_attribute[0]];
+    }
+    get BYTES_PER_ELEMENT(){
+        return this._type_attribute[1];
+    }
+    get _mclass(){
+        return MClass[this._type_attribute[2]];
+    }
+    get _order() {
+        return (this._attributes[0] === 0)?"C":"R";
+    }
+    
     constructor(wi:any, arr_ptr:number){
+        super(wi.mem.buffer,wi.mxarray_core_get_array_ptr(arr_ptr), wi.numel(arr_ptr)); 
         let header = new Uint32Array(wi.mem.buffer, arr_ptr, 7);
-        let attr = new Uint8Array(wi.mem.buffer, header[6],4);
+        this._type_attribute = new Uint8Array(wi.mem.buffer, header[0],3);
+        this._attributes = new Uint8Array(wi.mem.buffer, header[6],4);
         this._wi = wi;
         this._numel = header[1];
         this._ndim = header[3];
-        if(header[2]!= 0 && header[2]!= -1) this._data = new Float64Array(wi.mem.buffer, 
-            header[2],
-             this._numel);
-        else this._data = new Float64Array(0); 
-        
-        this._offset = arr_ptr;
-        let shape_ptr = header[4]; 
+        // if(header[2]!= 0 && header[2]!= -1) this._data = new Float64Array(wi.mem.buffer, 
+        //     header[2], this._numel);
+        // else this._data = new Float64Array(0); 
+        this._byteOffset = arr_ptr;
         this._shape = new Float64Array(wi.mem.buffer,
-            shape_ptr, this._ndim);
+            header[4], this._ndim);
         this._strides =  new Float64Array(wi.mem.buffer,
             header[5], this._ndim); 
-        this._order = (attr[0])?"R":"C";
     }
     clone(): MachArray {
-        let new_arr_ptr = this._wi.clone(this._data.byteOffset);
+        let new_arr_ptr = this._wi.clone(this._byteOffset);
         return new MachArray(this._wi, new_arr_ptr);
     }
-    get(...args:number[]): number {
-        return this._data[this.index(...args)];
+    get_index(...args:number[]): number {
+        return this[this.index(...args)];
     }
-    set(args:number[], value:number): number {
-       return this._data[this.index(...args)] = value; 
+    set_index(args:number[], value:number): number {
+       return this[this.index(...args)] = value; 
     }
     index(...args:number[]): number {
         if(args.length == 1) return args[0];
         if(args.length == 0) throw new Error("Must provide at least one index");
         return args.reduce((acc, val,i)=>{ return acc+val*this._strides[i]},0);
     }
-    slice_get(...args: number[][]): MachArray {
+    slice_get(...args: number[][]): IMachObject {
         // throw new Error("Method not implemented.");
         let vector_input = new Uint32Array(this._wi.mem.buffer,
                 this._wi.create_mxvector(args.length, 5), args.length);
@@ -64,7 +78,7 @@ export class MachArray implements IMachObject {
         throw new Error("Method not implemented.");
     }
     numel(): number {
-        return this._data.length;
+        return this.length;
     }
     size(): Float64Array {
         return new Float64Array(this._shape);
@@ -72,28 +86,28 @@ export class MachArray implements IMachObject {
     ndims(): number {
         return this._shape.length;
     }
-    length(): number {
+    dim_length(): number {
         let max = -Infinity;
         return this._shape.reduce((val)=>(val>max)?val:max,0);
     }
     is_scalar(): Boolean {
-        return (this._data.length === 1);
+        return (this.length === 1);
     }
     isrow(): Boolean {
-        return this._wi.isrow(this._offset) === 1;
+        return this._wi.isrow(this._byteOffset) === 1;
     }
 
     iscolumn(): Boolean {
-        return this._wi.iscolumn(this._offset) === 1; 
+        return this._wi.iscolumn(this._byteOffset) === 1; 
     }
     ismatrix(): Boolean {
-        return this._wi.ismatrix(this._offset) === 1;
+        return this._wi.ismatrix(this._byteOffset) === 1;
     }
     isvector(): Boolean {
-        return this._wi.isvector(this._offset) === 1;
+        return this._wi.isvector(this._byteOffset) === 1;
     }
     isempty(): Boolean {
-        return this._data.length === 0;
+        return this.length === 0;
     }
     reshape(newshape:number[]){
         if(newshape.reduce((acc,dim)=>dim+acc,0) !== this._numel)
@@ -103,7 +117,8 @@ export class MachArray implements IMachObject {
         });
     }
     free(){
-        this._wi.free_macharray(this._offset);
+        this._wi.free_macharray(this._byteOffset);
     }
-
+   
 }
+

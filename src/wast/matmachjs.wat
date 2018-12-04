@@ -89,7 +89,7 @@
     (data $mem (i32.const 3448) "Arguments must be 2-D, or at least one argument must be scalar.")
     (data $mem (i32.const 3512) "Inner matrix dimensions must agree.")
     (data $mem (i32.const 3552) "N-dimensional arrays are not supported.")
-    ;; 
+ 
     (func $throwError (param $error i32)
         (local $offset i32)(local $length i32)
         (;
@@ -7417,7 +7417,7 @@
     (func $transpose_S (param f64)(result f64)
         get_local 0
     )
-      (export "transpose_M" (func $transpose_M))
+    (export "transpose_M" (func $transpose_M))
     (func $transpose_M (param $arr_ptr i32) (result i32)
         (local $i i32)(local $j i32)(local $n i32)(local $m i32)(local $dim_ptr i32)
         (local $out_ptr i32)
@@ -7447,7 +7447,7 @@
         (call $set_array_index_f64 (get_local $dim_ptr)(i32.const 1)(f64.convert_s/i32 (get_local $m)))
         (call $set_array_index_f64 (get_local $dim_ptr)(i32.const 2)(f64.convert_s/i32 (get_local $n)))
         (tee_local $out_ptr (call $create_mxarray_ND (get_local $dim_ptr)(i32.const 0)(i32.const 0)(i32.const 0)))  
-            
+
         loop
             block
             (br_if 0 (i32.ge_s (get_local $i)(get_local $n)))
@@ -8291,21 +8291,17 @@
         (local $res_ptr i32)
         (call $verify_pairwise (get_local $m1_ptr)(get_local $m2_ptr))
         (tee_local $res_ptr)
-        call $numel
+        i32.load offset=4 align=4 
         i32.const 0
         i32.gt_s
         if 
             (call $traverse_pairwise 
-                (get_local $res_ptr)(call $size (get_local $res_ptr)(i32.const 0))
-                (get_local $m1_ptr)(call $size (get_local $m1_ptr)(i32.const 0))
-                (get_local $m2_ptr)(call $size (get_local $m2_ptr)(i32.const 0))
-                (get_local $func_ptr)(i32.const 1)
-                (i32.const 0)(i32.const 1)
-                (i32.const 0)(i32.const 1)
-                (i32.const 0)(i32.const 1))
+                (get_local $res_ptr)(i32.load offset=16 align=4 (get_local $res_ptr))(i32.load offset=20 align=4 (get_local $res_ptr))(i32.load offset=12 align=4 (get_local $res_ptr))
+                (get_local $m1_ptr)(i32.load offset=16 align=4 (get_local $m1_ptr))(i32.load offset=20 align=4 (get_local $m1_ptr))(i32.load offset=12 align=4 (get_local $m1_ptr))
+                (get_local $m2_ptr)(i32.load offset=16 align=4 (get_local $m2_ptr))(i32.load offset=20 align=4 (get_local $m2_ptr))(i32.load offset=12 align=4 (get_local $m2_ptr))
+                (get_local $func_ptr)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0))
         end
         get_local $res_ptr
-        return
     )
     (export "verify_pairwise" (func $verify_pairwise))
     (func $verify_pairwise (param $m1_ptr i32)(param $m2_ptr i32) (result i32)
@@ -8415,129 +8411,221 @@
         end
         (call $create_mxarray_ND (get_local $new_shape_ptr) (i32.const 0)(i32.const 0)(i32.const 0))
     )
-    (func $traverse_pairwise (param $total_ptr i32)
-        (param $total_shape_ptr i32)(param $a_ptr i32)(param $a_shape_ptr i32)
-        (param $b_ptr i32)(param $b_shape_ptr i32)(param $func_ptr i32)
-        (param $curr_dim i32)(param $offset_tot i32)(param $mult_tot i32)
-        (param $offset_a i32)(param $mult_a i32)(param $offset_b i32)(param $mult_b i32)
-        ;; (param $res_type i32)
-        (local $len_dim i32)(local $i i32)(local $new_offset_tot i32)
-        (local $new_mult_tot i32)(local $new_offset_a i32)
-        (local $new_mult_a i32)(local $new_offset_b i32)
-        (local $new_mult_b i32)(local $bshape_dim i32)
-        (local $ashape_dim i32)(local $total_dim_num i32)
+    (func $traverse_pairwise 
+        (param $total_ptr i32)(param $total_shape_ptr i32)(param $total_stride_ptr i32)(param $total_dim_num i32)
+        (param $a_ptr i32)(param $a_shape_ptr i32)(param $a_stride_ptr i32)(param $a_dim_num i32)
+        (param $b_ptr i32)(param $b_shape_ptr i32)(param $b_stride_ptr i32)(param $b_dim_num i32)
+        (param $func_ptr i32)(param $curr_dim i32)
+        (param $offset_tot i32)(param $offset_a i32) (param $offset_b i32)
+        (local $len_dim i32)(local $i i32)
+        (local $new_offset_tot i32)(local $new_offset_a i32)(local $new_offset_b i32)
+        (local $total_data_ptr i32)(local $a_data_ptr i32)(local $b_data_ptr i32)
+        (local $curr_stride_tot i32)(local $curr_stride_a i32)(local $curr_stride_b i32)
+        (local $curr_shape_a i32)(local $curr_shape_b i32)
         (set_local $len_dim 
-            (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $total_shape_ptr)
-                (get_local $curr_dim))))
-       
-        (set_local $total_dim_num (call $numel (get_local $total_shape_ptr)))
-        loop
-            block
-            (br_if 0 (i32.ge_s (get_local $i)(get_local $len_dim)))
-            ;; Total calculation
-            (set_local $new_offset_tot 
-                (i32.add (get_local $offset_tot)
-                         (i32.mul (get_local $i)(get_local $mult_tot))))
+            (i32.trunc_s/f64 (f64.load offset=0 align=8 (i32.add (get_local $total_shape_ptr)
+                (i32.mul (i32.const 8)(get_local $curr_dim))))))
+        (set_local $total_data_ptr (i32.load offset=8 align=4 (get_local $total_ptr)))
+        (set_local $a_data_ptr (i32.load offset=8 align=4 (get_local $a_ptr)))
+        (set_local $b_data_ptr (i32.load offset=8 align=4 (get_local $b_ptr)))
+        ;; (set_local $total_dim_num (call $numel (get_local $total_shape_ptr)))
+       (i32.lt_s (get_local $i)(get_local $len_dim))
+       if   
+            (set_local $curr_stride_tot (i32.trunc_s/f64 (f64.load offset=0 align=8 
+                        (i32.add (get_local $total_stride_ptr)(i32.mul (i32.const 8)(get_local $curr_dim))))))
+            ;; Check if a enough dimensions, save a stride before loop
+            get_local $a_dim_num
+            get_local $curr_dim
+            i32.gt_s
+            if
+                (set_local $curr_stride_a (i32.trunc_s/f64 
+                    (f64.load offset=0 align=8 (i32.add (get_local $a_stride_ptr)
+                        (i32.mul (i32.const 8)(get_local $curr_dim))))))
+                (set_local $curr_shape_a (i32.trunc_s/f64 
+                    (f64.load offset=0 align=8 (i32.add (get_local $a_shape_ptr)
+                        (i32.mul (i32.const 8)(get_local $curr_dim))))))
+            end
+            ;; Check if b enough dimensions, save b stride before loop
+            get_local $b_dim_num
+            get_local $curr_dim
+            i32.gt_s
+            if
+                (set_local $curr_stride_b (i32.trunc_s/f64 
+                    (f64.load offset=0 align=8 (i32.add (get_local $b_stride_ptr)
+                        (i32.mul (i32.const 8)(get_local $curr_dim))))))
+                (set_local $curr_shape_b (i32.trunc_s/f64 
+                    (f64.load offset=0 align=8 (i32.add (get_local $b_shape_ptr)
+                        (i32.mul (i32.const 8)(get_local $curr_dim))))))
+            end                       
+            loop
+                ;; Get if a has enough dimensions and that the dimension is not larger than the current_dim.
+                (set_local $new_offset_tot (i32.add (get_local $offset_tot)
+                    (i32.mul (get_local $i)(get_local $curr_stride_tot))))
                 
-            (set_local $new_mult_tot 
-                (i32.mul (get_local $mult_tot)
-                    (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $total_shape_ptr)
-                        (get_local $curr_dim)))))
-    
-            ;; A Calculation
-            (set_local $ashape_dim (i32.trunc_s/f64 
-                (call $get_array_index_f64 (get_local $a_shape_ptr)
-                    (get_local $curr_dim))))
-            get_local $curr_dim
-            get_local $a_shape_ptr
-            call $numel
-            i32.gt_s
-            get_local $i
-            get_local $ashape_dim
-            i32.const 1
-            i32.sub
-            i32.gt_s
-            i32.or
-            if
-                (set_local $new_offset_a (get_local $offset_a))
-                (set_local $new_mult_a (get_local $mult_a))
-            else
-                (set_local $new_offset_a
-                                (i32.add (get_local $offset_a)
-                                        (i32.mul (get_local $i)(get_local $mult_a))))
-                (set_local $new_mult_a
-                    (i32.mul (get_local $mult_a)
-                       (get_local $ashape_dim)))
-            end
-          
-            ;; B calculation
-             (set_local $bshape_dim (i32.trunc_s/f64 
-                (call $get_array_index_f64 (get_local $b_shape_ptr)
-                    (get_local $curr_dim))))
-            get_local $curr_dim
-            get_local $b_shape_ptr
-            call $numel
-            i32.gt_s
-            get_local $i
-            get_local $bshape_dim
-            i32.const 1
-            i32.sub
-            i32.gt_s
-            i32.or
-            if
-                (set_local $new_offset_b (get_local $offset_b))
-                (set_local $new_mult_b (get_local $mult_b))
-            else
-                (set_local $new_offset_b
-                                (i32.add (get_local $offset_b)
-                                        (i32.mul (get_local $i)(get_local $mult_b))))
-                (set_local $new_mult_b
-                    (i32.mul (get_local $mult_b)
-                       (get_local $bshape_dim)))
-            end
-
-            get_local $curr_dim
-            get_local $total_dim_num
-            i32.eq
-            if
-                ;; get_local $res_type
-                ;; i32.eqz
-                ;; if
-                ( call $set_array_index_f64
-                    (get_local $total_ptr)
-                    (i32.add (i32.const 1)(get_local $new_offset_tot))
-                    (call_indirect (type $type_binary_op_f64) 
-                        (call $get_array_index_f64 (get_local $a_ptr)
-                            (i32.add (i32.const 1)(get_local $new_offset_a)))
-                        (call $get_array_index_f64 (get_local $b_ptr)
-                            (i32.add (i32.const 1)(get_local $new_offset_b)))
-                        (get_local $func_ptr)))
-                ;; else
-                ;;     ( call $set_array_index_f64
-                ;;         (get_local $total_ptr)
-                ;;         (i32.add (i32.const 1)(get_local $new_offset_tot))
-                ;;         (f64.convert_s/i32 (call_indirect (type $type_binary_op_i32) 
-                ;;             (call $get_array_index_f64 (get_local $a_ptr)
-                ;;                 (i32.add (i32.const 1)(get_local $new_offset_a)))
-                ;;             (call $get_array_index_f64 (get_local $b_ptr)
-                ;;                 (i32.add (i32.const 1)(get_local $new_offset_b)))
-                ;;             (get_local $func_ptr))))
-                ;; end
-            else
-                (call $traverse_pairwise 
-                    (get_local $total_ptr)(get_local $total_shape_ptr)
-                    (get_local $a_ptr)(get_local $a_shape_ptr)
-                    (get_local $b_ptr)(get_local $b_shape_ptr)
-                    (get_local $func_ptr)
-                    (i32.add (get_local $curr_dim)(i32.const 1))
-                    (get_local $new_offset_tot)(get_local $new_mult_tot)
-                    (get_local $new_offset_a)(get_local $new_mult_a)
-                    (get_local $new_offset_b)(get_local $new_mult_b))
-            end
+                (i32.ge_s (get_local $curr_dim)(get_local $a_dim_num))
+                if                    
+                    (set_local $new_offset_a (get_local $offset_a))
+                else
+                   (i32.ge_s (get_local $i)(get_local $curr_shape_a))
+                   if
+                        (set_local $new_offset_a (get_local $offset_a))
+                   else
+                        (set_local $new_offset_a (i32.add (get_local $offset_a)
+                            (i32.mul (get_local $i)(get_local $curr_stride_a))))
+                   end 
+                end
+                ;; idx > bshape.length-1 || i > bshape[idx]-1
+                get_local $curr_dim
+                get_local $b_dim_num
+                i32.ge_s
+                if      
+                    (set_local $new_offset_b (get_local $offset_b))              
+                else 
+                    (i32.ge_s (get_local $i)(get_local $curr_shape_b))
+                    if
+                        (set_local $new_offset_b (get_local $offset_b))
+                    else
+                        (set_local $new_offset_b (i32.add (get_local $offset_b)
+                            (i32.mul (get_local $i)(get_local $curr_stride_b)))) 
+                    end 
+                end
+                get_local $curr_dim
+                get_local $total_dim_num
+                i32.const 1
+                i32.sub
+                i32.eq
+                if
+                    (f64.store offset=0 align=8
+                        (i32.add (get_local $total_data_ptr)(i32.mul (i32.const 8)(get_local $new_offset_tot)))
+                        (call_indirect (type $type_binary_op_f64) 
+                            (f64.load offset=0 align=8 
+                                (i32.add (get_local $a_data_ptr)
+                                    (i32.mul (i32.const 8)(get_local $new_offset_a))))
+                            (f64.load offset=0 align=8 
+                                (i32.add (get_local $b_data_ptr)
+                                    (i32.mul (i32.const 8)(get_local $new_offset_b))))
+                            (get_local $func_ptr)))
+                else
+                    (call $traverse_pairwise 
+                        (get_local $total_ptr)(get_local $total_shape_ptr)(get_local $total_stride_ptr)(get_local $total_dim_num)
+                        (get_local $a_ptr)(get_local $a_shape_ptr)(get_local $a_stride_ptr)(get_local $a_dim_num)
+                        (get_local $b_ptr)(get_local $b_shape_ptr)(get_local $b_stride_ptr)(get_local $b_dim_num)
+                        (get_local $func_ptr)(i32.add (get_local $curr_dim)(i32.const 1))
+                        (get_local $new_offset_tot)(get_local $new_offset_a)(get_local $new_offset_b))
+                end         
             (set_local $i (i32.add (i32.const 1)(get_local $i)))
-            br 1
+            (br_if 0 (i32.lt_s (get_local $i)(get_local $len_dim)))
             end
-        end
+       end 
+
+
+        ;; loop
+        ;;     block
+        ;;     (br_if 0 (i32.ge_s (get_local $i)(get_local $len_dim)))
+        ;;     ;; Total calculation
+        ;;     (set_local $new_offset_tot 
+        ;;         (i32.add (get_local $offset_tot)
+        ;;                  (i32.mul (get_local $i)(get_local $mult_tot))))
+                
+        ;;     (set_local $new_mult_tot 
+        ;;         (i32.mul (get_local $mult_tot)
+        ;;             (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $total_shape_ptr)
+        ;;                 (get_local $curr_dim)))))
+    
+        ;;     ;; A Calculation
+        ;;     (set_local $ashape_dim (i32.trunc_s/f64 
+        ;;         (call $get_array_index_f64 (get_local $a_shape_ptr)
+        ;;             (get_local $curr_dim))))
+        ;;     get_local $curr_dim
+        ;;     get_local $a_shape_ptr
+        ;;     call $numel
+        ;;     i32.gt_s
+        ;;     get_local $i
+        ;;     get_local $ashape_dim
+        ;;     i32.const 1
+        ;;     i32.sub
+        ;;     i32.gt_s
+        ;;     i32.or
+        ;;     if
+        ;;         (set_local $new_offset_a (get_local $offset_a))
+        ;;         (set_local $new_mult_a (get_local $mult_a))
+        ;;     else
+        ;;         (set_local $new_offset_a
+        ;;                         (i32.add (get_local $offset_a)
+        ;;                                 (i32.mul (get_local $i)(get_local $mult_a))))
+        ;;         (set_local $new_mult_a
+        ;;             (i32.mul (get_local $mult_a)
+        ;;                (get_local $ashape_dim)))
+        ;;     end
+          
+        ;;     ;; B calculation
+        ;;     (set_local $bshape_dim (i32.trunc_s/f64 
+        ;;         (call $get_array_index_f64 (get_local $b_shape_ptr)
+        ;;             (get_local $curr_dim))))
+        ;;     get_local $curr_dim
+        ;;     get_local $b_shape_ptr
+        ;;     call $numel
+        ;;     i32.gt_s
+        ;;     get_local $i
+        ;;     get_local $bshape_dim
+        ;;     i32.const 1
+        ;;     i32.sub
+        ;;     i32.gt_s
+        ;;     i32.or
+        ;;     if
+        ;;         (set_local $new_offset_b (get_local $offset_b))
+        ;;         (set_local $new_mult_b (get_local $mult_b))
+        ;;     else
+        ;;         (set_local $new_offset_b
+        ;;                         (i32.add (get_local $offset_b)
+        ;;                                 (i32.mul (get_local $i)(get_local $mult_b))))
+        ;;         (set_local $new_mult_b
+        ;;             (i32.mul (get_local $mult_b)
+        ;;                (get_local $bshape_dim)))
+        ;;     end
+
+        ;;     get_local $curr_dim
+        ;;     get_local $total_dim_num
+        ;;     i32.eq
+        ;;     if
+        ;;         ;; get_local $res_type
+        ;;         ;; i32.eqz
+        ;;         ;; if
+        ;;         ( call $set_array_index_f64
+        ;;             (get_local $total_ptr)
+        ;;             (i32.add (i32.const 1)(get_local $new_offset_tot))
+        ;;             (call_indirect (type $type_binary_op_f64) 
+        ;;                 (call $get_array_index_f64 (get_local $a_ptr)
+        ;;                     (i32.add (i32.const 1)(get_local $new_offset_a)))
+        ;;                 (call $get_array_index_f64 (get_local $b_ptr)
+        ;;                     (i32.add (i32.const 1)(get_local $new_offset_b)))
+        ;;                 (get_local $func_ptr)))
+        ;;         ;; else
+        ;;         ;;     ( call $set_array_index_f64
+        ;;         ;;         (get_local $total_ptr)
+        ;;         ;;         (i32.add (i32.const 1)(get_local $new_offset_tot))
+        ;;         ;;         (f64.convert_s/i32 (call_indirect (type $type_binary_op_i32) 
+        ;;         ;;             (call $get_array_index_f64 (get_local $a_ptr)
+        ;;         ;;                 (i32.add (i32.const 1)(get_local $new_offset_a)))
+        ;;         ;;             (call $get_array_index_f64 (get_local $b_ptr)
+        ;;         ;;                 (i32.add (i32.const 1)(get_local $new_offset_b)))
+        ;;         ;;             (get_local $func_ptr))))
+        ;;         ;; end
+        ;;     else
+        ;;         (call $traverse_pairwise 
+        ;;             (get_local $total_ptr)(get_local $total_shape_ptr)
+        ;;             (get_local $a_ptr)(get_local $a_shape_ptr)
+        ;;             (get_local $b_ptr)(get_local $b_shape_ptr)
+        ;;             (get_local $func_ptr)
+        ;;             (i32.add (get_local $curr_dim)(i32.const 1))
+        ;;             (get_local $new_offset_tot)(get_local $new_mult_tot)
+        ;;             (get_local $new_offset_a)(get_local $new_mult_a)
+        ;;             (get_local $new_offset_b)(get_local $new_mult_b))
+        ;;     end
+        ;;     (set_local $i (i32.add (i32.const 1)(get_local $i)))
+        ;;     br 1
+        ;;     end
+        ;; end
     )
     
 
@@ -8609,9 +8697,7 @@
             (set_local $dim (call $findNonSingletonDimension (get_local $size_new_arr)))
         end
      
-        ;; (i32.gt_s (get_local $dim)(call $numel (get_local $size_new_arr)))
-        ;; call $printDouble
-        ;; drop
+
         (i32.or 
             (i32.gt_s (get_local $dim)(call $numel (get_local $size_new_arr)))
             (i32.eq (i32.const -1)(get_local $dim)))
@@ -8637,15 +8723,12 @@
             get_local $arr_ptr
             call $ne_SM
           else 
-
               get_local $arr_ptr
               call $clone
           end
-            
         else
             (set_local $size_arr 
                 (call $clone (get_local $size_new_arr)))
-
 
             (call $set_array_index_f64 
                 (get_local $size_new_arr)
