@@ -30,7 +30,7 @@ traverse(decodedWasm, {
       let exported_functions = getFunctions(ast.node).reduce((acc, func)=>{
         let paramIndex = 0;
         const parameters =
-            (argv.r)? "...args":
+            (argv.r)? (func.signature.params.length> 0)?"...args":"":
                 func.signature.params
                     .map((param)=>{
                         const tsParam = `${param.valtype}_${paramIndex}:number`;
@@ -39,13 +39,13 @@ traverse(decodedWasm, {
         acc += `\t${func.name}(${parameters}):number;\n\n`;
         return acc;
       }, "");
-        // Memory
+        // Memories
         let exported_memories = getMemory(ast.node).reduce((acc, memDef)=>{
             return acc+`\t${memDef.name}:WebAssembly.Memory;\n`;
         },"");
         // Globals
 
-        // Table
+        // Tables
 
         // Generated Module
         let generated_module =
@@ -53,7 +53,11 @@ traverse(decodedWasm, {
       fs.writeFileSync(argv.o,generated_module);
     }
   });
-
+/**
+ * Filters and traverses the Node to obtain function definitions and exports
+ * @param node AST Node
+ * @returns {T[]}
+ */
 function getFunctions(node){
      return node.fields.filter(field => field.type === 'ModuleExport'&& field.descr.exportType === 'Func')
         .reduce((acc, type)=>{
@@ -67,6 +71,12 @@ function getFunctions(node){
             return acc;
     },[]).filter(val=> typeof val !== "undefined");
 }
+
+/**
+ * Filters and traverses the Node to obtain memory definitions and exports
+ * @param node AST Node
+ * @returns {T[]}
+ */
 function getMemory(node){
      return node.fields.filter(
             field => field.type === 'ModuleExport'

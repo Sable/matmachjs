@@ -1,7 +1,7 @@
 export interface MatMachWasm {
 
 	mem:WebAssembly.Memory;
-	___errno_location(...args):number;
+	___errno_location():number;
 
 	_sbrk(...args):number;
 
@@ -9,9 +9,9 @@ export interface MatMachWasm {
 
 	_malloc(...args):number;
 
-	tic(...args):number;
+	tic():number;
 
-	toc(...args):number;
+	toc():number;
 
 	mxarray_core_get_array_ptr(...args):number;
 

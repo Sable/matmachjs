@@ -1,6 +1,6 @@
-# MatRay
+# MatMachJS Libray
 
-[![Build Status](https://travis-ci.org/Sable/mc2wasm-lib.svg?branch=master)](https://travis-ci.org/Sable/mc2wasm-lib)
+[![Build Status](https://travis-ci.org/Sable/matmachjs.svg?branch=master)](https://travis-ci.org/Sable/matmachjs)
 
 
 - [Matlab library for WebAssembly](#matlab-library-for-webassembly)
