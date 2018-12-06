@@ -295,8 +295,6 @@ Module.env= {
     "abortStackOverflow": abortStackOverflow,
     "___setErrNo": ___setErrNo
 };
-console.log(Module.env);
-
 // Start of program
 // WebAssembly.instantiate(fs.readFileSync("entry.min.wasm"),Module)
 // .then((result)=>{

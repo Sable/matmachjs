@@ -2,7 +2,7 @@
   "name": "buildin-mc2wasm",
   "version": "1.0.0",
   "description": "Built-in functions and memory calls for the mc2wasm module",
-  "main": "./bin/index.js",
+  "main": "./bin/classes/macharray/MachRuntime.js",
   "types": "lib/index",
   "scripts": {
     "test": "./node_modules/mocha/bin/_mocha --ui bdd ./test/node/**/*.test.js ./test/node/**/**/*.test.js",

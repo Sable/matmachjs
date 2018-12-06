@@ -1,5 +1,4 @@
-import { ValueType } from "./value-type";
-import { ArrayValue } from "./macharray/types";
+import {ArrayValue, MClass} from "./macharray/types";
 
 
 
@@ -10,7 +9,7 @@ export class MatmachError extends Error{
 }
 
 export class ValueTypeError extends MatmachError {
-    constructor(source: ValueType, expected: ValueType){
+    constructor(source: MClass, expected: MClass){
         super(`Invalid value type, expected: ${expected} got: ${source}`);
     } 
 }

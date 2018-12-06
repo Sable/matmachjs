@@ -7,11 +7,12 @@ import { ArrayValueTypeError, ValueTypeError } from "../error";
 import { MachUtil } from "./MachUtil";
 
 import * as fs from 'fs';
+import { MatMachWasm } from "../../wasm_interface/MatMachWasm";
 
 export class MachRuntime implements IMachRuntime{
-    _wi:any;
-    _buffer:Buffer;
-    constructor(wi: any){
+    _wi:MatMachWasm;
+    _buffer:ArrayBuffer;
+    constructor(wi: MatMachWasm){
         this._wi = wi;
         this._buffer = wi.mem.buffer;
     }
@@ -23,7 +24,7 @@ export class MachRuntime implements IMachRuntime{
         let wi = await WebAssembly.instantiate(
             fs.readFileSync(path_wat),
                 await import(path_js_lib));    
-         return new MachRuntime(wi.instance);
+         return new MachRuntime(wi.instance.exports);
     }
     public static async initializeRuntime(): Promise<MachRuntime> {
         return this.initializeRuntimeWithPaths("../matmachjs.wat","../matmachjs-lib.js");
@@ -46,18 +47,18 @@ export class MachRuntime implements IMachRuntime{
             totalElem*=a;
         });
         let arr = new MachArray(this._wi, 
-            this._wi.create_mxarray_ND(shape_input_header.byteOffset,0,0,order_opt));
+            this._wi.create_mxarray_ND(shape_input_header,0,0,order_opt));
         if(!(data instanceof Float64Array )) 
             throw new ArrayValueTypeError(<ArrayValue> data, new Float64Array(0));
         if(totalElem !== data.length) 
             throw new Error(`Data and Shape do not match, ${totalElem} != ${data.length}`);
         // Fill data with values
         arr.set(data);
-        // data.forEach((val, i)=> arr._data[i] = val); 
         // Free input vector
         this._wi.free_macharray(shape_input_header);
         return arr;
     }
+
     public ones(args?:number[],mclass=MClass.float64): MachArray{
         if(mclass !== MClass.float64)
             throw new ValueTypeError(mclass, MClass.float64);
@@ -89,7 +90,7 @@ export class MachRuntime implements IMachRuntime{
         if(mclass !== MClass.float64)
             throw new ValueTypeError(mclass, MClass.float64);
         let shape_arr = this.helperShapeConstructors(shape); 
-        let arr = new MachArray(this._wi, this._wi.randi_M(max_int, shape_arr));
+        let arr = new MachArray(this._wi, this._wi.randi(max_int, shape_arr));
         this._wi.free_macharray(shape);
         return arr; 
     }
@@ -97,7 +98,7 @@ export class MachRuntime implements IMachRuntime{
         if(mclass !== MClass.float64)
             throw new ValueTypeError(mclass, MClass.float64);
         let shape = this.helperShapeConstructors(args);
-        let arr = new MachArray(this._wi, this._wi.rand_M(shape));
+        let arr = new MachArray(this._wi, this._wi.rand(shape));
         this._wi.free_macharray(shape);
         return arr; 
     }
@@ -106,7 +107,7 @@ export class MachRuntime implements IMachRuntime{
         if(mclass !== MClass.float64)
             throw new ValueTypeError(mclass, MClass.float64);
         let shape = this.helperShapeConstructors(args);
-        let arr = new MachArray(this._wi, this._wi.randn_M(shape));
+        let arr = new MachArray(this._wi, this._wi.randn(shape));
         this._wi.free_macharray(shape);
         return arr;
     }
@@ -433,12 +434,12 @@ export class MachRuntime implements IMachRuntime{
     }
     public sum(arr1:MachArray|number, dim:number=0, nanFlag=false){
         if(typeof arr1 === "number") return arr1; 
-        return new MachArray(this._wi, this._wi.sum_M(arr1._byteOffset,dim, nanFlag));
+        return new MachArray(this._wi, this._wi.sum(arr1._byteOffset,dim, nanFlag));
 
     }
     public prod(arr1:MachArray|number, dim:number=0, nanFlag=false){
         if(typeof arr1 === "number") return arr1; 
-        return new MachArray(this._wi, this._wi.prod_M(arr1._byteOffset,dim, nanFlag));
+        return new MachArray(this._wi, this._wi.prod(arr1._byteOffset,dim, nanFlag));
     }
     public transpose(arr1:MachArray|number){
         if(typeof arr1 === "number") return arr1; 
@@ -482,7 +483,7 @@ export class MachRuntime implements IMachRuntime{
             });
             return new MachArray(this._wi, this._wi.vertcat(inp_vec._byteOffset));
         }else{
-            return new MachArray(this._wi, this._wi.vertcar());
+            return new MachArray(this._wi, this._wi.vertcat());
         }
     }
 

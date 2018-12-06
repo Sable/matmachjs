@@ -29,8 +29,9 @@ export class MachArray extends Float64Array implements IMachObject {
     constructor(wi:any, arr_ptr:number){
         super(wi.mem.buffer,wi.mxarray_core_get_array_ptr(arr_ptr), wi.numel(arr_ptr)); 
         let header = new Uint32Array(wi.mem.buffer, arr_ptr, 7);
-        this._type_attribute = new Uint8Array(wi.mem.buffer, header[0],3);
-        this._attributes = new Uint8Array(wi.mem.buffer, header[6],4);
+        this._type_attribute = new Uint8Array(wi.mem.buffer, arr_ptr,3);
+        this._attributes = new Uint8Array(wi.mem.buffer, arr_ptr+24,4);
+        // console.log(this._attributes);
         this._wi = wi;
         this._numel = header[1];
         this._ndim = header[3];

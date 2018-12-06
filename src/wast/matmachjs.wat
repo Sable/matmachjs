@@ -4667,6 +4667,7 @@
         i32.const 1056
         i32.const -1
         i32.store)
+        
 
 
     (export "mxarray_core_get_array_ptr" (func $mxarray_core_get_array_ptr))
@@ -7340,15 +7341,8 @@
     (func $horzcat (param $input_matrices i32) (result i32)
         (call $concat (i32.const 2)(get_local $input_matrices))
     )
-    (export "eye_S" (func $eye_S))
-    (func $eye_S (result f64)
-        f64.const 1
-    )
-    (export "eye_M" (func $eye))
-    (func $eye_M (param $dim_ptr i32) (result i32)
-        get_local $dim_ptr
-        call $eye
-    )
+
+    (export "eye" (func $eye))
     (func $eye (param $dim_ptr i32) (result i32)
         (local $i i32)(local $n i32)(local $m i32)
         (local $out_ptr i32)(local $dim_len i32)(local $out_data_ptr i32)
@@ -8769,6 +8763,7 @@
         i32.const 0
         call $sum
     )
+    ;;TODO(dherre3) Check for $mean_MSS for compilers
     (export "mean_MSS" (func $mean_MSS))
     (func $mean_MSS (param $arr_ptr i32)(param $dim f64)(param $nanFlag f64)(result i32)
         get_local $arr_ptr
@@ -9251,7 +9246,9 @@
     )
     (export "floor_M" (func $floor_M))
     (func $floor_M (param $arr_ptr i32) (result i32)
+
         (call $elementwise_mapping (get_local $arr_ptr)(i32.const 35))
     )    
+    
 )
 
