@@ -13,10 +13,10 @@ chai.use(sinonChai);
 
 
 ///////////////////////////////////////////////////////////////
-const libjs = require(path.join(__dirname,"../../../")+"/bin/lib.js");
+const libjs = require(path.join(__dirname,"../../../")+"/bin/matmachjs-lib.js");
 
 
-const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/get_mem.wasm");
+const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/matmachjs.wasm");
 let wi; // wasmInstance
 let memory;
 let malloc;
@@ -24,56 +24,39 @@ let malloc;
 describe('Allocate Matlab Arrays', () => {
     describe("#create_mxvector",()=>{
         beforeEach(async ()=>{
-            libjs.js.mem = new WebAssembly.Memory({initial:1});
             wi= await WebAssembly.instantiate(file,libjs);
             wi = wi.instance.exports;
             memory = wi.mem;
-            malloc = wi.malloc;
-
         });
         it("should create an empty array correctly", ()=>{
             let arr = wi.create_mxvector(0);
-            let arr_size = wi.numel(arr);
-            expect(wi.numel(arr)).to.equal(0);
-            expect(wi.mxarray_core_get_mclass(arr)).to.equal(0);
-            expect(wi.mxarray_core_get_simple_class(arr)).to.equal(0);
-            expect(wi.ndims(arr)).to.equal(2);
-            expect(wi.isscalar(arr)).to.equal(0);
+	        let arr_size = wi.numel(arr);
+	        expect(wi.numel(arr)).to.equal(0);
+	        expect(wi.mxarray_core_get_mclass(arr)).to.equal(0);
+	        expect(wi.mxarray_core_get_simple_class(arr)).to.equal(0);
+	        expect(wi.ndims(arr)).to.equal(2);
+	        expect(wi.isscalar(arr)).to.equal(0);
 	        let size_arr = wi.size(arr);
 	        expect(wi.get_array_index_f64(size_arr, 1)).to.equal(1);
 	        expect(wi.get_array_index_f64(size_arr, 2)).to.equal(0);
         });
-        it("should start array at correct section",()=>{
-            let heap_top = wi.get_heap_top();
-            let arr = wi.create_mxvector(5,0);
-            let arr_start = wi.mxarray_core_get_array_ptr(arr);
-            // 24 for metadata, 4 for malloc header
-            expect(arr_start).to.be.equal(arr+24/*meta info*/ + 4/*footer*/+12/*header_arr*/);
-        });
 
-	    it('Should insert type attribute correctly', () => {
-		    let ar = new Int8Array(wi.mem.buffer);
-		    let arr_pointer = wi.create_mxvector(5,0);
-		    let heap_top = wi.get_heap_top();
-		    ar[heap_top] = wi.mxarray_core_set_type_attribute(heap_top);
-		    expect(ar[arr_pointer]).to.equal(ar[heap_top]);
-        });
+
         
 	    it("Should set other meta data correctly",()=>{
             let arr_8 = new Int8Array(wi.mem.buffer);
             let arr_pointer = wi.create_mxvector(5,0);
-            let arr_32 = new Int32Array(wi.mem.buffer,arr_pointer,6);
-            expect([arr_32[1],arr_32[3], arr_8[arr_pointer + 20],arr_8[arr_pointer + 21]]).to.deep.equal([5,2,0,0]);
+            expect([ arr_8[arr_pointer + 24],arr_8[arr_pointer + 25]]).to.deep.equal([0,0]);
         });
         it('Should set dimensions correctly', () => {
-            let arr_pointer = wi.create_mxvector(5,0);
+            let arr_pointer = wi.create_mxvector(5);
             
             let arr = new Int32Array(wi.mem.buffer,arr_pointer);
             let dim_ptr = arr[4];
             let arr_f64 = new Float64Array(wi.mem.buffer, dim_ptr, 4);
             expect([arr_f64[0],arr_f64[1]]).to.deep.equal([1,5]);
             // Testing transpose
-            arr_pointer = wi.create_mxvector(5,0,0,0,1);
+            arr_pointer = wi.create_mxvector(5,0,0,1,0);
 
             arr = new Int32Array(wi.mem.buffer,arr_pointer);
              dim_ptr = arr[4];
@@ -197,20 +180,34 @@ describe('Allocate Matlab Arrays', () => {
         let create_array;
         let create_mxarray_ND;
         beforeEach(async ()=>{
-	        libjs.js.mem = new WebAssembly.Memory({initial:10});
 	        wi= await WebAssembly.instantiate(file,libjs);
             wi = wi.instance.exports;
 	        memory = wi.mem;
         });
+	    it("should create an empty array correctly", ()=>{
+		    let arr = wi.create_mxvector(0);
+		    let arr_size = wi.numel(arr);
+		    expect(wi.numel(arr)).to.equal(0);
+		    expect(wi.mxarray_core_get_mclass(arr)).to.equal(0);
+		    expect(wi.mxarray_core_get_simple_class(arr)).to.equal(0);
+		    expect(wi.ndims(arr)).to.equal(2);
+		    expect(wi.isscalar(arr)).to.equal(0);
+		    let size_arr = wi.size(arr);
+		    expect(wi.get_array_index_f64(size_arr, 1)).to.equal(1);
+		    expect(wi.get_array_index_f64(size_arr, 2)).to.equal(0);
+	    });
         it('should throw error if input is not a row vector',  () => {
-            let arr_1d = wi.create_mxvector(4,0,0,0,1);
+            let arr_1d = wi.create_mxvector(4,0,0,1,0);
 		    wi.set_array_index_f64(arr_1d, 1,30);
 		    wi.set_array_index_f64(arr_1d, 2,2);
 		    wi.set_array_index_f64(arr_1d, 3,4);
             wi.set_array_index_f64(arr_1d, 4,6);
             // console.log(wi.is_row_vector(arr_1d));
-            try {
+            // libjs.js.printString(2560, 1031);
+
+	        try {
                 wi.create_mxarray_ND(arr_1d);
+
                 expect(1+1).to.throw(3);
             }catch(err)
             {
@@ -231,10 +228,14 @@ describe('Allocate Matlab Arrays', () => {
             let arr = wi.create_mxarray_ND(arr_1d);
             expect(wi.ndims(arr)).to.equal(4);
         });
+        it("should check that dim array is f64 for now", ()=>{ // F64 Hardcode
+
+        });
         it("should create square matrix if input array has size 1", () => {
             let arr_1d = wi.create_mxvector(1);
             wi.set_array_index_f64(arr_1d, 1,2);
-            let arr_size = wi.size(wi.create_mxarray_ND(arr_1d));
+            let arr = wi.create_mxarray_ND(arr_1d);
+            let arr_size = wi.size(arr);
             expect([wi.get_array_index_f64(arr_size,1),wi.get_array_index_f64(arr_size,2)]).to.deep.equal([2,2]);
         });
         it('should set the number of elements correctly for normal case', () => {
@@ -275,20 +276,32 @@ describe('Allocate Matlab Arrays', () => {
 		    expect(arr_header_nd[1]).to.equal(1440); // Total array length
 		    expect(arr_header_nd[3]).to.equal(4); // Number of dimensions
 	    });
+		it('should return correct strides [1,2] for C order [30,2,4,6] array ',()=>{
+			let arr_1d = wi.create_mxvector(4);
+			wi.set_array_index_f64(arr_1d, 1,30);
+			wi.set_array_index_f64(arr_1d, 2,2);
+			wi.set_array_index_f64(arr_1d, 3,4);
+			wi.set_array_index_f64(arr_1d, 4,6);
+			let arr_nd = wi.create_mxarray_ND(arr_1d);
+			let attr = new Int8Array(memory.buffer, arr_nd + 24, 1);
+			let arr_header_nd = new Int32Array(memory.buffer, arr_nd, 7);
+			let strides = new Float64Array(memory.buffer, arr_header_nd[5], 4);
+			expect(Array.from(strides)).to.deep.equal([1,30,60,240]);
+			expect(attr[0]).to.equal(0);
+		});
+	    it('should return correct strides [1,2] for R order [30,2,4,6] array ',()=>{
+		    let arr_1d = wi.create_mxvector(4);
+		    wi.set_array_index_f64(arr_1d, 1,30);
+		    wi.set_array_index_f64(arr_1d, 2,2);
+		    wi.set_array_index_f64(arr_1d, 3,4);
+		    wi.set_array_index_f64(arr_1d, 4,6);
+		    let arr_nd = wi.create_mxarray_ND(arr_1d,0,0,1);
+		    let arr_header_nd = new Int32Array(memory.buffer, arr_nd, 7);
+		    let attr = new Int8Array(memory.buffer, arr_nd + 24, 1);
+		    let strides = new Float64Array(memory.buffer, arr_header_nd[5], 4);
+		    expect(Array.from(strides)).to.deep.equal([2,1,60,240]);
+		    expect(attr[0]).to.equal(1);
+	    });
+    });
 
-    });
-    describe('#mxarray_core_set_type_attribute', () => {
-        beforeEach(async ()=>{
-            wi= await WebAssembly.instantiate(file,libjs);
-            wi = wi.instance.exports;
-            memory = wi.mem;
-        });
-        it("should verify type attribute works well",()=>{
-            wi.mxarray_core_set_type_attribute(wi.get_heap_top(),0,16,5);
-            let arr_8 = new Int8Array(memory.buffer,wi.get_heap_top(),4);
-            expect([arr_8[0],arr_8[1],arr_8[2],arr_8[3]]).to.deep.equal([0,16,5,1]);
-            // Test with 1 bit
-            wi.mxarray_core_set_type_attribute(wi.get_heap_top(),0,1,3);
-        });
-    });
 });

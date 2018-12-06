@@ -11,21 +11,15 @@ chai.use(sinonChai);
 
 
 
-const libjs = require(path.join(__dirname,"../../../")+"/bin/lib.js");
-const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/get_mem.wasm");
+const libjs = require(path.join(__dirname,"../../../")+"/bin/matmachjs-lib.js");
+const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/matmachjs.wasm");
 const { MxNDArray, MatlabRuntime} = require(path.join(__dirname,"../../../bin/classes/Runtime.js"));
 
 let wi;
 let mr;
-
+let memory;
 describe('Concatanation Module', () => {
-    // Verifies input
-	beforeEach(async ()=>{
-		wi= await WebAssembly.instantiate(file,libjs);
-		wi = wi.instance.exports;
-		memory = wi.mem;
-		mr = new MatlabRuntime(wi);
-	});
+
     describe('#verify_input_and_instantiate_result_concatation(dim, input_matrices)', () => {
 	    beforeEach(async ()=>{
 		    wi= await WebAssembly.instantiate(file,libjs);
@@ -130,6 +124,13 @@ describe('Concatanation Module', () => {
         });
     });
 	describe('#concat', () => {
+		// Verifies input
+		beforeEach(async ()=>{
+			wi= await WebAssembly.instantiate(file,libjs);
+			wi = wi.instance.exports;
+			memory = wi.mem;
+			mr = new MatlabRuntime(wi);
+		});
         it('should return correct result for matrices [1,2], [2,2], [5,2] to result in a [8,2] when dim is 1',()=>{
             let arr = mr.colon(7,16);
             arr = mr.reshape(arr, [5,2]);
@@ -144,6 +145,13 @@ describe('Concatanation Module', () => {
         });
 	});
 	describe("#horzcat", ()=>{
+		// Verifies input
+		beforeEach(async ()=>{
+			wi= await WebAssembly.instantiate(file,libjs);
+			wi = wi.instance.exports;
+			memory = wi.mem;
+			mr = new MatlabRuntime(wi);
+		});
 		it('should return correct result for ', () => {
 			let arr = mr.colon(11,20);
 			arr = mr.reshape(arr, [2,5]);
@@ -161,6 +169,13 @@ describe('Concatanation Module', () => {
 
 	});
 	describe("#vertcat",()=>{
+		// Verifies input
+		beforeEach(async ()=>{
+			wi= await WebAssembly.instantiate(file,libjs);
+			wi = wi.instance.exports;
+			memory = wi.mem;
+			mr = new MatlabRuntime(wi);
+		});
 		it('should return correct result for matrices [1,2], [2,2], [5,2] to result in a [8,2] when dim is 1 ', () => {
 			let arr = mr.colon(7,16);
 			arr = mr.reshape(arr, [5,2]);

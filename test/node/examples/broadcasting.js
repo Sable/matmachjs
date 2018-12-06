@@ -75,7 +75,7 @@ function traverse_pairwise(total, a, b, func_ptr,idx, offset_tot, mult_tot, offs
 		// a
 		let new_offset_a;
 		let new_mult_a;
-		if( idx > ashape.length-1 || i > ashape[idx]-1){
+		if ( idx > ashape.length-1 || i > ashape[idx]-1){
 			new_offset_a = offset_a;
 			new_mult_a = mult_a;
 		}else{

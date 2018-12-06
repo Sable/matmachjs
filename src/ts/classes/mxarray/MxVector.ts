@@ -4,21 +4,20 @@ import {MxNDArray} from "./MxNdArray";
 
 export class MxVector extends MxArray {
 
-    constructor(wi:any, array:Array<number>|number|MxVector, simple_type:number=0, class_type:number=0,
-                 complex:number=0, column:boolean=false, byte_size:number = 0)
+    constructor(wi:any, array:Array<number>|number|MxVector, simple_type:number=0, class_type:number=0,column:boolean=false, order:number = 0)
     {
         super();
         this._wi = wi;
         if( typeof array != "undefined" ){
             if(typeof array == 'number'){
-                this._arr_ptr = this._wi.create_mxvector(array,simple_type,class_type,complex,column,byte_size);
+                this._arr_ptr = this._wi.create_mxvector(array,simple_type,class_type,column,order);
             }else if(array instanceof MxVector) {
                 this._arr_ptr = this._wi.clone(array._arr_ptr);
             }else{
                 // if ( array.length == 1 ) {
                 //     this._arr_ptr = this._wi.create_mxvector(array.length, simple_type, class_type, complex, column, byte_size);
                 // }
-                this._arr_ptr = this._wi.create_mxvector(array.length,simple_type,class_type,complex,column,byte_size);
+                this._arr_ptr = this._wi.create_mxvector(array.length,simple_type,class_type,column,order);
                 array.forEach((val, idx)=>{
                     this._wi.set_array_index_f64(this._arr_ptr, idx+1, val);
                 });

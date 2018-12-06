@@ -14,10 +14,10 @@ chai.use(sinonChai);
 
 
 ///////////////////////////////////////////////////////////////
-const libjs = require(path.join(__dirname,"../../../")+"/bin/lib.js");
+const libjs = require(path.join(__dirname,"../../../")+"/bin/matmachjs-lib.js");
 
 
-const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/get_mem.wasm");
+const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/matmachjs.wasm");
 const { MxVector } = require(path.join(__dirname,"../../../")+"bin/classes/mxarray/MxVector.js");
 const { MxNDArray } = require(path.join(__dirname,"../../../")+ "bin/classes/mxarray/MxNdArray.js");
 const { MatlabRuntime } = require(path.join(__dirname,"../../../")+ "bin/classes/Runtime.js");
@@ -27,7 +27,6 @@ let memory;
 let mr;
 describe('Logical ops', () => {
     beforeEach(async () => {
-        libjs.js.mem = new WebAssembly.Memory({initial: 1});
         wi = await WebAssembly.instantiate(file, libjs);
         wi = wi.instance.exports;
         mr = new MatlabRuntime(wi);
@@ -37,7 +36,6 @@ describe('Logical ops', () => {
         it('should output 1 [1,1,1;1,1,1;1,1,1]', function () {
             let arr1 = mr.ones(3);
             expect(wi.all_nonzero_reduction(arr1.arr_ptr)).to.equal(1);
-            console.log(arr1.getContents());
         });
         it('should output 0 when input is [1,1,1;1,1,1;1,1,0]', function () {
             let arr1 = mr.ones(3);

@@ -2,7 +2,7 @@
     export interface IMXObject {
         numel():number;
         ndims():number;
-        length_M():number;
+        length():number;
         isrow():boolean;
         iscolumn():boolean;
         ismatrix():boolean;

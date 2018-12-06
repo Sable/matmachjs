@@ -14,10 +14,10 @@ chai.use(sinonChai);
 
 
 ///////////////////////////////////////////////////////////////
-const libjs = require(path.join(__dirname,"../../../")+"/bin/lib.js");
+const libjs = require(path.join(__dirname,"../../../")+"/bin/matmachjs-lib.js");
 
 
-const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/get_mem.wasm");
+const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/matmachjs.wasm");
 const { MxVector } = require(path.join(__dirname,"../../../")+"bin/classes/mxarray/MxVector.js");
 const { MxNDArray } = require(path.join(__dirname,"../../../")+ "bin/classes/mxarray/MxNdArray.js");
 
@@ -26,7 +26,6 @@ let memory;
 
 describe('Element wise constructors', () => {
 	beforeEach(async () => {
-		libjs.js.mem = new WebAssembly.Memory({initial: 1});
 		wi = await WebAssembly.instantiate(file, libjs);
 		wi = wi.instance.exports;
 		memory = wi.mem;

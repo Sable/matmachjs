@@ -14,11 +14,11 @@ chai.use(sinonChai);
 
 
 ///////////////////////////////////////////////////////////////
-const libjs = require(path.join(__dirname,"../../../")+"/bin/lib.js");
+const libjs = require(path.join(__dirname,"../../../")+"/bin/matmachjs-lib.js");
 
 const { MxNDArray, MxVector } = require(path.join(__dirname,"../../../bin/classes/Runtime.js"));
 
-const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/get_mem.wasm");
+const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/matmachjs.wasm");
 let wi;
 let memory;
 
@@ -59,7 +59,7 @@ describe('Array Transformations', () => {
             wi.set_array_index_f64(dim_ptr, 2, 7);
             wi.set_array_index_f64(dim_ptr, 3, 2);
             let arr_ptr = wi.create_mxarray_ND(dim_ptr);
-            let new_dim_ptr = wi.create_mxvector(2,0,0,0,1);
+            let new_dim_ptr = wi.create_mxvector(2,0,0,1,0);
             wi.set_array_index_f64(dim_ptr, 1, 21);
             wi.set_array_index_f64(dim_ptr, 2, 2);
             try{

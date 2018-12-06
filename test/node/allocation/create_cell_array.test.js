@@ -14,10 +14,10 @@ chai.use(sinonChai);
 
 
 ///////////////////////////////////////////////////////////////
-const libjs = require(path.join(__dirname,"../../../")+"/bin/lib.js");
+const libjs = require(path.join(__dirname,"../../../")+"/bin/matmachjs-lib.js");
 
 
-const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/get_mem.wasm");
+const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/matmachjs.wasm");
 let wi;
 let memory;
 
@@ -28,6 +28,22 @@ describe('Cell Array Creation', () => {
 		wi = wi.instance.exports;
 		memory = wi.mem;
 
+	});
+	describe("#create_mxarray_ND",()=>{
+		it('should set the cell-array correctly', () => {
+			let input = wi.create_mxvector(2);
+			wi.set_array_index_f64(input,1,5);
+			wi.set_array_index_f64(input,2,10);
+			let arr = wi.create_mxarray_ND(input,1); // Create a cell-array
+			let size_arr = wi.size(arr);
+			let arr_data = wi.mxarray_core_get_array_ptr(arr);
+			let capacity = new Int32Array(memory.buffer, arr_data-4,1)[0];
+			expect(wi.numel(arr)).to.equal(50);
+			expect(wi.ndims(arr)).to.equal(2);
+			expect(wi.get_array_index_f64(size_arr,1)).to.equal(5);
+			expect(wi.get_array_index_f64(size_arr,2)).to.equal(10);
+			expect(capacity).to.equal(208);
+		});
 	});
 	describe('#create_mxvector', function () {
 		it('should create cell array correctly', function () {

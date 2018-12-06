@@ -5,7 +5,7 @@ const MxVector_1 = require("./MxVector");
 class MxNDArray extends MxArray_1.MxArray {
     constructor(wi, mxarray, class_type = 0, simple_type = 0, complex = false, column = 0, byte_size = 8) {
         super();
-        this._wi = wi;
+        this._wi = wi; // Refers to module exports
         if (typeof wi === "undefined") {
             throw Error("Error: WebAssembly Matlab module must be defined");
         }

@@ -1,0 +1,88 @@
+#!/usr/bin/env node
+
+const {signatures, traverse} = require("@webassemblyjs/ast");
+const path = require("path");
+const { decode } = require("@webassemblyjs/wasm-parser");
+var argv = require('yargs')
+    .usage('Usage: $0 -o [output file] -p [path to wasm file]')
+    .alias("p","path")
+    .alias("o","output_file")
+    .alias("i","interface-name")
+    .describe("i","Name for the generated TS interface")
+    .string("i")
+    .boolean(["r"])
+    .default("r",false)
+    .alias("r","rest-parameters")
+    .describe("rest", "Boolean flag to replace all arguments to functions by the rest argument (...args)")
+    .demandOption(['p','o'])
+    .argv;
+const fs = require("fs");
+const decoderOpts = {};
+if(!argv.i) {
+    argv.i = path.basename(argv.o);
+    argv.i = argv.i.substring(0, argv.i.lastIndexOf("."));
+}
+const decodedWasm = decode(fs.readFileSync(argv.p), decoderOpts);
+traverse(decodedWasm, {
+    Module(ast) {
+
+        // Functions
+      let exported_functions = getFunctions(ast.node).reduce((acc, func)=>{
+        let paramIndex = 0;
+        const parameters =
+            (argv.r)? "...args":
+                func.signature.params
+                    .map((param)=>{
+                        const tsParam = `${param.valtype}_${paramIndex}:number`;
+                        paramIndex++;return tsParam;}
+                        ).join(", ");
+        acc += `\t${func.name}(${parameters}):number;\n\n`;
+        return acc;
+      }, "");
+        // Memory
+        let exported_memories = getMemory(ast.node).reduce((acc, memDef)=>{
+            return acc+`\t${memDef.name}:WebAssembly.Memory;\n`;
+        },"");
+        // Globals
+
+        // Table
+
+        // Generated Module
+        let generated_module =
+            `export interface ${argv.i} {\n\n${exported_memories}${exported_functions}\n}`;
+      fs.writeFileSync(argv.o,generated_module);
+    }
+  });
+
+function getFunctions(node){
+     return node.fields.filter(field => field.type === 'ModuleExport'&& field.descr.exportType === 'Func')
+        .reduce((acc, type)=>{
+            acc.push(node.fields.filter(field => field.type === 'Func')
+            .map((func)=>{
+                if( Number(func.name.value.substring(5)) === type.descr.id.value){
+                    acc.push({signature: func.signature, name: type.name});
+                    return acc;
+                }
+            })[0]);
+            return acc;
+    },[]).filter(val=> typeof val !== "undefined");
+}
+function getMemory(node){
+     return node.fields.filter(
+            field => field.type === 'ModuleExport'
+            && field.descr.exportType === 'Mem')
+            .reduce((acc, type)=>{
+                acc.push(
+                    ...node.fields
+                .filter(field => field.type === 'Memory'
+                        || ( field.type === 'ModuleImport'&& field.descr.type === 'Memory' ))
+                .map((mem)=>{
+                    if(mem.type === 'ModuleImport'){// Must be an import
+                        return {...mem.descr, name:type.name};
+                    }else{ // Must be memory
+                        return {...mem,name:type.name};
+                    }
+                }));
+            return acc;
+        },[]).filter(val=> typeof val !== "undefined");
+}

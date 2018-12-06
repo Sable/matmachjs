@@ -7,7 +7,7 @@ export class MxNDArray extends MxArray {
     public constructor(wi:any, mxarray: MxNDArray| number[] | MxVector| number, class_type:number=0,simple_type:number=0,
                        complex:boolean=false, column:number=0, byte_size:number = 8) {
         super();
-        this._wi = wi;
+        this._wi = wi; // Refers to module exports
         if(typeof wi === "undefined"){
             throw Error("Error: WebAssembly Matlab module must be defined");
         }

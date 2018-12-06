@@ -2,7 +2,6 @@
 const gulp = require('gulp');
 const shell = require('gulp-shell');
 const express = require('express');
-const colors = require('colors');
 const mocha = require('gulp-mocha');
 const fs = require("fs");
 const ts = require("gulp-typescript");
@@ -23,9 +22,17 @@ gulp.task('compile-browser', () => {
       './run_wasm_browser.sh <%= file.path %>'
     ]))
 });
+
+
+gulp.task("test-ts",["compile-ts"],()=>{
+    if(fs.existsSync('./bin/matmachjs.wasm')){
+        return gulp.src('./test/node/**/**/*.test.ts',
+         {read: false}).pipe(mocha(
+           {require:["ts-node/register"]}));
+    }
+ });
 gulp.task("test",["compile-wasm","compile-ts"],()=>{
-    if(fs.existsSync("./bin/get_mem.wasm"))
-    {
+    if(fs.existsSync('./bin/matmachjs.wasm')){
         return gulp.src('./test/node/**/*.test.js', {read: false})
         .pipe(mocha());
     }
@@ -35,7 +42,11 @@ gulp.task("test-watch",()=>{
 });
 gulp.task('watch-compile-wasm',()=>{
   return gulp.watch(['./src/wast/*.wat'],['compile-wasm']);
-});gulp.task('default',()=>{
+});
+gulp.task('watch-compile-ts',()=>{
+  return gulp.watch(['./src/ts/**/**/*.ts'],['compile-ts']);
+});
+gulp.task('default',()=>{
     return gulp.watch(['./src/wast/*/wat','src/ts/**/**/*.ts'],['compile-wasm','compile-ts']);
 });
 gulp.task('browser',()=>{

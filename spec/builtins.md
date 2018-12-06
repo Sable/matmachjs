@@ -2,11 +2,10 @@
 
 # Allocation
 - [x] Malloc
-- [ ] Realloc
-- [ ] Free
+- [x] Free
 
 # Matrix Allocators
-- [x] create_mxvector_1D
+- [x] create_mxvector
 - [x] create_mxarray_ND
 ## Helpers
 - [x] mxarray_core_set_type_attribute

@@ -14,10 +14,10 @@ chai.use(sinonChai);
 
 
 ///////////////////////////////////////////////////////////////
-const libjs = require(path.join(__dirname,"../../../")+"/bin/lib.js");
+const libjs = require(path.join(__dirname,"../../../")+"/bin/matmachjs-lib.js");
 
 
-const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/get_mem.wasm");
+const file = fs.readFileSync(path.join(__dirname,"../../../")+"/bin/matmachjs.wasm");
 const { MxVector } = require(path.join(__dirname,"../../../")+"bin/classes/mxarray/MxVector.js");
 const { MxNDArray } = require(path.join(__dirname,"../../../")+ "bin/classes/mxarray/MxNdArray.js");
 const { MatlabRuntime } = require(path.join(__dirname,"../../../")+ "bin/classes/Runtime.js");
@@ -27,7 +27,6 @@ let memory;
 let mr;
 describe('#mtimes', () => {
 	beforeEach(async () => {
-		libjs.js.mem = new WebAssembly.Memory({initial: 1});
 		wi = await WebAssembly.instantiate(file, libjs);
 		wi = wi.instance.exports;
 		memory = wi.mem;
@@ -87,7 +86,6 @@ describe('#mtimes', () => {
 		let arr2 = mr.lit([[2],[1]]);
 		let res = new MxNDArray(wi, wi.mtimes_MM( arr2._arr_ptr,arr._arr_ptr));
 		res = new MxNDArray(wi, wi.plus_MS( res._arr_ptr,5));
-		console.log(res.getContents());
 	});
 
 	it('should return correct result for matrix multiplication of two 2D arrays', () => {
