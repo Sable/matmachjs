@@ -17,6 +17,8 @@ export interface MatMachWasm {
 
 	get_mxarray_dimension_number(...args):number;
 
+	copy_mxarray_header(...args):number;
+
 	create_mxarray_ND(...args):number;
 
 	get_array_index_i8(...args):number;

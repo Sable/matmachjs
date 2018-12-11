@@ -17,12 +17,11 @@ var argv = require('yargs')
     .demandOption(['p','o'])
     .argv;
 const fs = require("fs");
-const decoderOpts = {};
 if(!argv.i) {
     argv.i = path.basename(argv.o);
     argv.i = argv.i.substring(0, argv.i.lastIndexOf("."));
 }
-const decodedWasm = decode(fs.readFileSync(argv.p), decoderOpts);
+const decodedWasm = decode(fs.readFileSync(argv.p), {});
 traverse(decodedWasm, {
     Module(ast) {
 
@@ -44,7 +43,7 @@ traverse(decodedWasm, {
             return acc+`\t${memDef.name}:WebAssembly.Memory;\n`;
         },"");
         // Globals
-
+        console.log(getGlobals(ast.node));
         // Tables
 
         // Generated Module
@@ -93,6 +92,26 @@ function getMemory(node){
                         return {...mem,name:type.name};
                     }
                 }));
+            return acc;
+        },[]).filter(val=> typeof val !== "undefined");
+}
+function getGlobals(node){
+    console.log(JSON.stringify(node.fields));
+    return node.fields.filter(
+        field => field.type === 'ModuleExport'
+            && field.descr.exportType === 'GlobalType')
+        .reduce((acc, type)=>{
+            acc.push(
+                ...node.fields
+                    .filter(field => field.type === 'GlobalType'
+                        || ( field.type === 'ModuleImport'&& field.descr.type === 'GlobalType' ))
+                    .map((mem)=>{
+                        if(mem.type === 'ModuleImport'){// Must be an import
+                            return {...mem.descr, name:type.name};
+                        }else{ // Must be memory
+                            return {...mem,name:type.name};
+                        }
+                    }));
             return acc;
         },[]).filter(val=> typeof val !== "undefined");
 }

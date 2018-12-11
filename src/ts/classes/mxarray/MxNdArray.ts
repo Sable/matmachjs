@@ -16,13 +16,13 @@ export class MxNDArray extends MxArray {
         }else if(mxarray instanceof MxNDArray) {
             this._arr_ptr = this._wi.clone(mxarray._arr_ptr);
         }else if(mxarray instanceof MxVector){
-            this._arr_ptr = this._wi.create_mxarray_ND(mxarray.arr_ptr,class_type,simple_type, complex,byte_size);
+            this._arr_ptr = this._wi.create_mxarray_ND(mxarray.arr_ptr,class_type,simple_type, 0,0);
         }else{
-            let input_ptr = this._wi.create_mxvector(mxarray.length,simple_type,class_type,complex,column,byte_size);
+            let input_ptr = this._wi.create_mxvector(mxarray.length,simple_type,class_type,0,0);
             mxarray.forEach((val, idx)=>{
                 this._wi.set_array_index_f64(input_ptr, idx+1, val);
             });
-            this._arr_ptr = this._wi.create_mxarray_ND(input_ptr, class_type,simple_type, (complex)?0:1,byte_size);
+            this._arr_ptr = this._wi.create_mxarray_ND(input_ptr, class_type,simple_type, 0,0);
         }
     }
     public reshape(new_dimensions: number[]) {

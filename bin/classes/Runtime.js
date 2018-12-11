@@ -4,8 +4,6 @@ const MxVector_1 = require("./mxarray/MxVector");
 exports.MxVector = MxVector_1.MxVector;
 const MxNdArray_1 = require("./mxarray/MxNdArray");
 exports.MxNDArray = MxNdArray_1.MxNDArray;
-const error_1 = require("./error");
-const value_type_1 = require("./value-type");
 class MatlabRuntime {
     constructor(wis) {
         this.started = false;
@@ -25,9 +23,7 @@ class MatlabRuntime {
             return new MxNdArray_1.MxNDArray(this.wasm_exports, this.wasm_exports.transpose_M(arr.arr_ptr));
         }
     }
-    lit(arr, mclass = value_type_1.ValueType.float64) {
-        if (mclass !== value_type_1.ValueType.float64)
-            throw new error_1.ValueTypeError(mclass, value_type_1.ValueType.float64);
+    lit(arr) {
         if (typeof arr === 'undefined' || arr === null)
             this.wasm_exports.create_mxarray_empty(0, 0, 0, 0);
         if (arr.length == 0) {
@@ -60,9 +56,7 @@ class MatlabRuntime {
             return resArr;
         }
     }
-    ones(shape, mclass = value_type_1.ValueType.float64) {
-        if (mclass !== value_type_1.ValueType.float64)
-            throw new error_1.ValueTypeError(mclass, value_type_1.ValueType.float64);
+    ones(shape) {
         if (shape == undefined)
             return new MxNdArray_1.MxNDArray(this.wasm_exports, this.wasm_exports.ones((new MxVector_1.MxVector(this.wasm_exports, 1).arr_ptr)));
         if (typeof shape === "number") {

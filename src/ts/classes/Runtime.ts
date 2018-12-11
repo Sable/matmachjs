@@ -4,7 +4,6 @@ import {MxNDArray} from "./mxarray/MxNdArray";
 import {MxObject} from "./mxarray/MxObject";
 import { MatWablyBuiltin } from "../interfaces/MatlabWasmBuiltins";
 import { ValueTypeError } from './error';
-import { ValueType } from "./value-type";
 
 export {
     MxNDArray,
@@ -32,9 +31,8 @@ class MatlabRuntime {
             return new MxNDArray(this.wasm_exports, this.wasm_exports.transpose_M(arr.arr_ptr));
         }
     }
-    public lit(arr: Array<number> | Array<Array<number>>, mclass=ValueType.float64):MxArray{
-        if(mclass !== ValueType.float64) 
-            throw new ValueTypeError(mclass, ValueType.float64);
+    public lit(arr: Array<number> | Array<Array<number>>):MxArray{
+
         if(typeof arr === 'undefined'||arr === null) this.wasm_exports.create_mxarray_empty(0,0,0,0);
         if(arr.length == 0) {
             // create an empty array
@@ -64,10 +62,8 @@ class MatlabRuntime {
             return resArr;
         }
     }
-    public ones(shape?: number[], mclass=ValueType.float64): MxArray{
-        if(mclass !== ValueType.float64) 
-            throw new ValueTypeError(mclass, ValueType.float64); 
-        if(shape == undefined) 
+    public ones(shape?: number[]): MxArray{
+        if(shape == undefined)
             return new MxNDArray(this.wasm_exports, 
                     this.wasm_exports.ones((new MxVector(this.wasm_exports, 1).arr_ptr))); 
         if(typeof shape === "number"){

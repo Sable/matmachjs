@@ -15,7 +15,6 @@
     (import "env" "getTotalMemory" (func $getTotalMemory (type $2)))
     (import "env" "abortOnCannotGrowMemory" (func $abortOnCannotGrowMemory (type $2)))
     (import "env" "abortStackOverflow" (func $abortStackOverflow (type $3)))
-    
     (import "js" "printError" (func $printError (param i32 i32)(result i32)))
     (import "js" "print_array_f64" (func $print_array_f64 (param i32 i32)))
     (import "js" "printString" (func $printString (param i32 i32)(result i32)))
@@ -56,12 +55,14 @@
     (export "log2_S" (func $log2_S))
     (export "pi" (func $pi))
     (export "e" (func $e))
-    
+    (export "aaas" (global $2))
+
         
     ;; Mutable globals
     (global $DYNAMICTOP_PTR (mut i32) (get_global $2))
     (global $STACKTOP (mut i32) (get_global $5))
     (global $STACK_MAX (mut i32) (get_global $6))
+
 
     (global $TIC_TIME (mut f64) (f64.const 0))
     (table $tab 256 anyfunc)
@@ -4760,9 +4761,23 @@
             end
         end
     )
+    (export "copy_mxarray_header" (func $copy_mxarray_header))
+    (func $copy_mxarray_header (param $mxarray i32)(result i32)
+        (local $i i32)(local $return_mxarray i32)
+        i32.const 28
+        call $malloc
+        tee_local $return_mxarray
+        loop
+            (i32.store (i32.add (get_local $return_mxarray)(get_local $i))
+                (i32.load (i32.add (get_local $mxarray)(get_local $i))))
+            (set_local $i (i32.add (get_local $i)(i32.const 4)))
+            (br_if 0  (i32.lt_s (get_local $i)(i32.const 28)))
+        end    
+    )
+
     (export "create_mxarray_ND" (func $create_mxarray_ND))
     (func $create_mxarray_ND  (param $dim_array i32)(param $class i32) (param $simple_class i32)
-    (param $order i32)
+    (param $order i32)(param $empty_data_ptr i32)
     (result i32)
         (;
             Order: 0 = Column-major, 1=Row-major
@@ -4918,8 +4933,10 @@
         get_local $array_header_ptr
         get_local $array_length_i32
         i32.store offset=4 align=4
+        get_local $empty_data_ptr
         get_local $array_length_i32
         i32.eqz
+        i32.or
         if
             get_local $array_header_ptr
             i32.const -1
@@ -4944,7 +4961,7 @@
         get_local $array_header_ptr
         get_local $dim_number
         i32.store offset=12 align=4
-        
+
         ;; Set other attributes
         get_local $array_header_ptr
         get_local $order
@@ -6527,6 +6544,7 @@
         i32.const 0
         i32.const 0
         i32.const 0
+        i32.const 0
         call $create_mxarray_ND
         tee_local $new_arr_ptr
         loop
@@ -6617,7 +6635,7 @@
 	   call $verify_and_get_dimensions
        set_local $dim_ptr
        ;; Create 
-       (call $create_mxarray_ND (get_local $dim_ptr)(i32.const 0)(call $mxarray_core_get_simple_class (get_local $array_ptr))(i32.const 0))
+       (call $create_mxarray_ND (get_local $dim_ptr)(i32.const 0)(call $mxarray_core_get_simple_class (get_local $array_ptr))(i32.const 0)(i32.const 0))
 
         ;; Calling get colon
         tee_local $res_ptr
@@ -7224,6 +7242,7 @@
             (i32.const 0)
             (i32.const 0)
             (i32.const 0)
+            (i32.const 0)
         ) 
         return 
     )
@@ -7440,7 +7459,7 @@
         (set_local $m (i32.trunc_s/f64 (call $get_array_index_f64 (get_local $dim_ptr)(i32.const 2))))
         (call $set_array_index_f64 (get_local $dim_ptr)(i32.const 1)(f64.convert_s/i32 (get_local $m)))
         (call $set_array_index_f64 (get_local $dim_ptr)(i32.const 2)(f64.convert_s/i32 (get_local $n)))
-        (tee_local $out_ptr (call $create_mxarray_ND (get_local $dim_ptr)(i32.const 0)(i32.const 0)(i32.const 0)))  
+        (tee_local $out_ptr (call $create_mxarray_ND (get_local $dim_ptr)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)))  
 
         loop
             block
@@ -7468,7 +7487,7 @@
     (func $rand (param $size_ptr i32)(result i32)
         (local $arr_data_ptr i32)(local $arr_ptr i32)(local $len i32)(local $i i32)
         (set_local $arr_ptr 
-            (call $create_mxarray_ND (get_local $size_ptr)(i32.const 0)(i32.const 0)(i32.const 0)))
+            (call $create_mxarray_ND (get_local $size_ptr)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)))
         (set_local $len (i32.load offset=4 align=4 (get_local $arr_ptr)))
         (set_local $arr_data_ptr (i32.load offset=8 align=4 (get_local $arr_ptr)))
         (i32.lt_s (get_local $i)(get_local $len))
@@ -7491,7 +7510,7 @@
     (func $ones (param $size_ptr i32)(result i32)
         (local $arr_data_ptr i32)(local $arr_ptr i32)(local $len i32)(local $i i32)
         (set_local $arr_ptr 
-            (call $create_mxarray_ND (get_local $size_ptr)(i32.const 0)(i32.const 0)(i32.const 0)))
+            (call $create_mxarray_ND (get_local $size_ptr)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)))
         (set_local $len (i32.load offset=4 align=4 (get_local $arr_ptr)))
         (set_local $arr_data_ptr (i32.load offset=8 align=4 (get_local $arr_ptr)))
         (i32.lt_s (get_local $i)(get_local $len))
@@ -7514,7 +7533,7 @@
     (func $randn (param $size_ptr i32)(result i32)
         (local $arr_data_ptr i32)(local $arr_ptr i32)(local $len i32)(local $i i32)
         (set_local $arr_ptr 
-            (call $create_mxarray_ND (get_local $size_ptr)(i32.const 0)(i32.const 0)(i32.const 0)))
+            (call $create_mxarray_ND (get_local $size_ptr)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)))
         (set_local $len (i32.load offset=4 align=4 (get_local $arr_ptr)))
         (set_local $arr_data_ptr (i32.load offset=8 align=4 (get_local $arr_ptr)))
         (i32.lt_s (get_local $i)(get_local $len))
@@ -7537,7 +7556,7 @@
     (func $zeros (param $size_ptr i32)(result i32)
         (local $arr_data_ptr i32)(local $arr_ptr i32)(local $len i32)(local $i i32)
         (set_local $arr_ptr 
-            (call $create_mxarray_ND (get_local $size_ptr)(i32.const 0)(i32.const 0)(i32.const 0)))
+            (call $create_mxarray_ND (get_local $size_ptr)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)))
         (set_local $len (i32.load offset=4 align=4 (get_local $arr_ptr)))
         (set_local $arr_data_ptr (i32.load offset=8 align=4 (get_local $arr_ptr)))
         (i32.lt_s (get_local $i)(get_local $len))
@@ -7561,7 +7580,7 @@
     (func $fill (param $size_ptr i32)(param $val f64)(result i32)
         (local $arr_data_ptr i32)(local $arr_ptr i32)(local $len i32)(local $i i32)
         (set_local $arr_ptr 
-            (call $create_mxarray_ND (get_local $size_ptr)(i32.const 0)(i32.const 0)(i32.const 0)))
+            (call $create_mxarray_ND (get_local $size_ptr)(i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0)))
         (set_local $len (i32.load offset=4 align=4 (get_local $arr_ptr)))
         (set_local $arr_data_ptr (i32.load offset=8 align=4 (get_local $arr_ptr)))
         (i32.lt_s (get_local $i)(get_local $len))
@@ -7638,6 +7657,7 @@
         i32.const 0
         i32.const 0
         i32.const 0
+        (i32.const 0)
         call $create_mxarray_ND
         tee_local $arr_ptr
         (set_local $len (i32.load offset=4 align=4 (get_local $arr_ptr)))
@@ -7703,6 +7723,7 @@
         i32.const 0
         i32.const 0
         i32.const 0
+        (i32.const 0)
         call $create_mxarray_ND
         get_local $initial_value
         i32.const 35
@@ -7715,6 +7736,7 @@
         i32.const 0
         i32.const 0
         i32.const 0
+        (i32.const 0)
         call $create_mxarray_ND
         get_local $max
         i32.const 4
@@ -8403,7 +8425,7 @@
             br 1
             end
         end
-        (call $create_mxarray_ND (get_local $new_shape_ptr) (i32.const 0)(i32.const 0)(i32.const 0))
+        (call $create_mxarray_ND (get_local $new_shape_ptr) (i32.const 0)(i32.const 0)(i32.const 0)(i32.const 0))
     )
     (func $traverse_pairwise 
         (param $total_ptr i32)(param $total_shape_ptr i32)(param $total_stride_ptr i32)(param $total_dim_num i32)
@@ -9249,6 +9271,6 @@
 
         (call $elementwise_mapping (get_local $arr_ptr)(i32.const 35))
     )    
-    
+
 )
 
