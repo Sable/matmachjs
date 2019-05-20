@@ -19,6 +19,18 @@ export interface MatMachWasm {
 
 	copy_mxarray_header(...args):number;
 
+	copy_mxarray_structure(...args):number;
+
+	create_mxarray_2D(...args):number;
+
+	isequaln(...args):number;
+
+	isequaln_two(...args):number;
+
+	isequal(...args):number;
+
+	isequal_two(...args):number;
+
 	create_mxarray_ND(...args):number;
 
 	get_array_index_i8(...args):number;
@@ -35,12 +47,6 @@ export interface MatMachWasm {
 
 	create_mxvector(...args):number;
 
-	get_mem_free_bit(...args):number;
-
-	get_mem_payload_size(...args):number;
-
-	load_mem(...args):number;
-
 	set_array_index_i32_no_check(...args):number;
 
 	get_array_index_i32_no_check(...args):number;
@@ -52,10 +58,6 @@ export interface MatMachWasm {
 	get_array_index_f64(...args):number;
 
 	set_array_index_f64(...args):number;
-
-	get_free_bit_from_array(...args):number;
-
-	get_mem_free_bit_footer(...args):number;
 
 	mxarray_core_set_type_attribute(...args):number;
 
@@ -77,6 +79,8 @@ export interface MatMachWasm {
 
 	numel(...args):number;
 
+	size_S(...args):number;
+
 	size_M(...args):number;
 
 	size(...args):number;
@@ -87,9 +91,9 @@ export interface MatMachWasm {
 
 	isscalar(...args):number;
 
-	length_S(...args):number;
+	ones_S():number;
 
-	length_M(...args):number;
+	length(...args):number;
 
 	ismatrix(...args):number;
 
@@ -119,15 +123,35 @@ export interface MatMachWasm {
 
 	set_f64(...args):number;
 
+	get_stride_f64_all_M(...args):number;
+
+	set_stride_f64_all_MS(...args):number;
+
+	set_stride_f64_all_MM(...args):number;
+
+	memcpy(...args):number;
+
 	reshape(...args):number;
 
 	verify_input_and_instantiate_result_concatation(...args):number;
+
+	cat_S(...args):number;
+
+	cat_M(...args):number;
+
+	cat_SM(...args):number;
+
+	cat_MM(...args):number;
 
 	concat(...args):number;
 
 	vertcat(...args):number;
 
 	horzcat(...args):number;
+
+	horzcat_corder(...args):number;
+
+	eye_2D(...args):number;
 
 	eye(...args):number;
 
@@ -137,23 +161,35 @@ export interface MatMachWasm {
 
 	rand(...args):number;
 
+	rand_2D(...args):number;
+
+	randn_2D(...args):number;
+
+	end(...args):number;
+
+	zeros_2D(...args):number;
+
+	ones_2D(...args):number;
+
 	ones(...args):number;
 
-	randn(...args):number;
+	ones_experimental(...args):number;
+
+	ones_experimental2(...args):number;
 
 	zeros(...args):number;
 
 	fill(...args):number;
 
-	randn2(...args):number;
+	randn(...args):number;
 
 	size_MS(...args):number;
 
 	create_mxarray_with_initial_value(...args):number;
 
-	randi(...args):number;
+	randi_2D(...args):number;
 
-	get_array_stride(...args):number;
+	randi(...args):number;
 
 	mod_SS(...args):number;
 
@@ -211,9 +247,7 @@ export interface MatMachWasm {
 
 	plus_SS(...args):number;
 
-	plus_MM(...args):number;
-
-	plus_SM(...args):number;
+	plus2_SM(...args):number;
 
 	plus_MS(...args):number;
 
@@ -227,9 +261,11 @@ export interface MatMachWasm {
 
 	times_MS(...args):number;
 
+	plus_SM(...args):number;
+
 	times_SM(...args):number;
 
-	times_MM(...args):number;
+	times2_SM(...args):number;
 
 	rem_SM(...args):number;
 
@@ -255,11 +291,13 @@ export interface MatMachWasm {
 
 	ldivide_MM(...args):number;
 
-	power_SM(...args):number;
-
 	power_MS(...args):number;
 
+	power_SM(...args):number;
+
 	power_MM(...args):number;
+
+	get_array_stride(...args):number;
 
 	le_SM(...args):number;
 
@@ -309,11 +347,35 @@ export interface MatMachWasm {
 
 	ne_MM(...args):number;
 
+	times_MM(...args):number;
+
+	plus_MM_broadcasting(...args):number;
+
+	power_MM_broadcasting(...args):number;
+
+	times_MM_broadcasting(...args):number;
+
+	plus_MM(...args):number;
+
 	verify_pairwise(...args):number;
 
 	sum_S(...args):number;
 
+	prod_M(...args):number;
+
 	sum_M(...args):number;
+
+	sum_all_M(...args):number;
+
+	prod_all_M(...args):number;
+
+	mean_all_M(...args):number;
+
+	prod_MM(...args):number;
+
+	sum_MM(...args):number;
+
+	prod_MS(...args):number;
 
 	sum_MS(...args):number;
 
@@ -330,6 +392,8 @@ export interface MatMachWasm {
 	any(...args):number;
 
 	all_nonzero_reduction(...args):number;
+
+	any_nonzero_reduction(...args):number;
 
 	all(...args):number;
 
@@ -378,6 +442,8 @@ export interface MatMachWasm {
 	fix_M(...args):number;
 
 	sin_M(...args):number;
+
+	sin_M_noallocation(...args):number;
 
 	cos_M(...args):number;
 

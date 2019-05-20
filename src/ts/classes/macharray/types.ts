@@ -15,14 +15,17 @@ export enum MatClass {
     Colon        
 }
 export enum MClass {
-    float64, 
-    float32,
-    uint8,
-    int8,
-    uint16,
-    int16,
-    uint32,
-    int32,
-    uint64,
-    int64
+    float64=0,
+    float32=1,
+    int16=2,
+    int8=3,
+    int64=4,
+    int32=5,
+    uint16=6,
+    uint8=7,
+    uint64=8,
+    uint32=9,
+    char=11,
+    logical=15
 }
+

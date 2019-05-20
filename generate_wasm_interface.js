@@ -3,9 +3,9 @@
 const {signatures, traverse} = require("@webassemblyjs/ast");
 const path = require("path");
 const { decode } = require("@webassemblyjs/wasm-parser");
-var argv = require('yargs')
-    .usage('Usage: $0 -o [output file] -p [path to wasm file]')
-    .alias("p","path")
+const argv = require('yargs')
+    .usage('Usage: $0 -o [output file] -m [path to wasm file]')
+    .alias("m","module")
     .alias("o","output_file")
     .alias("i","interface-name")
     .describe("i","Name for the generated TS interface")
@@ -14,14 +14,14 @@ var argv = require('yargs')
     .default("r",false)
     .alias("r","rest-parameters")
     .describe("rest", "Boolean flag to replace all arguments to functions by the rest argument (...args)")
-    .demandOption(['p','o'])
+    .demandOption(['m','o'])
     .argv;
 const fs = require("fs");
 if(!argv.i) {
     argv.i = path.basename(argv.o);
     argv.i = argv.i.substring(0, argv.i.lastIndexOf("."));
 }
-const decodedWasm = decode(fs.readFileSync(argv.p), {});
+const decodedWasm = decode(fs.readFileSync(argv.m), {});
 traverse(decodedWasm, {
     Module(ast) {
 
@@ -43,7 +43,6 @@ traverse(decodedWasm, {
             return acc+`\t${memDef.name}:WebAssembly.Memory;\n`;
         },"");
         // Globals
-        console.log(getGlobals(ast.node));
         // Tables
 
         // Generated Module
@@ -96,7 +95,6 @@ function getMemory(node){
         },[]).filter(val=> typeof val !== "undefined");
 }
 function getGlobals(node){
-    console.log(JSON.stringify(node.fields));
     return node.fields.filter(
         field => field.type === 'ModuleExport'
             && field.descr.exportType === 'GlobalType')

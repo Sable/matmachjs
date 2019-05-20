@@ -30,13 +30,12 @@ describe('Allocate Matlab Arrays', () => {
         });
         it("should create an empty array correctly", ()=>{
             let arr = wi.create_mxvector(0);
-	        let arr_size = wi.numel(arr);
 	        expect(wi.numel(arr)).to.equal(0);
 	        expect(wi.mxarray_core_get_mclass(arr)).to.equal(0);
 	        expect(wi.mxarray_core_get_simple_class(arr)).to.equal(0);
 	        expect(wi.ndims(arr)).to.equal(2);
 	        expect(wi.isscalar(arr)).to.equal(0);
-	        let size_arr = wi.size(arr);
+            let size_arr = wi.size(arr);
 	        expect(wi.get_array_index_f64(size_arr, 1)).to.equal(1);
 	        expect(wi.get_array_index_f64(size_arr, 2)).to.equal(0);
         });
@@ -288,20 +287,9 @@ describe('Allocate Matlab Arrays', () => {
 			let strides = new Float64Array(memory.buffer, arr_header_nd[5], 4);
 			expect(Array.from(strides)).to.deep.equal([1,30,60,240]);
 			expect(attr[0]).to.equal(0);
+			
 		});
-	    it('should return correct strides [1,2] for R order [30,2,4,6] array ',()=>{
-		    let arr_1d = wi.create_mxvector(4);
-		    wi.set_array_index_f64(arr_1d, 1,30);
-		    wi.set_array_index_f64(arr_1d, 2,2);
-		    wi.set_array_index_f64(arr_1d, 3,4);
-		    wi.set_array_index_f64(arr_1d, 4,6);
-		    let arr_nd = wi.create_mxarray_ND(arr_1d,0,0,1);
-		    let arr_header_nd = new Int32Array(memory.buffer, arr_nd, 7);
-		    let attr = new Int8Array(memory.buffer, arr_nd + 24, 1);
-		    let strides = new Float64Array(memory.buffer, arr_header_nd[5], 4);
-		    expect(Array.from(strides)).to.deep.equal([2,1,60,240]);
-		    expect(attr[0]).to.equal(1);
-	    });
+
     });
 
 });

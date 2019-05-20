@@ -1,19 +1,19 @@
-const { TextDecoder } = require('util');
-// Object to fit to WebAssembly Runtime
-let Module = {};
+import { TextDecoder } from 'util';
 
+// Object to fit to WebAssembly Runtime
+export let MatMachNativeLib:any = {};
 if(typeof console === "undefined" ) {
-    console = {};
-    console.log = print;
-    console.warn = print;
+  console = <any>{};
+  console.log = print;
+  console.warn = print;
 }else if(typeof console.log === "undefined"){
-    console.log = print;
+  console.log = print;
 }else if(typeof console.warn === "undefined"){
-	console.warn = print;
+console.warn = print;
 }
 // Polyfill
 if(typeof performance === "undefined" ) {
-    performance = {};
+   performance = <any>{};
     performance.now = Date.now;
 }
 if(typeof performance.now === "undefined"){
@@ -26,7 +26,8 @@ const WASM_PAGE_SIZE = 65536;
 const MIN_TOTAL_MEMORY = 16777216;
 let TOTAL_STACK = 5242880; 
 let TOTAL_MEMORY = 1073676288; // 
-
+let ABORT;
+let EXITSTATUS;
 let HEAP,
 /** @type {ArrayBuffer} */
   buffer,
@@ -59,19 +60,19 @@ staticSealed = false;
 
 // Set the reallocBuffer function used by `growMemory` which is called my _sbrk
 
-Module['reallocBuffer'] = wasmReallocBuffer;
+MatMachNativeLib['reallocBuffer'] = wasmReallocBuffer;
 if (TOTAL_MEMORY < TOTAL_STACK) 
-    console.warn('TOTAL_MEMORY should be larger than TOTAL_STACK, was '
+    console.warn('TOTAL_MEMORY should be larger than TOTAL_STACK, was ' 
         + TOTAL_MEMORY + '! (TOTAL_STACK=' + TOTAL_STACK + ')');
 
 // Initializing buffer
 // Use a provided buffer, if there is one, or else allocate a new one
   // Use a WebAssembly memory where available
-assert(TOTAL_MEMORY % WASM_PAGE_SIZE === 0);
-Module['wasmMemory'] = new WebAssembly.Memory({ 'initial': TOTAL_MEMORY / WASM_PAGE_SIZE});
-buffer = Module['wasmMemory'].buffer;
-assert(buffer.byteLength === TOTAL_MEMORY);
-Module['buffer'] = buffer;
+assert(TOTAL_MEMORY % WASM_PAGE_SIZE === 0,"");
+MatMachNativeLib['wasmMemory'] = new WebAssembly.Memory({ 'initial': TOTAL_MEMORY / WASM_PAGE_SIZE});
+buffer = MatMachNativeLib['wasmMemory'].buffer;
+assert(buffer.byteLength === TOTAL_MEMORY,"");
+MatMachNativeLib['buffer'] = buffer;
 updateGlobalBufferViews();
 
 /**
@@ -94,11 +95,11 @@ STATICTOP = STATIC_BASE + STATICBUMP; // STATIC END
 
 staticAlloc(1224); // This manually adds the static offset occupied by my WebAssembly module string errors.
                     // Check the data segments in my `matmachjs.wat` module. 
-DYNAMICTOP_PTR = staticAlloc(4); // Allocate address to store DYNAMIC_PTR 
 
-STACK_BASE = STACKTOP = alignMemory(STATICTOP);
+DYNAMICTOP_PTR = staticAlloc(4); // Allocate address to store DYNAMIC_PTR 
+STACK_BASE = STACKTOP = alignMemory(STATICTOP,null);
 STACK_MAX = STACK_BASE + TOTAL_STACK;
-DYNAMIC_BASE = alignMemory(STACK_MAX);
+DYNAMIC_BASE = alignMemory(STACK_MAX,null);
 
 staticSealed = true; // seal the static portion of memory
 
@@ -122,7 +123,7 @@ function alignMemory(size, factor) {
  * @param {number} size 
  */
 function staticAlloc(size) {
-  assert(!staticSealed);
+  assert(!staticSealed,"");
   var ret = STATICTOP;
   STATICTOP = (STATICTOP + size + 15) & -16;
   return ret;
@@ -134,7 +135,7 @@ function staticAlloc(size) {
  * @param {size} allocSize 
  */
 function abortStackOverflow(allocSize) {
-  abort('Stack overflow! Attempted to allocate ' + allocSize + ' bytes on the stack, but stack has only ' + (STACK_MAX - stackSave() + allocSize) + ' bytes available!');
+  abort('Stack overflow! Attempted to allocate ' + allocSize + ' bytes on the stack, but stack has only ' + (STACK_MAX + allocSize) + ' bytes available!');
 }
 /**
  * Abort function from Emscripten
@@ -144,8 +145,7 @@ function abortStackOverflow(allocSize) {
  */
 function abort(what) {
   if (what !== undefined) {
-    console.log(what);
-    console.warn(what); // Replace
+    console.warn(what); // Replace 
     what = JSON.stringify(what)
   } else {
     what = '';
@@ -175,7 +175,7 @@ function abortOnCannotGrowMemory() {
 
 // __errno_location imported from the wasm module. I used `ERROR_LOCATION_WASM` since it is already
 // to this value in my wasm module 
-Module["___errno_location"] = ERROR_LOCATION_WASM;
+MatMachNativeLib["___errno_location"] = ERROR_LOCATION_WASM;
 
 /**
  * Sets the error, this is call in 
@@ -183,7 +183,7 @@ Module["___errno_location"] = ERROR_LOCATION_WASM;
  * @param {number} value 
  */
 function ___setErrNo(value) {
-    if (Module['___errno_location']) HEAP32[((Module['___errno_location']())>>2)]=value;
+    if (MatMachNativeLib['___errno_location']) HEAP32[((MatMachNativeLib['___errno_location']())>>2)]=value;
     else console.warn('failed to set errno from JS');
     return value;
 } 
@@ -193,7 +193,7 @@ function ___setErrNo(value) {
  * @param {Array<byte>} buf 
  */
 function updateGlobalBuffer(buf) {
-    Module['buffer'] = buffer = buf;
+    MatMachNativeLib['buffer'] = buffer = buf;
 }
 
 /**
@@ -206,14 +206,14 @@ function getTotalMemory() {
  * Updating global buffer views 
  */  
 function updateGlobalBufferViews() {
-    Module['HEAP8'] = HEAP8 = new Int8Array(buffer);
-    Module['HEAP16'] = HEAP16 = new Int16Array(buffer);
-    Module['HEAP32'] = HEAP32 = new Int32Array(buffer);
-    Module['HEAPU8'] = HEAPU8 = new Uint8Array(buffer);
-    Module['HEAPU16'] = HEAPU16 = new Uint16Array(buffer);
-    Module['HEAPU32'] = HEAPU32 = new Uint32Array(buffer);
-    Module['HEAPF32'] = HEAPF32 = new Float32Array(buffer);
-    Module['HEAPF64'] = HEAPF64 = new Float64Array(buffer);
+    MatMachNativeLib['HEAP8'] = HEAP8 = new Int8Array(buffer);
+    MatMachNativeLib['HEAP16'] = HEAP16 = new Int16Array(buffer);
+    MatMachNativeLib['HEAP32'] = HEAP32 = new Int32Array(buffer);
+    MatMachNativeLib['HEAPU8'] = HEAPU8 = new Uint8Array(buffer);
+    MatMachNativeLib['HEAPU16'] = HEAPU16 = new Uint16Array(buffer);
+    MatMachNativeLib['HEAPU32'] = HEAPU32 = new Uint32Array(buffer);
+    MatMachNativeLib['HEAPF32'] = HEAPF32 = new Float32Array(buffer);
+    MatMachNativeLib['HEAPF64'] = HEAPF64 = new Float64Array(buffer);
 }
 /**
  * Size to use vuffer and reallocate
@@ -222,18 +222,18 @@ function updateGlobalBufferViews() {
 function wasmReallocBuffer(size) {
     // Align the size to be a WASM_PAGE_SIZE
     size = alignUp(size, WASM_PAGE_SIZE); // round up to wasm page size
-    var old = Module['buffer'];
+    var old = MatMachNativeLib['buffer'];
     var oldSize = old.byteLength;
     try {
-        var result = Module['wasmMemory'].grow((size - oldSize) / WASM_PAGE_SIZE); // .grow() takes a delta compared to the previous size
+        var result = MatMachNativeLib['wasmMemory'].grow((size - oldSize) / WASM_PAGE_SIZE); // .grow() takes a delta compared to the previous size
         if (result !== (-1 | 0)) {
             // success in native wasm memory growth, get the buffer from the memory
-            return Module['buffer'] = Module['wasmMemory'].buffer;
+            return MatMachNativeLib['buffer'] = MatMachNativeLib['wasmMemory'].buffer;
         } else {
             return null;
         }
     } catch(e) {
-        console.error('Module.reallocBuffer: Attempted to grow from ' + oldSize  + ' bytes to ' + size + ' bytes, but got error: ' + e);
+        console.error('MatMachNativeLib.reallocBuffer: Attempted to grow from ' + oldSize  + ' bytes to ' + size + ' bytes, but got error: ' + e);
         return null;
     }
 }
@@ -253,7 +253,7 @@ function alignUp(x, multiple) {
  */
 function enlargeMemory() {
     // TOTAL_MEMORY is the current size of the actual array, and DYNAMICTOP is the new top.
-    assert(HEAP32[DYNAMICTOP_PTR>>2] > TOTAL_MEMORY); // This function should only ever be called after the ceiling of the dynamic heap has already been bumped to exceed the current total size of the asm.js heap.
+    assert(HEAP32[DYNAMICTOP_PTR>>2] > TOTAL_MEMORY,""); // This function should only ever be called after the ceiling of the dynamic heap has already been bumped to exceed the current total size of the asm.js heap.
 
 
     const PAGE_MULTIPLE =  WASM_PAGE_SIZE; // In wasm, heap size must be a multiple of 64KB. In asm.js, they need to be multiples of 16MB.
@@ -277,7 +277,7 @@ function enlargeMemory() {
 
     const start = Date.now();
 
-    let replacement = Module['reallocBuffer'](TOTAL_MEMORY);
+    let replacement = MatMachNativeLib['reallocBuffer'](TOTAL_MEMORY);
     if (!replacement || replacement.byteLength != TOTAL_MEMORY) {
     console.warn('Failed to grow the heap from ' + OLD_TOTAL_MEMORY + ' bytes to ' + TOTAL_MEMORY + ' bytes, not enough memory!');
     if (replacement) {
@@ -292,7 +292,7 @@ function enlargeMemory() {
     updateGlobalBuffer(replacement);
     updateGlobalBufferViews();
 
-    console.warn('enlarged memory arrays from ' + OLD_TOTAL_MEMORY + ' to ' + TOTAL_MEMORY + ', took ' + (Date.now() - start) + ' ms (has ArrayBuffer.transfer? ' + (!!ArrayBuffer.transfer) + ')');
+    console.warn('enlarged memory arrays from ' + OLD_TOTAL_MEMORY + ' to ' + TOTAL_MEMORY + ', took ' + (Date.now() - start) + ' ms (has ArrayBuffer.transfer? ');
     return true;
 }
 
@@ -303,7 +303,7 @@ function enlargeMemory() {
  * @param {number} length 
  */
 function printArrayDouble(arr_ptr, length) {
-    let arr = new Float64Array(Module.wasmMemory.buffer, arr_ptr, length);
+    let arr = new Float64Array(MatMachNativeLib.wasmMemory.buffer, arr_ptr, length);
     console.log(arr);
 }
 /**
@@ -312,13 +312,13 @@ function printArrayDouble(arr_ptr, length) {
  * @param {number} length 
  */
 function printError(offset, length) {
-    var bytes = new Uint8Array(Module.wasmMemory.buffer, offset, length);
+    var bytes = new Uint8Array(MatMachNativeLib.wasmMemory.buffer, offset, length);
     var string = new TextDecoder('utf8').decode(bytes);
     throw new Error(string);
 }
 // Prints a string in memory.
 function printString(offset, length) {
-    var bytes = new Uint8Array(Module.wasmMemory.buffer, offset, length);
+    var bytes = new Uint8Array(MatMachNativeLib.wasmMemory.buffer, offset, length);
     var string = new TextDecoder('utf8').decode(bytes);
     console.log(string);
 }
@@ -353,7 +353,7 @@ function printTime(time){
  * DEFINITION OF MODULE IMPORTS
  */
 // Helper functions for wasm code
-Module.js = {
+MatMachNativeLib.js = {
     "printTime":printTime,
     "printError":printError,
     "printString":printString,
@@ -361,14 +361,14 @@ Module.js = {
     "printDoubleNumber":printDouble,
     "assert_header":1,
     "print_array_f64":printArrayDouble,
-    "time": ()=> performance.now()
+    "time": ()=>performance.now()
 };
 // Debugging calls.
-Module.debug = {
+MatMachNativeLib.debug = {
     printMarker:()=>console.log("MARKER")
 };
 // Helper math functions
-Module.math = {
+MatMachNativeLib.math = {
         ones:() => 1,
         rand:() => Math.random(),
         randn:() => randn(),
@@ -390,19 +390,17 @@ Module.math = {
         e:()=>Math.E
 };
 // Used by memory management in the wasm module
-Module.env = { 
+MatMachNativeLib.env = { 
         "DYNAMICTOP_PTR": DYNAMICTOP_PTR,
         "STACKTOP": STACKTOP,
         "STACK_MAX": STACK_MAX,
         "memoryBase": STATIC_BASE, // Not necessary for malloc, but may be useful
         "abort": abort, 
         "assert": assert,
-        "memory":Module["wasmMemory"],
+        "memory":MatMachNativeLib["wasmMemory"],
         "enlargeMemory": enlargeMemory,
         "getTotalMemory": getTotalMemory,
         "abortOnCannotGrowMemory": abortOnCannotGrowMemory,
         "abortStackOverflow": abortStackOverflow,
         "___setErrNo": ___setErrNo
 };
-
-module.exports = Module;

@@ -5,7 +5,7 @@
   "main": "./bin/classes/macharray/MachRuntime.js",
   "types": "lib/index",
   "scripts": {
-    "test": "./node_modules/mocha/bin/_mocha --ui bdd ./test/node/**/*.test.js ./test/node/**/**/*.test.js",
+    "test": "./node_modules/mocha/bin/_mocha --ui bdd ./test/node/**/*.test.js ./test/node/**/**/*.test.js --timeout 5000",
     "build-ts": "tsc",
     "watch-ts": "tsc -w"
   },
@@ -26,7 +26,8 @@
     "gulp-shell": "^0.6.5",
     "gulp-typescript": "^5.0.0-alpha.1",
     "mocha": "^5.2.0",
-    "shelljs": "^0.8.1",
+    "nyc": "^13.3.0",
+    "shelljs": "^0.8.3",
     "sinon": "^4.5.0",
     "sinon-chai": "^3.0.0",
     "ts-node": "^7.0.1",

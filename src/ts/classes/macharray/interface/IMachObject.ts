@@ -1,3 +1,4 @@
+import { MachArray } from "../MachArray";
 
 
 
@@ -7,8 +8,8 @@ export interface IMachObject {
     get_index(...args:number[]): number;// Set Index
     set_index(args:number[], value:number): number;// Get Index
     index(...args:number[]):number; // Returns index into the linear array.  
-    slice_get(args:number[][]): IMachObject; // Creates view of array
-    slice_set(args:number[][],values:number[]): void; // Creates view of array
+    get(...args:number[][]): IMachObject; // Creates view of array
+    set(args:number[][],values:number[]): void; // Creates view of array
 
     // Query information
     numel(): number;

@@ -91,7 +91,7 @@ sz=[1,2,4], classname
 
 ```
 
-# Numerica Binary operations (Matrix-vs-Matrix, Matrix-vs-Scalar)
+# Numerica Binary operations (Matrix-vs-Matrix, Matrix-vs-Scalar) Elemet-wise
 - [x] add
 - [x] sub
 - [x] ldivide
@@ -99,9 +99,7 @@ sz=[1,2,4], classname
 - [x] times
 - [x] rem
 - [x] mod
-- [x] ldivide
-- [x] rdivide (right divide, elem-by-elem)
-- [x] power (Base A is a square matrix and exponent B is a scalar)
+- [x] power
 # Logical Binary Operations
 - [x] lt
 - [x] le
@@ -109,7 +107,6 @@ sz=[1,2,4], classname
 - [x] ge
 - [x] eq
 - [x] ne
-- [x] eq
 # Unary operations (M)->(M)
 - [x] floor(x)
 - [x] ceil(x)
@@ -134,7 +131,7 @@ sz=[1,2,4], classname
 - [ ] min
 ## Combination of operations
 <!-- - [ ] std (built using sum, and divide) -->
-- [ ] mean
+- [x] mean
 
 # Cum operations and reductions (M)->(M|S) reduce by one dimension to logical
 - [x] any (determine if any elements are non-zero)
@@ -146,7 +143,7 @@ sz=[1,2,4], classname
 - [ ] cumsum (movsum, and cumsum the same with but cumsum(X) = movsum(X,0))
 - [ ] cumprod
 # Matrix comparison to logical (M,M)=> {1,0}
-- [ ] isequal
+- [x] isequal
 # Other matrix operations  (Matrix-vs-Matrix, Matrix-vs-Scalar)
 - [x] mtimes
 - [ ] mrdivide (system of linear equations divide) x = B/A
@@ -162,9 +159,9 @@ sz=[1,2,4], classname
 - [x] PI
 # Utility
 - [ ] who
-- [ ] disp
-- [ ] tic
-- [ ] toc
+- [x] disp
+- [x] tic
+- [x] toc
 - [ ] assert
 # Implementation
 

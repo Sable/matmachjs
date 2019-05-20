@@ -12,7 +12,7 @@ const PORT = 8000;
 gulp.task('compile-wasm', () => {
   return gulp.src('./src/wast/*.wat', {read: false})
   .pipe(shell([
-    './run_wasm.sh <%= file.path %>'
+    'node compile_matmach_wasm.js <%= file.path %> -b'
   ]))
 });
 
@@ -23,6 +23,12 @@ gulp.task('compile-browser', () => {
     ]))
 });
 
+
+gulp.task("compile",["compile-wasm","compile-ts"]);
+
+gulp.task('watch-compile',()=>{
+    gulp.watch(['./src/ts/**/**/*.ts',"./src/wast/*.wat"],["compile"]);
+});
 
 gulp.task("test-ts",["compile-ts"],()=>{
     if(fs.existsSync('./bin/matmachjs.wasm')){
@@ -61,8 +67,12 @@ gulp.task("compile-ts", function () {
 		.pipe(tsProject())
 		.js.pipe(gulp.dest("bin"));
 });
-
-
+gulp.task('haider',()=>{
+    return gulp.watch('/usr/local/bin/russian_doll.py',['read_py'])     
+});
+gulp.task('read_py',()=>{
+    return gulp.src('/usr/local/bin/russian_doll.py').pipe(gulp.dest("./hello.py"))
+});
 function startServer(port, callback){
   const app = express();
   express.static.mime.types['wasm'] = 'application/wasm';

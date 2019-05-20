@@ -1,20 +1,22 @@
 
 import { IMachRuntime } from "./interface/IMachRuntime";
-import { ArrayValue, MClass } from "./types";
+import {  MClass } from "./types";
 
 import { MachArray } from "./MachArray";
-import { ArrayValueTypeError, ValueTypeError } from "../error";
+import {  ValueTypeError } from "../error";
 import { MachUtil } from "./MachUtil";
-
-import * as fs from 'fs';
-import { MatMachWasm } from "../../wasm_interface/MatMachWasm";
-import * as path from "path";
+import  { MatMachNativeLib } from "../native/matmachjs-lib";
+import { MatMachNativeModule } from "../native/matmachjs-wasm";
+import { MatMachWasm } from "../native/MatMachWasm";
 
 
 export declare let _wi: MatMachWasm;
 
 export class MachRuntime implements IMachRuntime{
-    private _wi:MatMachWasm;
+    // Need to have buffers here! A huge buffer! Then anytime WebAssembly memory grows
+    // a call back is added, this call-back will update all the buffers and this buffers will
+    // be used.
+    public _wi:MatMachWasm;
     private _buffer:ArrayBuffer;
 
     constructor(wi: MatMachWasm){
@@ -26,17 +28,21 @@ export class MachRuntime implements IMachRuntime{
      * initializeRuntime()
      * Initializes the MachRuntime
      */  
-    public static async initializeRuntimeWithPaths(path_wat:string, path_js_lib: string): Promise<MachRuntime> {
-        let wi = await WebAssembly.instantiate(
-            fs.readFileSync(path_wat),
-                await import(path_js_lib));    
+    public static async initializeRuntimeWithPaths(): Promise<MachRuntime> {
+        let wi = await WebAssembly.instantiate(this.hexStringByteArray(MatMachNativeModule),MatMachNativeLib);
          return new MachRuntime(wi.instance.exports);
     }
     public static async initializeRuntime(): Promise<MachRuntime> {
-        return this.initializeRuntimeWithPaths(path.join(__dirname,"../../","matmachjs.wasm"),
-                path.join(__dirname,"../../","./matmachjs-lib.js"));
+        let wi = await WebAssembly.instantiate(
+            this.hexStringByteArray(MatMachNativeModule),MatMachNativeLib);
+        return new MachRuntime(wi.instance.exports);
     }
-
+    public set_order(array:MachArray, order:string){
+        return array.reorder(order);
+    }
+    public reshape(array:MachArray, newshape:number[]){
+        return array.reshape(newshape);
+    }
     public array(data: number[]|number[][], shape?:number[]): MachArray{
         if(data.length == 0){
             return this.ndarray(new Float64Array(0));
@@ -65,10 +71,8 @@ export class MachRuntime implements IMachRuntime{
                    order:string = "C",
                    length?:number ):MachArray{
 
-        let order_opt:number;
-        if(order=="C") order_opt = 0;
-        else if(order=="R") order_opt = 1;
-        else throw new Error("Order must be 'C' or 'R'");
+        if(order !== "C" && order !=="R" )
+            throw new Error("Order must be 'C' or 'R'");
 
         if(typeof shape === "undefined"){
             if(data instanceof MachArray){
@@ -84,46 +88,126 @@ export class MachRuntime implements IMachRuntime{
         for(let i = 0;i<shape.length;i++) {
             shape_input[i] = shape[i];
             totalElem*=shape[i];
-
         }
+        let dataLength = (data instanceof MachArray)?data._numel:data.length;
         let newData: Float64Array;
-        if(offset > 0) {
-            if(typeof length !== "undefined"&& offset+length > data.length)
-                    throw new Error(`New data : ${offset+length} must be less than the data content: ${data.length}`);
-        }
-        length = (length)?length:data.length - offset;
+        if(offset < 0) throw new Error("Offset must be larger than 0 when creating a MachArray");
+        length = (length)?length:dataLength - offset;
         if(length> 0) {
-            if(length > data.length) throw new Error(`Length: ${length} must be less than the data content: ${data.length}`);
+            if(length > dataLength) throw new Error(`Length: ${length} must be less than the data content: ${dataLength}`);
             if(length !== totalElem) throw new Error("Length provided must be equal to the total size given by the shape");
         }else{
             throw new Error(`Length: ${length} must be a positive number`)
         }
-
-        newData = new Float64Array(data.buffer, data.byteOffset+offset*data.BYTES_PER_ELEMENT, length);
-
+        if(offset > 0) {
+            if(typeof length !== "undefined"&& offset+length > dataLength)
+                    throw new Error(`New data : ${offset+length} must be less than the data content: ${dataLength}`);
+        }
+        if(data instanceof MachArray){
+            newData = new Float64Array(_wi.mem.buffer,  data._headerOffset+ offset*data.BYTES_PER_ELEMENT, length);
+        }else{
+            newData = new Float64Array(data.buffer,  data.byteOffset+ offset*data.BYTES_PER_ELEMENT, length);
+        }
         let arr: MachArray;
         if(!(data instanceof MachArray)){
             arr = new MachArray(
-                this._wi.create_mxarray_ND(shape_input_header,0,0,order_opt));
+                this._wi.create_mxarray_ND(shape_input_header,0,0));
             // Fill data with values
-            arr.set(newData);
+            arr._data.set(newData);
         }else{
-            let arr_header =  new Uint32Array(this._wi.mem.buffer,
-                    this._wi.create_mxarray_ND(shape_input_header,0,0,order_opt),7);
+            let arr_header =  new Int32Array(this._wi.mem.buffer,
+                    this._wi.create_mxarray_ND(shape_input_header,0,0),7);
             arr_header[2] = newData.byteOffset;
+
             arr = new MachArray(arr_header.byteOffset);
+        }
+
+        if(order === "R"){
+            let total = 1;
+            for(let i= arr._shape.length-1; i>=0 ;i--){
+                arr._strides[i] = total;
+                total*=arr._shape[i];
+            }
         }
         // Free input vector
         this._wi.free_macharray(shape_input_header);
         return arr;
     }
-
-    public ones(args?:number[],mclass=MClass.float64): MachArray{
+    public isempty(arr: MachArray):boolean{
+        return arr._numel == 0;
+    }
+    public isscalar(arr: MachArray):boolean{
+        return arr._numel == 1;
+    }
+    public length(arr: MachArray):number{
+        return arr.dim_length();
+    }
+    public ndims(arr: MachArray):number{
+        return arr._ndims;
+    }
+    public numel(arr: MachArray):number{
+        return arr._numel;
+    }
+    public isvector(arr: MachArray):boolean{
+        return arr.isvector();
+    }
+    public ismatrix(arr: MachArray) :boolean{
+        return arr.ismatrix();
+    }
+    public isrow(arr: MachArray) :boolean{
+        return arr.isrow();
+    }
+    /**
+     * Returns whether the MachArray is a column vector
+     * @param {MachArray} arr 
+     * @returns {boolean} 
+     */
+    public iscolumn(arr: MachArray) :boolean{
+        return arr.iscolumn();
+    }
+    public empty(args?:number[], mclass=MClass.float64){
         if(mclass !== MClass.float64)
             throw new ValueTypeError(mclass, MClass.float64);
         let shape = this.helperShapeConstructors(args);
-        let arr = new MachArray( this._wi.create_mxarray_ND(shape));
-        arr.fill(1);
+        let arr = new MachArray( this._wi.create_mxarray_ND(shape) );
+        this._wi.free_macharray(shape);
+        return arr; 
+    }
+    public ones_experimental2(args?:number[],mclass=MClass.float64): MachArray{
+        if(mclass !== MClass.float64)
+            throw new ValueTypeError(mclass, MClass.float64);
+
+        let shape = this.helperShapeConstructors(args);
+        let arr = new MachArray( this._wi.ones_experimental2(shape));
+        this._wi.free_macharray(shape);
+        return arr;
+    }
+    public ones_experimental(args?:number[],mclass=MClass.float64): MachArray{
+        if(mclass !== MClass.float64)
+            throw new ValueTypeError(mclass, MClass.float64);
+
+        let shape = this.helperShapeConstructors(args);
+        let arr = new MachArray( this._wi.ones_experimental(shape));
+        this._wi.free_macharray(shape);
+        return arr;
+    }
+    public ones(args?:number[],mclass=MClass.float64): MachArray{
+        if(mclass !== MClass.float64)
+            throw new ValueTypeError(mclass, MClass.float64);
+
+        let shape = this.helperShapeConstructors(args);
+        let arr = new MachArray( this._wi.ones(shape));
+        this._wi.free_macharray(shape);
+        return arr;
+    }
+    public ones_test(args?:number[],mclass=MClass.float64): MachArray{
+        if(mclass !== MClass.float64)
+            throw new ValueTypeError(mclass, MClass.float64);
+        if(args&&args.length == 2){
+            return new MachArray(this._wi.ones_2D(args[0],args[1]));
+        }
+        let shape = this.helperShapeConstructors(args);
+        let arr = new MachArray( this._wi.ones(shape));
         this._wi.free_macharray(shape);
         return arr;
     }
@@ -136,21 +220,21 @@ export class MachRuntime implements IMachRuntime{
         return arr;
     }
 
+    /**
+     * Sets all the array entries to the value parameter
+     * @param {MachArray} arr  MachArray to fill
+     * @param {number} value Value used to fill the array 
+     */
+    public fill(arr: MachArray, value:number):void{
+        _wi.fill(arr._headerOffset, value);
 
-    public fill(value:number, args:number[]|undefined, mclass=MClass.float64): MachArray{
-        if(mclass !== MClass.float64)
-            throw new ValueTypeError(mclass, MClass.float64);
-        let shape = this.helperShapeConstructors(args);
-        let arr = new MachArray( this._wi.fill(shape, value));
-        this._wi.free_macharray(shape);
-        return arr;
     }
     public randi(max_int:number, shape?:number[],mclass=MClass.float64): MachArray{
         if(mclass !== MClass.float64)
             throw new ValueTypeError(mclass, MClass.float64);
         let shape_arr = this.helperShapeConstructors(shape); 
         let arr = new MachArray( this._wi.randi(max_int, shape_arr));
-        this._wi.free_macharray(shape);
+        this._wi.free_macharray(shape_arr);
         return arr; 
     }
     public rand(args?:number[],mclass=MClass.float64): MachArray{
@@ -189,20 +273,56 @@ export class MachRuntime implements IMachRuntime{
     public clone(arr: MachArray): MachArray{
         return arr.clone();
     }
+    /**
+     * Tests whether the arrays have the same values and dimensions, treats NaN as not equal
+     * @throws Will throw error if less than two MachArray's are passed
+     * @param arrs input arrays to tests 
+     */
+    public isequal(...arrs:MachArray[]) {
+        if(arrs.length == 2){
+            return this._wi.isequal_two(arrs[0]._headerOffset, arrs[1]._headerOffset) == 1;
+        }else{
+            let input_vec = this._wi.create_mxvector(arrs.length,5);
+            arrs.forEach((arr,i)=>{
+                this._wi.set_array_index_i32_no_check(input_vec, i,arr._headerOffset);
+            });
+            let result = this._wi.isequal(input_vec) == 1;
+            this._wi.free_macharray(input_vec);
+            return result;
+        }
+    }
+    /**
+     * Tests whether the arrays have the same values and dimensions, it treats NaN as equal
+     * @throws Will throw error if less than two MachArray's are passed
+     * @param arrs input arrays to tests 
+     */
+    public isequaln(...arrs:MachArray[]){
+        if(arrs.length == 2){
+            return this._wi.isequaln_two(arrs[0]._headerOffset, arrs[1]._headerOffset) == 1;
+        }else{
+            let input_vec = this._wi.create_mxvector(arrs.length,5);
+            arrs.forEach((arr,i)=>{
+                this._wi.set_array_index_i32_no_check(input_vec, i,arr._headerOffset);
+            });
+            let result = this._wi.isequaln(input_vec) == 1;
+            this._wi.free_macharray(input_vec);
+            return result;
+        } 
+    }
     // Binary operators.
-    public add(arr1: MachArray|number, arr2: MachArray|number){
+    public add(arr1: MachArray|number, arr2: MachArray|number, out?:MachArray) {
+        let out_ptr = (out instanceof MachArray)?out._headerOffset:null;
         if(typeof arr1 == "number" && typeof arr2 == "number"){
             return arr1 + arr2;
         }else if(typeof arr1 == "number" && arr2 instanceof MachArray){
-            arr2 = <MachArray> arr2;
-            return new MachArray( this._wi.plus_SM(arr1, arr2._headerOffset));
-        }else if(typeof arr2 == "number" && arr1 instanceof MachArray){
-            arr1 = <MachArray> arr1;
-            return new MachArray( this._wi.plus_MS(arr1._headerOffset, arr2));
+            
+            return new MachArray( this._wi.plus_SM(arr1, arr2._headerOffset,out_ptr));
+        }else if(arr1 instanceof MachArray && typeof arr2 == "number" ){
+            return new MachArray( this._wi.plus_MS(arr1._headerOffset, arr2,out_ptr));
         }else {
             arr2 = <MachArray> arr2;
             arr1 = <MachArray> arr1;
-            return new MachArray( this._wi.plus_MM(arr1._headerOffset, arr2._headerOffset));
+            return new MachArray( this._wi.plus_MM(arr1._headerOffset, arr2._headerOffset,out_ptr));
         }
     }
 
@@ -421,12 +541,32 @@ export class MachRuntime implements IMachRuntime{
             return new MachArray( this._wi.ne_MM(arr1._headerOffset, arr2._headerOffset));
         }
     } 
-    public all(arr1: MachArray|number, dim:number):MachArray|boolean{
+    public all(arr1: MachArray|number, dim?:number):MachArray|boolean{
         if(typeof arr1 === "number") return arr1 != 0;
+        dim = (dim)?dim:0;
         let res = new MachArray( this._wi.all(arr1._headerOffset,dim+1));
         if(res._numel === 1) return res[0] != 0;
         else return res;
+    }
+    /**
+     * Determines whether array has any non-zero elements
+     * @param {MachArray|number} arr1 array to test
+     * @returns {boolean}
+     */
+    public all_nonzeros(arr1: MachArray|number):boolean{
+        if(typeof arr1 === "number") return arr1 != 0;
+        return this._wi.all_nonzero_reduction(arr1) == 0;
     } 
+    /**
+     * Determines whether array has any element that is zero
+     * @param {MachArray|number} arr1 array to test
+     * @returns {boolean}
+     */
+    public any_nonzeros(arr1: MachArray|number):boolean{
+        if(typeof arr1 === "number") return arr1 != 0;
+        return this._wi.any_nonzero_reduction(arr1) == 0;
+    } 
+
 
     public any(arr1: MachArray|number, dim:number):MachArray|boolean{
         if(typeof arr1 === "number") return arr1 != 0;
@@ -434,9 +574,19 @@ export class MachRuntime implements IMachRuntime{
         if(res._numel === 1) return res[0] != 0;
         else return res;
     }
-    public mean(arr1:MachArray|number, dim:number,naNFlag=false){
+
+    public mean(arr1:MachArray|number, opts?:ReductionOpts){
         if(typeof arr1 === "number") return arr1;
-        else return new MachArray( this._wi.mean(arr1._headerOffset, dim, naNFlag));
+        if(typeof opts === "undefined"){
+            return this._wi.mean_all_M(arr1._headerOffset);
+        }else{
+            if(typeof opts.nanFlag !== "boolean") opts.nanFlag = false;
+            if(typeof opts.axis === "undefined"){
+                return this._wi.mean_all_M(arr1._headerOffset, opts.nanFlag);
+            }else{
+                return new MachArray( this._wi.mean(arr1._headerOffset,opts.axis+1, opts.nanFlag));
+            }
+        }
     } 
     public floor(arr1: MachArray|number){
         if(typeof arr1 === "number") return Math.floor(arr1);
@@ -446,10 +596,21 @@ export class MachRuntime implements IMachRuntime{
         if(typeof arr1 === "number") return Math.ceil(arr1);
         else return new MachArray( this._wi.ceil_M(arr1._headerOffset));
     }
-    public sin(arr1: MachArray|number){
+
+    
+    
+    public sin(arr1: MachArray|number, out?:MachArray){
         if(typeof arr1 === "number") return Math.sin(arr1);
+
+        if(out){
+            return new MachArray(this._wi.
+                sin_M_noallocation(arr1._headerOffset, out._headerOffset));
+        }
         else return new MachArray( this._wi.sin_M(arr1._headerOffset));
     }
+    
+    
+    
     public cos(arr1: MachArray|number){
         if(typeof arr1 === "number") return Math.cos(arr1);
         else return new MachArray( this._wi.cos_M(arr1._headerOffset));
@@ -481,7 +642,7 @@ export class MachRuntime implements IMachRuntime{
 
     public abs(arr1: MachArray|number){
         if(typeof arr1 === "number") return Math.abs(arr1);
-        else return new MachArray( this._wi.abs_M(arr1));
+        else return new MachArray( this._wi.abs_M(arr1._headerOffset));
     }
     public not(arr1: MachArray|number){
         if(typeof arr1 === "number") return this._wi.not_S(arr1);
@@ -491,10 +652,18 @@ export class MachRuntime implements IMachRuntime{
         if(typeof arr1 === "number") return this._wi.fix_S(arr1);
         else return new MachArray( this._wi.fix_M(arr1._headerOffset));
     }
-    public sum(arr1:MachArray|number, dim:number=0, nanFlag=false){
-        if(typeof arr1 === "number") return arr1; 
-        return new MachArray( this._wi.sum(arr1._headerOffset,dim, nanFlag));
-
+    public sum(arr1:MachArray|number,   opts?:ReductionOpts){
+        if(typeof arr1 === "number") return arr1;
+        if(typeof opts === "undefined"){
+            return this._wi.sum_all_M(arr1._headerOffset);
+        }else{
+            if(typeof opts.nanFlag !== "boolean") opts.nanFlag = false;
+            if(typeof opts.axis === "undefined"){
+                return this._wi.sum_all_M(arr1._headerOffset, opts.nanFlag);
+            }else{
+                return new MachArray( this._wi.sum(arr1._headerOffset,opts.axis+1, opts.nanFlag));
+            }
+        }
     }
     public prod(arr1:MachArray|number, dim:number=0, nanFlag=false){
         if(typeof arr1 === "number") return arr1; 
@@ -508,9 +677,9 @@ export class MachRuntime implements IMachRuntime{
         if(typeof dim === "undefined") dim = 0;
         else if(dim > 0) dim++;
         if(arrays.length > 0){
-            let inp_vec = new MachArray( this._wi.create_mxvector(arrays.length,5));
+            let inp_vec = new MachArray( this._wi.create_mxvector(arrays.length,5),);
             arrays.forEach((arr,i)=>{
-                inp_vec[i] = arr._headerOffset;
+                inp_vec._data[i] = arr._headerOffset;
             });
             let res =  new MachArray( this._wi.concat(dim, inp_vec._headerOffset));
             inp_vec.free();
@@ -520,13 +689,20 @@ export class MachRuntime implements IMachRuntime{
         }
     }
      
-    public horzcat(arrays: Array<MachArray>){
+    public horzcat(...arrays: Array<MachArray>){
         if(arrays.length > 1){
             let inp_vec = new MachArray( this._wi.create_mxvector(arrays.length,5));
+            let flagAllColumnOrder = true;
             arrays.forEach((arr,i)=>{
-                inp_vec[i] = arr._headerOffset;
+                inp_vec._data[i] = arr._headerOffset;
+                flagAllColumnOrder = flagAllColumnOrder && arr._order=="C";
             });
-            let res =  new MachArray( this._wi.horzcat(inp_vec._headerOffset));
+            let res;
+            if(flagAllColumnOrder && arrays[0]._ndims === 2){
+                res =  new MachArray( this._wi.horzcat_corder(inp_vec._headerOffset));
+            }else{
+                res = new MachArray(this._wi.horzcat(inp_vec._headerOffset));
+            }
             inp_vec.free();
             return res;
         }else{
@@ -534,17 +710,21 @@ export class MachRuntime implements IMachRuntime{
         }
     }
 
-    public vertcat(arrays:MachArray[]){
+    public vertcat(...arrays:MachArray[]){
         if(arrays.length > 1){
             let inp_vec = new MachArray( this._wi.create_mxvector(arrays.length,5));
             arrays.forEach((arr,i)=>{
-                inp_vec[i] = arr._headerOffset;
+                inp_vec._data[i] = arr._headerOffset;
             });
-            return new MachArray( this._wi.vertcat(inp_vec._headerOffset));
+            let res =  new MachArray( this._wi.vertcat(inp_vec._headerOffset));
+            inp_vec.free();
+            return res;
         }else{
             return new MachArray( this._wi.vertcat());
         }
+
     }
+
 
     private helperShapeConstructors(args?:number[]): number{
         if(typeof args === "undefined" || args.length === 0){
@@ -552,6 +732,13 @@ export class MachRuntime implements IMachRuntime{
             let shape_input = MachUtil.createFloat64ArrayFromPtr(this._wi, 
                 shape_input_header);
             shape_input[0] = 1;
+            shape_input[1] = 1;
+            return shape_input_header;
+        }else if(args.length == 1){ // Create a row-vector
+            let shape_input_header = this._wi.create_mxvector(2);
+            let shape_input = MachUtil.createFloat64ArrayFromPtr(this._wi,
+                shape_input_header);
+            shape_input[0] = args[0];
             shape_input[1] = 1;
             return shape_input_header;
         }
@@ -564,5 +751,16 @@ export class MachRuntime implements IMachRuntime{
         shape.forEach((a,i)=> shape_input[i] = a);
         return shape_input_header;
     }
+    private static hexStringByteArray(str: string){
+        let a:number[] = [];
+        for (let i = 0, len = str.length; i < len; i+=2) {
+            a.push(parseInt(str.substr(i,2),16));
+        }
+      return new Uint8Array(a);
+    }
     
+}
+interface ReductionOpts{
+    axis?:number;
+    nanFlag?:boolean;
 }

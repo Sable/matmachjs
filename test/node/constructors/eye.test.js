@@ -26,9 +26,6 @@ describe('#eye', () => {
 		memory = wi.mem;
 		mr = new MatlabRuntime(wi);
 	});
-	it('should correctly create large array',()=>{
-		console.log(mr.ones([10000]));
-	});
 	it('should throw error when passing more than 2 dimensions as input', () => {
 		let input = new MxVector(wi, [2,3,4]);
 		try{

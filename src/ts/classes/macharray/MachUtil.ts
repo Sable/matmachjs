@@ -1,4 +1,4 @@
-import {MatMachWasm} from "../../wasm_interface/MatMachWasm";
+import {MatMachWasm} from "../native/MatMachWasm";
 
 
 export class MachUtil {
