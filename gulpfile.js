@@ -26,7 +26,7 @@ gulp.task('compile-browser', () => {
 
 gulp.task("compile",["compile-wasm","compile-ts"]);
 
-gulp.task('watch-compile',()=>{
+gulp.task('compile-watch',()=>{
     gulp.watch(['./src/ts/**/**/*.ts',"./src/wast/*.wat"],["compile"]);
 });
 
@@ -34,10 +34,13 @@ gulp.task("test-ts",["compile-ts"],()=>{
     if(fs.existsSync('./bin/matmachjs.wasm')){
         return gulp.src('./test/node/**/**/*.test.ts',
          {read: false}).pipe(mocha(
-           {require:["ts-node/register"]}));
+           {require:["ts-node/register"],timeout:5000}));
     }
  });
-gulp.task("test",["compile-wasm","compile-ts"],()=>{
+
+gulp.task("test",["test-js","test-ts"]);
+
+gulp.task("test-js",["compile-wasm"],()=>{
     if(fs.existsSync('./bin/matmachjs.wasm')){
         return gulp.src('./test/node/**/*.test.js', {read: false})
         .pipe(mocha());

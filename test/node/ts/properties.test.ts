@@ -1,11 +1,7 @@
 import { MachRuntime } from '../../../src/ts/classes/macharray/MachRuntime';
 import { MachArray } from '../../../src/ts/classes/macharray/MachArray';
-import * as fs from 'fs';
-import { ENV_VARIABLES } from './env-variables'
 import { expect } from 'chai';
 import 'mocha';
-let wi: WebAssembly.ResultObject;
-let mr: MachRuntime;
 /**
  * MatWably
  */

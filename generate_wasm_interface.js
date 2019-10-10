@@ -29,7 +29,7 @@ traverse(decodedWasm, {
       let exported_functions = getFunctions(ast.node).reduce((acc, func)=>{
         let paramIndex = 0;
         const parameters =
-            (argv.r)? (func.signature.params.length> 0)?"...args":"":
+            (argv.r)? (func.signature!=null && func.signature.params.length> 0)?"...args":"":
                 func.signature.params
                     .map((param)=>{
                         const tsParam = `${param.valtype}_${paramIndex}:number`;

@@ -9,9 +9,15 @@ export interface MatMachWasm {
 
 	_malloc(...args):number;
 
+	get_stack_top():number;
+
+	undefined():number;
+
 	tic():number;
 
 	toc():number;
+
+	get_heap_top_ptr():number;
 
 	mxarray_core_get_array_ptr(...args):number;
 
@@ -105,6 +111,10 @@ export interface MatMachWasm {
 
 	isvector(...args):number;
 
+	linespace_SSS(...args):number;
+
+	linespace_SS(...args):number;
+
 	colon_two(...args):number;
 
 	colon_three(...args):number;
@@ -120,6 +130,12 @@ export interface MatMachWasm {
 	get_array_value_multiple_indeces_f64(...args):number;
 
 	get_f64(...args):number;
+
+	get_f64_one_index_SM(...args):number;
+
+	get_f64_one_index_colon(...args):number;
+
+	get_f64_one_index_spread(...args):number;
 
 	set_f64(...args):number;
 
@@ -297,7 +313,9 @@ export interface MatMachWasm {
 
 	power_MM(...args):number;
 
-	get_array_stride(...args):number;
+	mxarray_size_MS_nocheck(...args):number;
+
+	mxarray_stride_MS_nocheck(...args):number;
 
 	le_SM(...args):number;
 
@@ -458,6 +476,40 @@ export interface MatMachWasm {
 	log2_M(...args):number;
 
 	floor_M(...args):number;
+
+	gcCheckExternalToIncreaseRCSite(...args):number;
+
+	gcGetExternalFlag(...args):number;
+
+	gcSetExternalFlag(...args):number;
+
+	gcCheckExternalToDecreaseRCSite(...args):number;
+
+	gcGetRC(...args):number;
+
+	gcCheckExternalToSetReturnFlagAndSetRCZero(...args):number;
+
+	gcCheckExternalAndReturnFlagToFreeSite(...args):number;
+
+	gcCheckExternalToResetReturnFlag(...args):number;
+
+	gcInitiateRC(...args):number;
+
+	gcDecreaseRCSite(...args):number;
+
+	gcIncreaseRCSite(...args):number;
+
+	gcSetReturnFlagAndSetRCToZero(...args):number;
+
+	gcSetRCToZero(...args):number;
+
+	gcCheckReturnFlagToFreeSite(...args):number;
+
+	gcFreeSite(...args):number;
+
+	gcGetReturnFlag(...args):number;
+
+	gcResetReturnFlag(...args):number;
 
 
 }

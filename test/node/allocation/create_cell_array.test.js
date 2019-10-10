@@ -52,18 +52,17 @@ describe('Cell Array Creation', () => {
 			let dim_2 = wi.create_mxvector(1,0);
 			wi.set_array_index_i32(dim_1,1,5);
 			wi.set_array_index_i32(dim_2,1,10);
-			let param_arr = wi.create_mxvector(2, 5,1);
-
+			let param_arr = wi.create_mxvector(2, 0,4);
 			wi.set_array_index_i32(param_arr, 1,dim_1);
 			wi.set_array_index_i32(param_arr, 2,dim_2);
-
 			expect(wi.get_array_index_i32(dim_1, 1)).to.equal(5);
 			expect(wi.get_array_index_i32(dim_2, 1)).to.equal(10);
 			expect(wi.get_array_index_i32(param_arr, 1)).to.equal(dim_1);
 			expect(wi.mxarray_core_get_array_length(param_arr)).to.equal(2);
 			expect(wi.ndims(param_arr)).to.equal(2);
-			expect(wi.length_M(param_arr)).to.equal(2);
+			expect(wi.length(param_arr)).to.equal(2);
 			expect(wi.get_array_index_i32(param_arr, 2)).to.equal(dim_2);
+
 		});
 	});
 });

@@ -41,9 +41,6 @@ describe('Setters', () => {
 			data_nd = wasmInstance.mxarray_core_get_array_ptr(head_nd);
 			arr_data_nd = new Float64Array(memory.buffer, data_nd, 4);
 		});
-		it("Should reallocate array when index is more than length",() =>{
-			// TODO(dherre3): Assumption is that dynamic allocation does not exist
-		});
 
 		it("Should throw an error when index is less than 1",() =>{
 			try{

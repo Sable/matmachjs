@@ -215,7 +215,6 @@ describe('Array Constructors', () => {
 				let dim_1 = wi.create_mxvector(1);
 				let dim_2 = wi.create_mxvector(1);
 				let dim_3 = wi.create_mxvector(1);
-				// TODO(derre3): set_array_index_i32 not working correctly, is not checking length before setting
 				let param_arr = wi.create_mxvector(3,5);
 				wi.set_array_index_f64(dim_1, 1, 4);
 				wi.set_array_index_f64(dim_2, 1, -2);
@@ -233,7 +232,6 @@ describe('Array Constructors', () => {
 				let dim_1 = wi.create_mxvector(1);
 				let dim_2 = wi.create_mxvector(1);
 				let dim_3 = wi.create_mxvector(1);
-				// TODO(derre3): set_array_index_i32 not working correctly, is not checking length before setting
 				let param_arr = wi.create_mxvector(3,5);
 				wi.set_array_index_f64(dim_1, 1, -4);
 				wi.set_array_index_f64(dim_2, 1, 2);
@@ -274,7 +272,7 @@ describe('Array Constructors', () => {
 		it('should return 0x1 if j< i', () => {
 			let arr = new MxNDArray(wi, wi.colon_two(10,1));
 			expect(Array.from(arr.getContents())).to.deep.equal([]);
-			expect(Array.from(arr.size().getContents())).to.deep.equal([0,1]);
+			expect(Array.from(arr.size().getContents())).to.deep.equal([1,0]);
 		});
 	});
 	describe('#colon_three', () => {

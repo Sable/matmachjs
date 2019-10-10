@@ -126,8 +126,6 @@ describe('Array Properties', () => {
 		    wi.set_array_index_f64(dim_arr, 1, 20);
 		    wi.set_array_index_f64(dim_arr, 2, 100);
 		    wi.set_array_index_f64(dim_arr, 3, 20);
-		    wi.set_array_index_f64(dim_arr, 4, -1);
-		    wi.set_array_index_f64(dim_arr, 5, -1);
 		    let arr = wi.create_mxarray_ND(dim_arr);
 		    expect(wi.length(wi.create_mxarray_ND(wi.create_mxvector(5)))).to.equal(0);
 		    expect(wi.length(arr)).to.equal(100);

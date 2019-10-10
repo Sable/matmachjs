@@ -82,38 +82,6 @@ describe('Getters', () => {
 			expect(wi.get_array_index_f64(head_nd, 2)).to.equal(4.2131);
 			expect(wi.get_array_index_f64(head_nd, 1000)).to.equal(1000.1221);
 		});
-		it("Should correctly return value at index for int8",() =>{
-			head_nd = wi.create_mxarray_ND(arr_1d,0,3);
-			let start_arr = wi.mxarray_core_get_array_ptr(head_nd);
-			wi.set_array_index_i8(head_nd, 1,-127);
-			wi.set_array_index_i8(head_nd, 2,256);
-			wi.set_array_index_i8(head_nd, 3,-256);
-			wi.set_array_index_i8(head_nd, 4,-1);
-			wi.set_array_index_i8(head_nd, 5,127);
-			wi.set_array_index_i8(head_nd, 6,12);
-			expect(wi.get_array_index_i8(head_nd, 1)).to.equal(-127);
-			expect(wi.get_array_index_i8(head_nd, 2)).to.equal(127);
-			expect(wi.get_array_index_i8(head_nd, 3)).to.equal(-128);
-			expect(wi.get_array_index_i8(head_nd, 4)).to.equal(-1);
-			expect(wi.get_array_index_i8(head_nd, 5)).to.equal(127);
-			expect(wi.get_array_index_i8(head_nd, 6)).to.equal(12);
-		});
-		it("Should correctly return value at index for uint8",() =>{
-			head_nd = wi.create_mxarray_ND(arr_1d,0,7);
-			let start_arr = wi.mxarray_core_get_array_ptr(head_nd);
-			wi.set_array_index_i8(head_nd, 1,-127);
-			wi.set_array_index_i8(head_nd, 2,129);
-			wi.set_array_index_i8(head_nd, 3,-256);
-			wi.set_array_index_i8(head_nd, 4,-2121);
-			wi.set_array_index_i8(head_nd, 5,500);
-			wi.set_array_index_i8(head_nd, 6,255);
-			expect(wi.get_array_index_i8(head_nd, 1)).to.equal(0);
-			expect(wi.get_array_index_i8(head_nd, 2)).to.equal(129);
-			expect(wi.get_array_index_i8(head_nd, 3)).to.equal(0);
-			expect(wi.get_array_index_i8(head_nd, 4)).to.equal(0);
-			expect(wi.get_array_index_i8(head_nd, 5)).to.equal(255);
-			expect(wi.get_array_index_i8(head_nd, 6)).to.equal(255);
-		});
 		it("Should throw an error if index is less than 1",() =>{
 			try{
 				wi.set_array_index_i32(head_nd,1,232);
@@ -141,10 +109,6 @@ describe('Getters', () => {
 			memory = wi.mem;
 			mr = new MatlabRuntime(wi);
 		});
-		it('should throw an error when any of the inputs are null', () => {
-			// TODO: Check how McLab handles a(). In matlab this gives the entire array
-		});
-		// TODO: Case where indices are not integers
 		it('should return an empty array of size 0x0x0 when given as input ([],[],[])', () => {
 			let arr = new MxNDArray(wi, [3,7,2]);
 			arr.set_indices([[38,39,41,42]],[3,3,3,3]);

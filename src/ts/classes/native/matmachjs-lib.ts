@@ -1,5 +1,46 @@
-import { TextDecoder } from 'util';
+// import { TextDecoder } from 'util';
+if(typeof module == "undefined"){
+  module = <any>{};
+}
 
+  function TextDecoder(arg) {
+  }
+  TextDecoder.prototype.decode = function (octets) {
+    var string = "";
+    var i = 0;
+    while (i < octets.length) {
+      var octet = octets[i];
+      var bytesNeeded = 0;
+      var codePoint = 0;
+      if (octet <= 0x7F) {
+        bytesNeeded = 0;
+        codePoint = octet & 0xFF;
+      } else if (octet <= 0xDF) {
+        bytesNeeded = 1;
+        codePoint = octet & 0x1F;
+      } else if (octet <= 0xEF) {
+        bytesNeeded = 2;
+        codePoint = octet & 0x0F;
+      } else if (octet <= 0xF4) {
+        bytesNeeded = 3;
+        codePoint = octet & 0x07;
+      }
+      if (octets.length - i - bytesNeeded > 0) {
+        var k = 0;
+        while (k < bytesNeeded) {
+          octet = octets[i + k + 1];
+          codePoint = (codePoint << 6) | (octet & 0x3F);
+          k += 1;
+        }
+      } else {
+        codePoint = 0xFFFD;
+        bytesNeeded = octets.length - i;
+      }
+      string += String.fromCodePoint(codePoint);
+      i += bytesNeeded + 1;
+    }
+    return string
+  };
 // Object to fit to WebAssembly Runtime
 export let MatMachNativeLib:any = {};
 if(typeof console === "undefined" ) {
@@ -12,9 +53,10 @@ if(typeof console === "undefined" ) {
 console.warn = print;
 }
 // Polyfill
+
 if(typeof performance === "undefined" ) {
-   performance = <any>{};
-    performance.now = Date.now;
+   var performance = <any>{};
+   performance.now = Date.now;
 }
 if(typeof performance.now === "undefined"){
     performance.now = Date.now;
@@ -350,6 +392,62 @@ function printTime(time){
 }
 
 /**
+ * Helper function to print the header for a macharray.
+ * @param {number} arr_ptr MachArray pointer
+ * @param {boolean} flag_print_data Boolean indicating whether to print
+ * array contents
+ */
+function printMachArrayHeader(arr_ptr, flag_print_data=false){
+  if(arr_ptr!= null && arr_ptr!= 0 ){
+    let arr = new Int32Array(MatMachNativeLib.wasmMemory.buffer, arr_ptr, 6);
+    let attribute = new Uint8Array(MatMachNativeLib.wasmMemory.buffer, arr_ptr, 4);
+    let length = arr[1];
+    let data;
+    if(flag_print_data){
+      let data_ptr = arr[2];
+      data = new Float64Array(MatMachNativeLib.wasmMemory.buffer,
+         data_ptr,
+          length);
+    }
+    let dimensions = new Float64Array(MatMachNativeLib.wasmMemory.buffer, arr[4],arr[3]);
+    let strides = new Float64Array(MatMachNativeLib.wasmMemory.buffer, arr[5],arr[3]); 
+    let gc_info = new Uint8Array(MatMachNativeLib.wasmMemory.buffer, arr_ptr+24, 2);
+    console.warn({
+      "id":attribute,
+      "offset":arr_ptr,
+      "length":arr[1],
+      "data":(flag_print_data)?data:"omitted",
+      "ndim":arr[3],
+      "dims": dimensions,
+      "strides": strides,
+      "gc_info":gc_info
+    });
+  }
+}
+
+/**
+ * Prints memory information about the program.
+ * @param {number} alloc_number Total number of elements allocated
+ * @param {number} dealloc_number Total number of elements deallocated
+ * @param {number} alloc_memory Total memory requested to $malloc
+ * @param {number} dealloc_memory Total memory freed by $free
+ * @param {number} time_gc Total time spent by the GC
+ * @param {number} total_calls_gc Total number of gc calls
+ */
+function gcPrintMemoryUsage(alloc_number=0, dealloc_number=0, 
+    total_memory_budget=0, avg_object_size = 0, total_calls_gc = 0,time_gc=0){
+    console.warn(JSON.stringify({
+      "total_objects_allocated":alloc_number,
+      "total_objects_deallocated":dealloc_number,
+      "total_objects_not_freed":alloc_number-dealloc_number,
+      "total_memory_budget":`${total_memory_budget}(+-${alloc_number}) bytes`,
+      "avg_size_per_object": `${avg_object_size} bytes`,
+      "gc_total_number_calls": `${total_calls_gc}`,
+      "gc_total_time":`${time_gc}s`      
+    }).replace("{","[").replace("}","]"));
+}
+
+/**
  * DEFINITION OF MODULE IMPORTS
  */
 // Helper functions for wasm code
@@ -359,6 +457,7 @@ MatMachNativeLib.js = {
     "printString":printString,
     "printDouble":printDouble,
     "printDoubleNumber":printDouble,
+    "printMachArrayHeader":printMachArrayHeader,
     "assert_header":1,
     "print_array_f64":printArrayDouble,
     "time": ()=>performance.now()
@@ -402,5 +501,6 @@ MatMachNativeLib.env = {
         "getTotalMemory": getTotalMemory,
         "abortOnCannotGrowMemory": abortOnCannotGrowMemory,
         "abortStackOverflow": abortStackOverflow,
-        "___setErrNo": ___setErrNo
+        "___setErrNo": ___setErrNo,
+        "gcPrintMemoryUsage":gcPrintMemoryUsage
 };

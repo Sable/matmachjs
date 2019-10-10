@@ -78,7 +78,11 @@ export class MachRuntime implements IMachRuntime{
             if(data instanceof MachArray){
                 shape = data._shape;
             }else{
-                shape = [1,data.length];
+                if(data.length == 0){
+                    shape = [0,0];
+                }else{
+                    shape = [1,data.length];
+                }
             }
         }
 
@@ -92,8 +96,10 @@ export class MachRuntime implements IMachRuntime{
         let dataLength = (data instanceof MachArray)?data._numel:data.length;
         let newData: Float64Array;
         if(offset < 0) throw new Error("Offset must be larger than 0 when creating a MachArray");
-        length = (length)?length:dataLength - offset;
-        if(length> 0) {
+        if(typeof length === "undefined"){
+            length = dataLength - offset;
+        }
+        if(length >= 0) {
             if(length > dataLength) throw new Error(`Length: ${length} must be less than the data content: ${dataLength}`);
             if(length !== totalElem) throw new Error("Length provided must be equal to the total size given by the shape");
         }else{
@@ -194,7 +200,6 @@ export class MachRuntime implements IMachRuntime{
     public ones(args?:number[],mclass=MClass.float64): MachArray{
         if(mclass !== MClass.float64)
             throw new ValueTypeError(mclass, MClass.float64);
-
         let shape = this.helperShapeConstructors(args);
         let arr = new MachArray( this._wi.ones(shape));
         this._wi.free_macharray(shape);

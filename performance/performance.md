@@ -1,4 +1,9 @@
-# Performance
+# Benchmark Generator
+
+
+# Case Study: MatMachJS Library
+In this section, we give examples of 
+## Performance
 
 To measure the performance of the library, there are a few
 factors to be taken into account.

@@ -19,6 +19,7 @@ export class MachArray implements IMachObject {
     public _mat_class: string;
     public _mclass: string;
     public BYTES_PER_ELEMENT: number;
+    private _gc_info: Uint8Array;
 
     get _order() {
         return (this._attributes[0] === 0)?"C":"R";
@@ -90,6 +91,10 @@ export class MachArray implements IMachObject {
         this.BYTES_PER_ELEMENT = this._data.BYTES_PER_ELEMENT;
         this._mclass = MClass[this._type_attribute[2]];
         this._mat_class =  MatClass[this._type_attribute[0]];
+        this._gc_info =  new Uint8Array(_wi.mem.buffer, arr_ptr+24, 2);
+    }
+    getGCInfo():Uint8Array{
+        return this._gc_info;
     }
     clone(): MachArray {
         let new_arr_ptr = _wi.clone(this._headerOffset);
