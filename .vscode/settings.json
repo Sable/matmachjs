@@ -4,5 +4,6 @@
         "include": ["js","wat"],
         "folderExclude": ["node_modules", ".vscode"],
         "only":["src"]
-    }
+    },
+    "editor.lineNumbers": "relative"
 }
