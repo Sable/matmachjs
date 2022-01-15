@@ -29,7 +29,7 @@
     "gulp-typescript": "^5.0.1",
     "mocha": "^5.2.0",
     "nyc": "^13.3.0",
-    "shelljs": "^0.8.3",
+    "shelljs": "^0.8.5",
     "sinon": "^4.5.0",
     "sinon-chai": "^3.3.0",
     "ts-node": "^7.0.1",
